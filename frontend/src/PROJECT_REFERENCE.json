@@ -1,0 +1,506 @@
+{
+  "projectName": "WorkLogger",
+  "description": "Time tracking and project management application built with Next.js 16, Prisma 7, and MySQL. Includes client portal for sharing project data with clients.",
+  "version": "0.2.0",
+  "lastUpdated": "2026-01-15",
+
+  "techStack": {
+    "framework": "Next.js 16.0.10 (App Router)",
+    "language": "TypeScript 5",
+    "runtime": "React 19.2.1",
+    "database": "MySQL 8.0 (via Prisma 7 + MariaDB adapter)",
+    "authentication": "NextAuth.js 4.24.13 (JWT strategy)",
+    "payment": "Stripe",
+    "email": "Resend",
+    "styling": "Tailwind CSS 4.1.18",
+    "testing": "Jest 30.2.0",
+    "i18n": "next-intl 4.6.1"
+  },
+
+  "projectStructure": {
+    "rootDirectory": "/home/jarek/projects/work_logger",
+    "webDirectory": "/home/jarek/projects/work_logger/web",
+    "mainDirectories": {
+      "src/app": "Next.js App Router pages and API routes",
+      "src/app/(auth)": "Authentication pages (login, register, verify-email, password reset)",
+      "src/app/api": "API endpoints",
+      "src/app/dashboard": "Protected dashboard pages",
+      "src/app/portal/[hash]": "Client portal with hash-based access",
+      "src/app/portal/[hash]/(auth)": "Portal authentication pages (email entry, code verification)",
+      "src/app/portal/[hash]/(authenticated)": "Portal protected pages (dashboard, projects, etc.)",
+      "src/app/pricing": "Subscription pricing page",
+      "src/app/components": "React components organized by feature",
+      "src/app/components/portal": "Portal-specific components",
+      "src/lib": "Utility functions, configurations, database queries",
+      "src/lib/queries": "Prisma database query functions",
+      "src/lib/queries/portal": "Portal-specific query functions filtered by clientId",
+      "src/__tests__": "Jest test suites",
+      "src/i18n": "Internationalization configuration",
+      "prisma": "Database schema and migrations",
+      "messages": "Translation files (pl.json, en.json)",
+      "public": "Static assets"
+    }
+  },
+
+  "databaseSchema": {
+    "provider": "MySQL 8.0",
+    "orm": "Prisma 7.2.0 with MariaDB adapter",
+    "models": {
+      "User": {
+        "purpose": "User accounts with auth and subscription data. Also used for portal users.",
+        "fields": {
+          "id": "Int @id @default(autoincrement())",
+          "name": "String",
+          "email": "String @unique",
+          "password": "String (bcrypt hashed)",
+          "emailVerified": "DateTime?",
+          "createdAt": "DateTime @default(now())",
+          "resetPasswordToken": "String?",
+          "resetPasswordExpires": "DateTime?",
+          "verificationCode": "String? (6-digit)",
+          "verificationCodeExpires": "DateTime?",
+          "stripeCustomerId": "String? @unique",
+          "stripeSubscriptionId": "String? @unique",
+          "stripePriceId": "String?",
+          "stripeCurrentPeriodEnd": "DateTime?",
+          "subscriptionStatus": "String? (active/canceled/past_due)",
+          "bypassSubscription": "Boolean @default(false)",
+          "isPortalUser": "Boolean @default(false) - Indicates portal user",
+          "portalClientId": "Int? - Links portal user to specific client"
+        },
+        "relations": ["clients", "projects", "calendarevents", "incomes", "portalClient"]
+      },
+      "Client": {
+        "purpose": "Client entities for billing. Hash is used for portal access URL.",
+        "fields": {
+          "id": "Int @id",
+          "name": "String",
+          "hourlyRate": "Decimal(10,2)",
+          "hash": "String @unique - Used in portal URL /portal/[hash]",
+          "status": "Int @db.TinyInt @default(1)",
+          "userId": "Int",
+          "createdAt": "DateTime"
+        },
+        "relations": ["user", "projects", "portalUsers"]
+      },
+      "Project": {
+        "purpose": "Projects linked to clients",
+        "fields": {
+          "id": "Int @id",
+          "name": "String",
+          "color": "String?",
+          "hourlyRate": "Decimal(10,2)",
+          "userId": "Int",
+          "status": "Int @db.TinyInt @default(0) (0=active, 1=finished, 2=archived)",
+          "clientId": "Int",
+          "createdAt": "DateTime"
+        },
+        "relations": ["user", "client", "calendarevents", "incomes"]
+      },
+      "CalendarEvent": {
+        "purpose": "Time tracking entries",
+        "fields": {
+          "id": "Int @id",
+          "description": "String",
+          "projectId": "Int",
+          "userId": "Int",
+          "hours": "Decimal(10,2)",
+          "hourlyRate": "Decimal(10,2)",
+          "start": "DateTime",
+          "end": "DateTime",
+          "createdAt": "DateTime"
+        },
+        "relations": ["user", "project"]
+      },
+      "Income": {
+        "purpose": "Payment records for projects",
+        "fields": {
+          "id": "Int @id",
+          "projectId": "Int",
+          "userId": "Int",
+          "value": "Decimal(10,2)",
+          "createdAt": "DateTime"
+        },
+        "relations": ["user", "project"]
+      }
+    }
+  },
+
+  "authentication": {
+    "provider": "NextAuth.js 4.24.13",
+    "strategy": "JWT",
+    "credentialsProviders": {
+      "credentials": "Email + Password for regular users",
+      "portal-credentials": "Email + Client Hash for portal users (passwordless)"
+    },
+    "passwordHashing": "bcryptjs (12 rounds)",
+    "flow": {
+      "registration": [
+        "1. User submits registration form",
+        "2. Password hashed with bcrypt",
+        "3. 6-digit verification code generated",
+        "4. User saved to DB with code",
+        "5. Verification email sent via Resend",
+        "6. Redirect to /verify-email"
+      ],
+      "emailVerification": [
+        "1. User enters 6-digit code",
+        "2. Code validated (10 min expiry)",
+        "3. emailVerified set to current timestamp",
+        "4. Redirect to /login"
+      ],
+      "login": [
+        "1. User submits email + password",
+        "2. Check if emailVerified is set",
+        "3. Compare password with bcrypt",
+        "4. Create JWT session",
+        "5. Redirect to /dashboard"
+      ],
+      "passwordReset": [
+        "1. User requests reset via email",
+        "2. SHA-256 hashed token generated (30 min expiry)",
+        "3. Email with reset link sent",
+        "4. User sets new password",
+        "5. Token cleared from DB"
+      ],
+      "portalLogin": [
+        "1. Client opens /portal/[hash] link",
+        "2. Client enters email address",
+        "3. Portal user created or found (isPortalUser=true)",
+        "4. 6-digit verification code sent via email",
+        "5. Client enters code on /portal/[hash]/verify",
+        "6. emailVerified set, JWT session created",
+        "7. Redirect to /portal/[hash]/dashboard"
+      ]
+    },
+    "jwtTokenFields": {
+      "id": "User ID",
+      "isPortalUser": "Boolean - true for portal users",
+      "portalClientId": "Int - Client ID for portal users",
+      "portalClientHash": "String - Client hash for redirects"
+    },
+    "files": {
+      "config": "src/lib/auth.ts",
+      "wrapper": "src/auth.ts",
+      "routes": "src/app/api/auth/[...nextauth]/route.ts",
+      "types": "src/types/next-auth.d.ts"
+    }
+  },
+
+  "subscriptionSystem": {
+    "provider": "Stripe",
+    "plans": {
+      "monthly": {
+        "name": "Monthly Plan",
+        "price": 29,
+        "currency": "USD",
+        "interval": "month"
+      },
+      "yearly": {
+        "name": "Yearly Plan",
+        "price": 290,
+        "currency": "USD",
+        "interval": "year",
+        "savings": "$58 per year"
+      }
+    },
+    "statuses": ["active", "canceled", "past_due", "trialing"],
+    "bypassSubscription": "Boolean field for admin/demo users to skip payment",
+    "webhookEvents": [
+      "checkout.session.completed",
+      "customer.subscription.created",
+      "customer.subscription.updated",
+      "customer.subscription.deleted",
+      "invoice.payment_succeeded",
+      "invoice.payment_failed"
+    ],
+    "files": {
+      "config": "src/lib/stripe.ts",
+      "subscriptionLogic": "src/lib/subscription.ts",
+      "guard": "src/components/SubscriptionGuard.tsx",
+      "checkAPI": "src/app/api/subscription/check/route.ts",
+      "checkoutAPI": "src/app/api/subscription/create-checkout/route.ts",
+      "webhookAPI": "src/app/api/webhooks/stripe/route.ts",
+      "pricingPage": "src/app/pricing/page.tsx"
+    }
+  },
+
+  "internationalization": {
+    "framework": "next-intl 4.6.1",
+    "locales": ["pl", "en"],
+    "defaultLocale": "pl",
+    "localeStorage": "Cookie (NEXT_LOCALE)",
+    "translationDomains": [
+      "common",
+      "auth",
+      "dashboard",
+      "clients",
+      "projects",
+      "calendar",
+      "incomes",
+      "reports",
+      "subscription",
+      "portal"
+    ],
+    "files": {
+      "config": "src/i18n/request.ts",
+      "polish": "messages/pl.json",
+      "english": "messages/en.json"
+    }
+  },
+
+  "emailService": {
+    "provider": "Resend",
+    "fromAddress": "WorkLogger <no-reply@worklogger.augustyniak.xyz>",
+    "templates": {
+      "verification": "6-digit code, 10 min expiry",
+      "passwordReset": "Reset link, 30 min expiry",
+      "portalVerification": "6-digit code for portal login, 10 min expiry"
+    },
+    "file": "src/lib/mail.ts"
+  },
+
+  "apiRoutes": {
+    "authentication": {
+      "POST /api/auth/[...nextauth]": "NextAuth handler",
+      "POST /api/auth/verify-email": "Verify email with 6-digit code",
+      "POST /api/auth/resend-verification": "Resend verification code",
+      "POST /api/auth/forgot-password": "Request password reset",
+      "POST /api/auth/reset-password": "Complete password reset"
+    },
+    "data": {
+      "GET /api/projects": "Get user's projects list",
+      "GET /api/clients": "Get user's clients list",
+      "GET /api/revenue": "Get revenue statistics"
+    },
+    "reports": {
+      "GET /api/reports/summary": "Generate summary report",
+      "GET /api/reports/project/[projectId]": "Get project detail report"
+    },
+    "subscription": {
+      "GET /api/subscription/check": "Check user subscription status",
+      "POST /api/subscription/create-checkout": "Create Stripe checkout session"
+    },
+    "webhooks": {
+      "POST /api/webhooks/stripe": "Handle Stripe webhook events"
+    },
+    "portal": {
+      "POST /api/portal/send-code": "Send 6-digit verification code to portal user",
+      "POST /api/portal/verify-code": "Verify portal user's 6-digit code",
+      "GET /api/portal/revenue": "Get portal revenue data for chart"
+    }
+  },
+
+  "pages": {
+    "public": {
+      "/login": "User login",
+      "/register": "User registration",
+      "/verify-email": "Email verification (6-digit code)",
+      "/forgot-password": "Password reset request",
+      "/reset-password": "Password reset form",
+      "/pricing": "Subscription pricing page"
+    },
+    "protected": {
+      "/dashboard": "Main dashboard with stats",
+      "/dashboard/calendar": "Time tracking calendar",
+      "/dashboard/clients": "Clients management",
+      "/dashboard/projects": "Projects management",
+      "/dashboard/incomes": "Income/payments tracking",
+      "/dashboard/reports": "Reports list",
+      "/dashboard/reports/[projectId]": "Project detail report"
+    },
+    "portal": {
+      "/portal/[hash]": "Portal entry page - email input form",
+      "/portal/[hash]/verify": "Portal verification page - 6-digit code input",
+      "/portal/[hash]/dashboard": "Portal dashboard with client stats and revenue chart",
+      "/portal/[hash]/projects": "Portal projects list (read-only)",
+      "/portal/[hash]/time-entries": "Portal time entries (read-only)",
+      "/portal/[hash]/payments": "Portal payments list (read-only)"
+    }
+  },
+
+  "components": {
+    "dashboard": {
+      "Sidebar.tsx": "Navigation sidebar",
+      "Topbar.tsx": "Top navigation bar",
+      "RevenueChart.tsx": "Revenue visualization chart"
+    },
+    "calendar": {
+      "CalendarWrapper.tsx": "Main calendar container",
+      "WeekCalendar.tsx": "Week view calendar",
+      "TimeEntryFormModal.tsx": "Create/edit time entry"
+    },
+    "projects": {
+      "ProjectsTable.tsx": "Projects list table",
+      "ProjectFormModal.tsx": "Create/edit project",
+      "StatusBadge.tsx": "Project status indicator",
+      "PaymentStatusBadge.tsx": "Payment status indicator"
+    },
+    "clients": {
+      "ClientsTable.tsx": "Clients list table",
+      "ClientFormModal.tsx": "Create/edit client"
+    },
+    "incomes": {
+      "IncomesTable.tsx": "Incomes list table",
+      "IncomeFormModal.tsx": "Create/edit income"
+    },
+    "reports": {
+      "ReportFilterModal.tsx": "Report filter options",
+      "ReportSummaryTable.tsx": "Summary report table",
+      "ProjectDetailView.tsx": "Project detail view",
+      "ProjectRevenueChart.tsx": "Project revenue chart"
+    },
+    "ui": {
+      "Modal.tsx": "Generic modal component",
+      "Paginate.tsx": "Pagination component",
+      "LanguageSwitcher.tsx": "Language selector"
+    },
+    "portal": {
+      "PortalSidebar.tsx": "Portal navigation sidebar",
+      "PortalTopbar.tsx": "Portal top navigation bar with logout",
+      "PortalProjectsTable.tsx": "Portal projects table (read-only)",
+      "PortalTimeEntriesTable.tsx": "Portal time entries table (read-only)",
+      "PortalPaymentsTable.tsx": "Portal payments table (read-only)",
+      "PortalRevenueChart.tsx": "Portal revenue chart with month navigation"
+    },
+    "global": {
+      "SubscriptionGuard.tsx": "Subscription protection wrapper",
+      "SessionProvider.tsx": "NextAuth session provider"
+    }
+  },
+
+  "libFiles": {
+    "auth.ts": "NextAuth configuration with Credentials and Portal-Credentials providers",
+    "prisma.ts": "Prisma client with MariaDB adapter",
+    "stripe.ts": "Stripe client and plan definitions",
+    "subscription.ts": "Subscription status checking functions",
+    "mail.ts": "Email sending via Resend (verification, password reset, portal verification)",
+    "passwordStrength.ts": "Password validation utilities"
+  },
+
+  "middleware": {
+    "file": "src/middleware.ts",
+    "features": [
+      "Locale cookie management",
+      "Portal user route protection - redirects to /portal/[hash]/dashboard",
+      "Portal user hash validation - redirects to correct portal if wrong hash"
+    ],
+    "protectedRoutes": ["/dashboard", "/clients", "/projects", "/calendar", "/reports", "/incomes", "/settings"],
+    "publicRoutes": ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"]
+  },
+
+  "queryFiles": {
+    "projects.ts": "getProject, getProjects, getProjectValue, getProjectPayments, getProjectsCount, getUsedColors",
+    "clients.ts": "Client database queries",
+    "calendarEvents.ts": "Calendar event queries",
+    "incomes.ts": "Income queries",
+    "reports.ts": "Report generation queries",
+    "revenue.ts": "Revenue calculation queries",
+    "portal/dashboard.ts": "Portal dashboard stats and client info queries",
+    "portal/projects.ts": "Portal projects query filtered by clientId",
+    "portal/calendarEvents.ts": "Portal time entries query filtered by clientId",
+    "portal/incomes.ts": "Portal incomes query filtered by clientId",
+    "portal/revenue.ts": "Portal revenue data for chart"
+  },
+
+  "environmentVariables": {
+    "required": {
+      "DATABASE_URL": "MySQL connection string",
+      "AUTH_SECRET": "NextAuth JWT secret (32+ chars)",
+      "NEXTAUTH_SECRET": "Alternative auth secret",
+      "NEXTAUTH_URL": "Base URL for auth callbacks",
+      "RESEND_API_KEY": "Resend email service API key",
+      "STRIPE_SECRET_KEY": "Stripe secret API key",
+      "STRIPE_WEBHOOK_SECRET": "Stripe webhook signing secret",
+      "STRIPE_MONTHLY_PRICE_ID": "Stripe monthly plan price ID",
+      "STRIPE_YEARLY_PRICE_ID": "Stripe yearly plan price ID"
+    },
+    "optional": {
+      "AUTH_TRUST_HOST": "Set true for localhost",
+      "AUTH_URL": "Alternative auth URL"
+    }
+  },
+
+  "dockerSetup": {
+    "containers": {
+      "worklogger_app": {
+        "image": "node:20-bullseye",
+        "port": 3000,
+        "volume": "./web:/web"
+      },
+      "worklogger_mysql": {
+        "image": "mysql:8.0",
+        "port": 3308,
+        "volume": "./mysql/data:/var/lib/mysql"
+      }
+    },
+    "network": "nginx-proxy-network"
+  },
+
+  "scripts": {
+    "dev": "next dev - Development server",
+    "build": "next build - Production build",
+    "start": "next start - Production server",
+    "lint": "eslint - Run linter",
+    "test": "jest - Run tests",
+    "test:watch": "jest --watch - Watch mode",
+    "test:coverage": "jest --coverage - Coverage report"
+  },
+
+  "testing": {
+    "framework": "Jest 30.2.0",
+    "config": "jest.config.js",
+    "setup": "jest.setup.js",
+    "testLocation": "src/__tests__/",
+    "existingTests": {
+      "email-verification.test.ts": "Tests for email verification flow"
+    }
+  },
+
+  "dependencies": {
+    "core": ["next@16.0.10", "react@19.2.1", "typescript@5"],
+    "database": ["@prisma/client@7.2.0", "@prisma/adapter-mariadb@7.2.0", "mariadb@3.4.5"],
+    "auth": ["next-auth@4.24.13", "bcryptjs@3.0.3"],
+    "payment": ["stripe", "@stripe/stripe-js"],
+    "email": ["resend@6.6.0"],
+    "ui": ["tailwindcss@4.1.18", "lucide-react@0.562.0", "@radix-ui/react-tooltip", "sweetalert2@11.26.17"],
+    "calendar": ["@fullcalendar/core@6.1.19", "@fullcalendar/react", "@fullcalendar/daygrid", "@fullcalendar/timegrid", "@fullcalendar/interaction"],
+    "charts": ["recharts@3.6.0"],
+    "utils": ["date-fns@4.1.0", "next-intl@4.6.1", "jspdf@4.0.0", "jspdf-autotable@5.0.7"]
+  },
+
+  "securityFeatures": [
+    "Password hashing with bcryptjs (12 rounds)",
+    "Email verification with 6-digit code (10 min expiry)",
+    "Password reset with hashed tokens (30 min expiry)",
+    "JWT session strategy",
+    "User data isolation (all queries filtered by userId)",
+    "Portal data isolation (queries filtered by clientId)",
+    "Portal user route protection via middleware",
+    "Portal users cannot access main application routes",
+    "Portal users restricted to their own client hash",
+    "Stripe webhook signature verification",
+    "Subscription bypass for admin/demo accounts"
+  ],
+
+  "keyFeatures": [
+    "Time tracking with weekly calendar view",
+    "Client and project management",
+    "Hourly rate tracking per project",
+    "Income/payment logging",
+    "Revenue reports with PDF/CSV export",
+    "Revenue charts visualization",
+    "Multi-language support (PL/EN)",
+    "Stripe subscription payments",
+    "Email verification on registration",
+    "Password reset via email",
+    "Client portal with unique hash-based URLs",
+    "Passwordless portal login (email + 6-digit code)",
+    "Portal read-only access to client-specific data"
+  ],
+
+  "documentation": {
+    "stripeSetup": "STRIPE_SETUP.md",
+    "projectReference": "PROJECT_REFERENCE.json"
+  }
+}

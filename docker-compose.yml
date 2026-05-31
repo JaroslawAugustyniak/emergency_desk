@@ -1,0 +1,102 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ed_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - default
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ed_backend
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    environment:
+      VIRTUAL_HOST: api.emergencydesk.localhost
+      VIRTUAL_PORT: 8000
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      APP_KEY: ${APP_KEY}
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+    networks:
+      - default
+      - nginx-proxy-network
+
+  queue-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ed_queue_worker
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      APP_KEY: ${APP_KEY}
+      QUEUE_CONNECTION: database
+    command: php artisan queue:work --delay=3 --max-jobs=1000 --max-time=3600
+    depends_on:
+      - mysql
+      - backend
+    networks:
+      - default
+    restart: unless-stopped
+
+  frontend:
+    image: node:20-bullseye
+    container_name: ed_frontend
+    working_dir: /web
+    volumes:
+      - ./frontend:/web
+    command: sh -c "npm install && npm run dev"
+    environment:
+      VIRTUAL_HOST: emergencydesk.localhost
+      VIRTUAL_PORT: 3000
+    extra_hosts:
+      - "api.emergencydesk.localhost:host-gateway"
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+    networks:
+      - default
+      - nginx-proxy-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  nginx-proxy-network:
+    external: true
+    name: nginx-proxy-network

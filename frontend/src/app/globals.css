@@ -1,0 +1,257 @@
+@import "tailwindcss";
+
+/* Prevent scaling and ensure 100vw fits */
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+}
+
+@layer components {
+  /* ==========================================
+     COMMON COMPONENTS - używane w całej aplikacji
+     ========================================== */
+
+  /* Form elements */
+  .input {
+    @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm mb-1.5
+           bg-white text-slate-900
+           focus:outline-none focus:ring-2 focus:ring-indigo-500;
+  }
+
+  .label {
+    @apply text-sm font-medium text-slate-700;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply px-4 py-2 rounded-lg text-sm font-medium cursor-pointer
+           transition-all duration-200 ease-in-out
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg text-sm font-medium cursor-pointer
+           transition-all duration-200 ease-in-out
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-blue-600 text-white
+           hover:bg-blue-700;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 rounded-lg text-sm font-medium cursor-pointer
+           transition-all duration-200 ease-in-out
+           disabled:opacity-50 disabled:cursor-not-allowed
+           border border-gray-300 text-gray-700 bg-white
+           hover:bg-gray-50;
+  }
+
+  .btn-danger {
+    @apply px-4 py-2 rounded-lg text-sm font-medium cursor-pointer
+           transition-all duration-200 ease-in-out
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-red-600 text-white
+           hover:bg-red-700;
+  }
+
+  .button {
+    @apply w-full rounded-lg bg-slate-600 px-3 py-2 text-sm text-amber-50 cursor-pointer
+           transition-all duration-300 ease-linear
+           hover:bg-slate-700;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white rounded-lg shadow-md border border-gray-200;
+  }
+
+  /* Dropdowns */
+  .dropdown {
+    @apply absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1;
+  }
+
+  .dropdown-item {
+    @apply w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700
+           hover:bg-gray-100 transition-colors;
+  }
+
+  .dropdown-item-danger {
+    @apply w-full flex items-center gap-2 px-4 py-2 text-sm
+           transition-colors
+           text-red-600 hover:bg-red-50;
+  }
+
+  .dropdown-divider {
+    @apply border-t border-gray-200 my-1;
+  }
+
+  /* Typography */
+  .text-primary {
+    @apply text-gray-900;
+  }
+
+  .text-secondary {
+    @apply text-gray-600;
+  }
+
+  .text-muted {
+    @apply text-gray-500;
+  }
+
+  .page-title {
+    @apply text-3xl font-bold text-gray-900;
+  }
+
+  .page-subtitle {
+    @apply text-gray-600 mt-2;
+  }
+
+  /* Tooltips */
+  .tooltip {
+    @apply absolute z-50 left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5
+           bg-gray-900 text-white
+           text-xs rounded whitespace-nowrap opacity-0 invisible
+           group-hover:opacity-100 group-hover:visible transition-all duration-200
+           pointer-events-none after:content-[''];
+  }
+
+  .tooltip-top {
+    @apply bottom-full
+           after:absolute
+           after:top-full
+           after:left-1/2
+           after:-translate-x-1/2
+           after:border-4
+           after:border-transparent
+           after:border-t-gray-900;
+  }
+
+  .tooltip-bottom {
+    @apply top-full -translate-x-1/2 mt-2
+           after:absolute
+           after:bottom-full
+           after:left-1/2
+           after:-translate-x-1/2
+           after:border-4
+           after:border-transparent
+           after:border-b-gray-900;
+  }
+
+  /* ==========================================
+     DASHBOARD LAYOUT - struktura dashboardu
+     ========================================== */
+
+  .dashboard-container {
+    @apply min-h-screen flex bg-slate-100;
+    width: 100vw;
+    max-width: 100vw;
+    overflow: hidden;
+  }
+
+  .dashboard-main {
+    @apply flex-1 flex flex-col;
+    min-height: 100vh;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .dashboard-content {
+    @apply flex-1 p-4 md:p-6;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: auto;
+    box-sizing: border-box;
+  }
+
+  /* Topbar */
+  .topbar {
+    @apply h-14 md:h-16 bg-white border-b border-gray-200 flex items-center justify-between px-3 md:px-6;
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+
+  .topbar-text {
+    @apply text-sm text-slate-500;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    @apply w-64 bg-slate-900 text-slate-200 flex flex-col h-full;
+  }
+
+  .sidebar-header {
+    @apply flex items-center p-6 text-lg font-semibold border-b border-slate-800;
+  }
+
+  .sidebar-nav {
+    @apply flex-1 px-4 py-6 space-y-1 text-sm;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 transition-colors
+           hover:bg-slate-800;
+  }
+
+  .sidebar-link-active {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 transition-colors
+           bg-slate-700 text-white;
+  }
+
+  .sidebar-link-loading {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 transition-colors
+           bg-slate-800 text-white;
+  }
+
+  /* User menu */
+  .user-menu-trigger {
+    @apply flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-2 rounded-lg transition-colors
+           hover:bg-gray-100;
+  }
+
+  .user-menu-name {
+    @apply text-xs md:text-sm font-medium text-slate-700;
+  }
+
+  .user-menu-icon {
+    @apply text-slate-600;
+  }
+
+  .user-menu-dropdown {
+    @apply absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1
+           right-0 mt-2 w-48;
+  }
+
+  /* Mobile Bottom Navigation */
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 z-40
+           bg-white border-t border-gray-200
+           md:hidden;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .mobile-nav-container {
+    @apply flex items-center justify-around
+           h-16 px-2 w-full;
+    box-sizing: border-box;
+  }
+
+  .mobile-nav-item {
+    @apply flex flex-col items-center justify-center
+           w-12 h-12 rounded-lg
+           transition-colors cursor-pointer
+           text-gray-50 hover:text-blue-400 hover:bg-blue-50;
+  }
+
+  .mobile-nav-item-active {
+    @apply flex flex-col items-center justify-center
+           w-12 h-12 rounded-lg
+           transition-colors
+           text-blue-400 bg-slate-700;
+  }
+}
