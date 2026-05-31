@@ -8,7 +8,7 @@ export default getRequestConfig(async () => {
 
   return {
     locale,
-    timeZone: i18nConfig.timeZone,
+    timeZone: 'Europe/Warsaw',
     messages: (await import(`../../messages/${locale}.json`)).default
   };
 });
