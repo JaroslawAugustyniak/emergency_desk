@@ -9,13 +9,14 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "127.0.0.1:3306:3306"
+      - "3309:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backups:/backups
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
+      interval: 5s
+      timeout: 5s
       retries: 10
     networks:
       - backend
@@ -43,12 +44,13 @@ services:
     expose:
       - "8000"
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8001:8000"
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - backend
+      - npm_network
 
   queue-worker:
     build:
@@ -86,3 +88,6 @@ volumes:
 networks:
   backend:
     driver: bridge
+  npm_network:
+    external: true
+    name: nginx-proxy-manager_default

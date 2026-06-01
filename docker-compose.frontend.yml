@@ -1,0 +1,23 @@
+services:
+  frontend:
+    image: node:20-alpine
+    container_name: ed_frontend_prod
+    restart: always
+    working_dir: /app
+    command: node server.js
+    environment:
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./frontend/.next/standalone:/app
+      - ./frontend/.next/static:/app/.next/static:ro
+      - ./frontend/public:/app/public:ro
+    networks:
+      - npm_network
+
+networks:
+  npm_network:
+    external: true
+    name: nginx-proxy-manager_default
