@@ -2,15 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Mountain, Target, CheckSquare, CalendarDays, BanknoteArrowUp, FileText } from 'lucide-react';
+import { LayoutDashboard, Mountain, Target, CheckSquare, CalendarDays, BanknoteArrowUp, FileText, Bell, Coins } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export default function MobileNav() {
   const pathname = usePathname();
   const t = useTranslations('dashboard');
 
-  const menuItems = [
-    { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true },
+
+
+    const menuItems = [
+    { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard'), exact: true },
+    { href: '/dashboard/clients', icon: Mountain, label: t('clients') },
+    { href: '/dashboard/reports', icon: FileText, label: t('reports') },
+    // { href: '/dashboard/reminders', icon: Bell, label: t('reminders') },
   ];
 
   const isActive = (href: string, exact?: boolean) => {

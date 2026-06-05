@@ -31,6 +31,11 @@ php artisan cache:clear
 echo "Running migrations..."
 php artisan migrate --force
 
-# Start dev server
-echo "Starting Laravel development server..."
-php artisan serve --host=0.0.0.0 --port=8000
+# Execute passed command or start dev server
+if [ $# -gt 0 ]; then
+  echo "Executing command: $@"
+  exec "$@"
+else
+  echo "Starting Laravel development server..."
+  php artisan serve --host=0.0.0.0 --port=8000
+fi

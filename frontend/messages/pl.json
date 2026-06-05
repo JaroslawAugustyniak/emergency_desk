@@ -95,6 +95,7 @@
     "welcome": "Witaj, {name} 👋",
     "summary": "Oto podsumowanie Twojego konta.",
     "adminPanel": "Panel administracyjny",
+    "dashboard": "Tablica",
     "clients": "Klienci",
     "projects": "Projekty",
     "hours": "Godziny",

@@ -4,18 +4,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Mountain, Target, CalendarDays, BanknoteArrowUp, FileText, CheckSquare, Loader2, Coins, Bell } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from "next/image";
+import { useSidebar } from "@/app/components/context/SidebarContext";
 
 export default function Sidebar() {
   const t = useTranslations('dashboard');
   const pathname = usePathname();
   const router = useRouter();
   const [loadingHref, setLoadingHref] = useState<string | null>(null);
+  const { isCollapsed } = useSidebar();
 
   const menuItems = [
-    { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true },
+    { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard'), exact: true },
+    { href: '/dashboard/clients', icon: Mountain, label: t('clients') },
+    { href: '/dashboard/reports', icon: FileText, label: t('reports') },
   ];
 
   const isActive = (href: string, exact?: boolean) => {
@@ -48,16 +52,28 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
       <div className="sidebar-header">
-        <Image
-          src="/images/logo.png"
-          alt="Logo"
-          width={80}
-          height={80}
-          className="main-logo mx-auto"
-          priority
-        />
+        {!isCollapsed && (
+          <Image
+            src="/images/logo-an-mar-big.png"
+            alt="Logo"
+            width={140}
+            height={60}
+            className="main-logo mx-auto"
+            priority
+          />
+        )}
+        {isCollapsed && (
+          <Image
+            src="/images/logo-an-mar-mini.png"
+            alt="Logo"
+            width={40}
+            height={40}
+            className="main-logo mx-auto"
+            priority
+          />
+        )}
       </div>
 
       <nav className="sidebar-nav">
@@ -72,13 +88,14 @@ export default function Sidebar() {
               href={item.href}
               onClick={(e) => handleClick(e, item.href)}
               className={getLinkClassName(active, isLoading)}
+              title={isCollapsed ? item.label : ''}
             >
               {isLoading ? (
                 <Loader2 className="text-blue-400 animate-spin" size={20} />
               ) : (
                 <Icon className={active ? 'text-blue-400' : ''} size={20} />
               )}
-              {item.label}
+              {!isCollapsed && item.label}
             </Link>
           );
         })}

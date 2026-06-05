@@ -7,11 +7,16 @@ html, body {
   overflow-x: hidden;
   position: relative;
 }
-
+ .pwa-install-button {
+    @apply cursor-pointer flex mx-auto mt-4 w-auto items-center justify-center gap-2 px-4 py-4 border border-white rounded-md hover:bg-gray-50 transition text-sm text-white;
+    background-color: #347ab8 !important;
+  }
 @layer components {
   /* ==========================================
      COMMON COMPONENTS - używane w całej aplikacji
      ========================================== */
+
+ 
 
   /* Form elements */
   .input {
@@ -116,6 +121,21 @@ html, body {
            pointer-events-none after:content-[''];
   }
 
+  @media(max-width: 768px) {
+    .fc-toolbar-chunk{
+      display: flex;
+    }
+    .fc.fc-media-screen .fc-toolbar.fc-header-toolbar{
+      margin-top:1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem; 
+    }
+    .fc-header-toolbar .fc-toolbar-chunk:last-child {
+      /* display: none; */
+    }
+  }
+
   .tooltip-top {
     @apply bottom-full
            after:absolute
@@ -126,6 +146,27 @@ html, body {
            after:border-transparent
            after:border-t-gray-900;
   }
+
+  .tooltip-top-left{
+    @apply bottom-full left-0 translate-x-0 mb-2
+           after:absolute
+           after:top-full
+           after:left-4
+           after:border-4
+           after:border-transparent
+           after:border-t-gray-900;
+  }
+
+.tooltip-top-right{
+  @apply bottom-full -translate-x-0 mb-2 whitespace-normal
+         right-0 left-auto
+         after:absolute
+         after:top-full
+         after:right-4
+         after:border-4
+         after:border-transparent
+         after:border-t-gray-900;
+}
 
   .tooltip-bottom {
     @apply top-full -translate-x-1/2 mt-2
@@ -173,21 +214,50 @@ html, body {
     flex-shrink: 0;
   }
 
+  .topbar{
+    .open{
+      display: none;
+    }
+    .close{
+      display: block;
+    }
+    &.topbar-collapsed .open {
+      display: block;
+    }
+
+    &.topbar-collapsed .close{
+      display: none;
+    }
+  }
+
   .topbar-text {
     @apply text-sm text-slate-500;
   }
 
   /* Sidebar */
   .sidebar {
-    @apply w-64 bg-slate-900 text-slate-200 flex flex-col h-full;
+    @apply w-64 bg-slate-900 text-slate-200 flex flex-col h-full transition-all duration-300;
+  }
+
+  .sidebar-collapsed {
+    @apply w-20;
   }
 
   .sidebar-header {
-    @apply flex items-center p-6 text-lg font-semibold border-b border-slate-800;
+    @apply flex items-center justify-center text-lg font-semibold rounded-xl m-4 mb-1 mt-0 border-slate-800 min-h-16 bg-white;
+    flex-shrink: 0;
+  }
+
+  .sidebar-collapsed .sidebar-header {
+    @apply min-h-16;
   }
 
   .sidebar-nav {
-    @apply flex-1 px-4 py-6 space-y-1 text-sm;
+    @apply flex-1 px-2 py-3 space-y-1.5 text-sm overflow-y-auto;
+  }
+
+  .sidebar-collapsed .sidebar-nav {
+    @apply px-1.5;
   }
 
   .sidebar-link {
@@ -195,14 +265,26 @@ html, body {
            hover:bg-slate-800;
   }
 
+  .sidebar-collapsed .sidebar-link {
+    @apply justify-center gap-0 px-2;
+  }
+
   .sidebar-link-active {
     @apply flex items-center gap-3 rounded-lg px-3 py-2 transition-colors
            bg-slate-700 text-white;
   }
 
+  .sidebar-collapsed .sidebar-link-active {
+    @apply justify-center gap-0 px-2;
+  }
+
   .sidebar-link-loading {
     @apply flex items-center gap-3 rounded-lg px-3 py-2 transition-colors
            bg-slate-800 text-white;
+  }
+
+  .sidebar-collapsed .sidebar-link-loading {
+    @apply justify-center gap-0 px-2;
   }
 
   /* User menu */
