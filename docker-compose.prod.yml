@@ -4,108 +4,102 @@ services:
     container_name: ed_mysql_prod
     restart: always
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    ports:
-      - "3309:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./backups:/backups
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    networks:
-      - backend
-
-  frontend:
-    image: node:20-alpine
-    container_name: ed_frontend_prod
-    restart: always
-    working_dir: /app
-    command: node server.js
-    environment:
-      PORT: 3000
-      HOSTNAME: "0.0.0.0"
     ports:
-      - "127.0.0.1:3000:3000"
-    volumes:
-      - ./frontend/.next/standalone:/app
-      - ./frontend/.next/static:/app/.next/static:ro
-      - ./frontend/public:/app/public:ro
+      - "127.0.0.1:3307:3306"
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - backend
-      - npm_network
+      - ed_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/jaroslawaugustyniak/emergency_desk:latest
     container_name: ed_backend_prod
     restart: always
-    working_dir: /app
-    volumes:
-      - ./backend:/app
-      - ./backend/storage:/app/storage
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USERNAME}
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       APP_KEY: ${APP_KEY}
-    expose:
-      - "8000"
-    ports:
-      - "127.0.0.1:8001:8000"
+      QUEUE_CONNECTION: database
+      CONTAINER_TYPE: combined
     depends_on:
       mysql:
         condition: service_healthy
+    ports:
+      - "8000:8000"
     networks:
-      - backend
+      - ed_network
+      - npm_network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  frontend:
+    image: ghcr.io/jaroslawaugustyniak/emergency_desk-frontend:latest
+    container_name: ed_frontend_prod
+    restart: always
+    environment:
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+    ports:
+      - "127.0.0.1:3001:3000"
+    networks:
+      - ed_network
       - npm_network
 
   queue-worker:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ed_queue_worker_prod
-    restart: always
+    container_name: ed_queue_worker
     working_dir: /app
     volumes:
       - ./backend:/app
-      - ./backend/storage:/app/storage
     environment:
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USERNAME}
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       APP_KEY: ${APP_KEY}
-    command: php artisan queue:work --delay=3 --max-jobs=1000 --max-time=3600
+      QUEUE_CONNECTION: database
+      CONTAINER_TYPE: queue-worker
     depends_on:
       mysql:
         condition: service_healthy
       backend:
         condition: service_started
     networks:
-      - backend
-    profiles:
-      - queue
+      - ed_network
+    restart: unless-stopped
 
 volumes:
   mysql_data:
     driver: local
 
 networks:
-  backend:
+  ed_network:
     driver: bridge
   npm_network:
     external: true
