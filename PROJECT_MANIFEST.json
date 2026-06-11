@@ -1,0 +1,1370 @@
+{
+  "project": {
+    "name": "Emergency Desk",
+    "description": "SaaS application for managing emergency repair orders and technician dispatching",
+    "version": "1.0.0",
+    "startDate": "2026-02-19",
+    "targetLaunch": "2026-08-31",
+    "status": "In Development",
+    "type": "SaaS - Service Management System"
+  },
+  "team": {
+    "owner": "Jaroslaw Augustyniak",
+    "email": "ai@awcg.pl",
+    "deploymentUrl": "ghcr.io/jaroslawaugustyniak/emergency_desk"
+  },
+  "architecture": {
+    "type": "Monorepo - Frontend + Backend",
+    "backend": {
+      "framework": "Laravel 11",
+      "language": "PHP",
+      "authSystem": "Laravel Sanctum",
+      "apiFormat": "RESTful JSON",
+      "database": "MySQL 8.0",
+      "queueSystem": "Database Queue",
+      "pdfGenerator": "mPDF or TCPDF",
+      "storage": "Local + S3 Compatible",
+      "containerization": "Docker",
+      "deploymentMethod": "Docker Compose + GitHub Container Registry"
+    },
+    "frontend": {
+      "framework": "Next.js 15+ (App Router)",
+      "language": "TypeScript",
+      "styling": "Tailwind CSS",
+      "uiComponents": "Shadcn/ui or Headless UI",
+      "stateManagement": "React Query / TanStack Query",
+      "mobileOptimization": "PWA-ready",
+      "internationalization": "next-intl",
+      "containerization": "Docker",
+      "deploymentMethod": "Docker + GitHub Container Registry"
+    },
+    "infrastructure": {
+      "reverseProxy": "Nginx Proxy Manager",
+      "ssl": "Let's Encrypt (via Nginx Proxy Manager)",
+      "monitoring": "Docker Health Checks",
+      "backups": "Cron-based (14-day retention for DB, daily for photos)",
+      "externalStorage": "S3 or SFTP",
+      "networking": "Docker Bridge + External Nginx Network"
+    }
+  },
+  "database": {
+    "engine": "MySQL 8.0",
+    "characterSet": "utf8mb4",
+    "collation": "utf8mb4_unicode_ci",
+    "integrity": "InnoDB with Foreign Keys",
+    "softDeletes": "Yes (Laravel Soft Deletes)",
+    "backupRetention": "14 days",
+    "tables": {
+      "users": {
+        "description": "User accounts and authentication",
+        "fields": [
+          { "name": "id", "type": "BIGINT UNSIGNED", "pk": true, "ai": true },
+          { "name": "email", "type": "VARCHAR(255)", "unique": true, "required": true },
+          { "name": "password", "type": "VARCHAR(255)", "required": true },
+          { "name": "role", "type": "ENUM('admin','client','technician')", "required": true },
+          { "name": "first_name", "type": "VARCHAR(100)", "required": true },
+          { "name": "last_name", "type": "VARCHAR(100)", "required": true },
+          { "name": "phone", "type": "VARCHAR(20)" },
+          { "name": "created_at", "type": "TIMESTAMP" },
+          { "name": "updated_at", "type": "TIMESTAMP" },
+          { "name": "deleted_at", "type": "TIMESTAMP", "nullable": true }
+        ]
+      },
+      "clients": {
+        "description": "Client (zleceniodawca) specific data",
+        "fields": [
+          { "name": "id", "type": "BIGINT UNSIGNED", "pk": true, "ai": true },
+          { "name": "user_id", "type": "BIGINT UNSIGNED", "fk": "users.id", "cascadeDelete": false },
+          { "name": "has_internal_no", "type": "BOOLEAN", "default": false },
+          { "name": "created_at", "type": "TIMESTAMP" },
+          { "name": "updated_at", "type": "TIMESTAMP" }
+        ]
+      },
+      "service_categories": {
+        "description": "Service categories per client",
+        "fields": [
+          { "name": "id", "type": "BIGINT UNSIGNED", "pk": true, "ai": true },
+          { "name": "client_id", "type": "BIGINT UNSIGNED", "fk": "clients.id", "cascadeDelete": true },
+          { "name": "name", "type": "VARCHAR(100)", "required": true },
+          { "name": "color", "type": "VARCHAR(7)", "description": "HEX color code", "required": true },
+          { "name": "created_at", "type": "TIMESTAMP" },
+          { "name": "updated_at", "type": "TIMESTAMP" }
+        ]
+      },
+      "addresses": {
+        "description": "Predefined address points per client",
+        "fields": [
+          { "name": "id", "type": "BIGINT UNSIGNED", "pk": true, "ai": true },
+          { "name": "client_id", "type": "BIGINT UNSIGNED", "fk": "clients.id", "cascadeDelete": true },
+          { "name": "street_no", "type": "VARCHAR(255)", "required": true },
+          { "name": "apartment_no", "type": "VARCHAR(50)" },
+          { "name": "city", "type": "VARCHAR(100)", "required": true },
+          { "name": "created_at", "type": "TIMESTAMP" },
+          { "name": "updated_at", "type": "TIMESTAMP" }
+        ]
+      },
+      "orders": {
+        "description": "Main orders table - core of the system",
+        "fields": [
+          { "name": "id", "type": "BIGINT UNSIGNED", "pk": true, "ai": true },
+          { "name": "order_number", "type": "VARCHAR(100)", "unique": true, "description": "Format: id_client/id_address/id_order" },
+          { "name": "client_id", "type": "BIGINT UNSIGNED", "fk": "clients.id", "required": true },
+          { "name": "technician_id", "type": "BIGINT UNSIGNED", "fk": "users.id", "nullable": true },
+          { "name": "address_id", "type": "BIGINT UNSIGNED", "fk": "addresses.id", "required": true },
+          { "name": "category_id", "type": "BIGINT UNSIGNED", "fk": "service_categories.id", "required": true },
+          { "name": "status", "type": "ENUM('new','assigned','in_progress','paused','completed','invoiced')", "default": "new" },
+          { "name": "description", "type": "TEXT", "description": "Initial problem/order description" },
+          { "name": "stop_reason", "type": "TEXT", "nullable": true, "description": "Reason for pausing work" },
+          { "name": "vat_rate", "type": "DECIMAL(5,2)", "default": "23.00" },
+          { "name": "is_emergency", "type": "BOOLEAN", "default": false, "description": "Emergency/Pogotowie flag" },
+          { "name": "client_ref_no", "type": "VARCHAR(100)", "nullable": true, "description": "Client's internal order number" },
+          { "name": "invoice_no", "type": "VARCHAR(100)", "nullable": true },
+          { "name": "price_total", "type": "DECIMAL(10,2)", "nullable": true },
+          { "name": "work_report", "type": "TEXT", "nullable": true, "description": "Technician's work description" },
+          { "name": "order_date", "type": "DATETIME", "required": true },
+          { "name": "start_at", "type": "DATETIME", "nullable": true },
+          { "name": "end_at", "type": "DATETIME", "nullable": true },
+          { "name": "created_at", "type": "TIMESTAMP" },
+          { "name": "updated_at", "type": "TIMESTAMP" },
+          { "name": "deleted_at", "type": "TIMESTAMP", "nullable": true }
+        ]
+      },
+      "order_materials": {
+        "description": "Materials used during order execution",
+        "fields": [
+          { "name": "id", "type": "BIGINT UNSIGNED", "pk": true, "ai": true },
+          { "name": "order_id", "type": "BIGINT UNSIGNED", "fk": "orders.id", "cascadeDelete": true },
+          { "name": "name", "type": "VARCHAR(255)", "required": true },
+          { "name": "price", "type": "DECIMAL(10,2)", "required": true },
+          { "name": "created_at", "type": "TIMESTAMP" },
+          { "name": "updated_at", "type": "TIMESTAMP" }
+        ]
+      },
+      "order_photos": {
+        "description": "After-repair photos gallery",
+        "fields": [
+          { "name": "id", "type": "BIGINT UNSIGNED", "pk": true, "ai": true },
+          { "name": "order_id", "type": "BIGINT UNSIGNED", "fk": "orders.id", "cascadeDelete": true },
+          { "name": "file_path", "type": "VARCHAR(255)", "required": true },
+          { "name": "created_at", "type": "TIMESTAMP" },
+          { "name": "updated_at", "type": "TIMESTAMP" }
+        ]
+      }
+    }
+  },
+  "roles": {
+    "admin": {
+      "label": "Admin Główny",
+      "description": "System administrator with full access",
+      "permissions": [
+        "manage_users",
+        "manage_clients",
+        "manage_technicians",
+        "manage_categories",
+        "manage_addresses",
+        "create_orders",
+        "assign_orders",
+        "view_reports",
+        "manage_financial_params",
+        "generate_invoices",
+        "manage_vat",
+        "view_all_orders",
+        "pause_orders",
+        "generate_pdf_reports",
+        "send_documents"
+      ]
+    },
+    "client": {
+      "label": "Zleceniodawca",
+      "description": "Service client submitting and monitoring orders",
+      "permissions": [
+        "create_own_orders",
+        "view_own_orders",
+        "view_order_status",
+        "provide_order_description",
+        "view_assigned_technician",
+        "receive_pdf_reports"
+      ]
+    },
+    "technician": {
+      "label": "Technik",
+      "description": "Field technician executing orders",
+      "permissions": [
+        "view_assigned_orders",
+        "start_order",
+        "end_order",
+        "add_work_description",
+        "add_materials",
+        "upload_photos",
+        "pause_orders",
+        "provide_pause_reason",
+        "view_own_analytics"
+      ]
+    }
+  },
+  "modules": {
+    "authentication": {
+      "status": "In Progress",
+      "completionLevel": 40,
+      "description": "User authentication system",
+      "components": [
+        "Login form (Email + Password)",
+        "Laravel Sanctum token-based auth",
+        "Password reset functionality",
+        "Role-based access control middleware",
+        "Protected API routes"
+      ],
+      "apiEndpoints": [
+        "POST /api/login",
+        "POST /api/logout",
+        "POST /api/password/forgot",
+        "POST /api/password/reset"
+      ]
+    },
+    "userManagement": {
+      "status": "Not Started",
+      "completionLevel": 0,
+      "description": "Admin panel for managing users",
+      "components": [
+        "User CRUD operations",
+        "Client account management",
+        "Technician account management",
+        "Role assignment",
+        "Contact details management",
+        "User listing and search"
+      ],
+      "apiEndpoints": [
+        "GET /api/users",
+        "POST /api/users",
+        "GET /api/users/{id}",
+        "PUT /api/users/{id}",
+        "DELETE /api/users/{id}",
+        "GET /api/users/technicians",
+        "GET /api/users/clients"
+      ]
+    },
+    "clientManagement": {
+      "status": "Not Started",
+      "completionLevel": 0,
+      "description": "Client-specific settings and configuration",
+      "components": [
+        "Service categories (CRUD with color coding)",
+        "Address management (Points/Punkty)",
+        "Internal order number flag",
+        "Client-specific parameters",
+        "Client listing and editing"
+      ],
+      "apiEndpoints": [
+        "GET /api/clients/{id}/categories",
+        "POST /api/clients/{id}/categories",
+        "PUT /api/clients/{id}/categories/{catId}",
+        "DELETE /api/clients/{id}/categories/{catId}",
+        "GET /api/clients/{id}/addresses",
+        "POST /api/clients/{id}/addresses",
+        "PUT /api/clients/{id}/addresses/{addrId}",
+        "DELETE /api/clients/{id}/addresses/{addrId}"
+      ]
+    },
+    "orderManagement": {
+      "status": "Not Started",
+      "completionLevel": 0,
+      "description": "Core order creation, assignment and status management",
+      "components": [
+        "Order form for clients",
+        "Order assignment by admin",
+        "Status transition workflow",
+        "Order numbering system (id_client/id_address/id_order)",
+        "Category selection logic",
+        "Client reference number handling",
+        "Emergency/Pogotowie flag",
+        "Order validation and constraints"
+      ],
+      "apiEndpoints": [
+        "GET /api/orders",
+        "POST /api/orders",
+        "GET /api/orders/{id}",
+        "PUT /api/orders/{id}",
+        "PATCH /api/orders/{id}/status",
+        "PATCH /api/orders/{id}/assign",
+        "PATCH /api/orders/{id}/pause",
+        "PATCH /api/orders/{id}/resume",
+        "GET /api/orders/client/{clientId}",
+        "GET /api/orders/technician/{technicianId}"
+      ]
+    },
+    "technicianExecution": {
+      "status": "Not Started",
+      "completionLevel": 0,
+      "description": "Mobile-friendly interface for field technicians",
+      "components": [
+        "Assigned orders list",
+        "Start/Stop workflow",
+        "Work description input",
+        "Material tracking (dynamic form)",
+        "Photo gallery upload",
+        "Time tracking (start_at, end_at)",
+        "Mobile-optimized UI (PWA)",
+        "Offline capability preparation"
+      ],
+      "apiEndpoints": [
+        "PATCH /api/orders/{id}/start",
+        "PATCH /api/orders/{id}/end",
+        "PUT /api/orders/{id}/work-report",
+        "POST /api/orders/{id}/materials",
+        "DELETE /api/orders/{id}/materials/{materialId}",
+        "POST /api/orders/{id}/photos",
+        "GET /api/orders/{id}/photos",
+        "DELETE /api/orders/{id}/photos/{photoId}"
+      ]
+    },
+    "documentGeneration": {
+      "status": "Not Started",
+      "completionLevel": 0,
+      "description": "PDF generation and document management",
+      "components": [
+        "Service protocol PDF generation",
+        "Invoice generation",
+        "Order summary PDF",
+        "Photo inclusion in reports",
+        "PDF preview in system",
+        "Email delivery with attachments",
+        "Document archiving"
+      ],
+      "apiEndpoints": [
+        "GET /api/orders/{id}/pdf/protocol",
+        "GET /api/orders/{id}/pdf/invoice",
+        "POST /api/orders/{id}/send-protocol",
+        "GET /api/documents/{id}"
+      ]
+    },
+    "reporting": {
+      "status": "Not Started",
+      "completionLevel": 0,
+      "description": "Financial and analytics reports for admin",
+      "components": [
+        "Technician revenue summary",
+        "Date range filtering",
+        "Emergency order statistics",
+        "Revenue excluding emergency orders",
+        "Order status distribution",
+        "Client performance metrics",
+        "Export to CSV/Excel",
+        "Visual charts and graphs"
+      ],
+      "apiEndpoints": [
+        "GET /api/reports/technician/{id}",
+        "GET /api/reports/revenue",
+        "GET /api/reports/orders-by-status",
+        "GET /api/reports/emergency-stats",
+        "GET /api/reports/client-performance"
+      ]
+    },
+    "backup": {
+      "status": "Not Started",
+      "completionLevel": 0,
+      "description": "Automated backup system",
+      "components": [
+        "Daily database backup (mysqldump)",
+        "14-day rotation policy",
+        "Daily photo backup (last 24h only)",
+        "External storage upload (S3 or SFTP)",
+        "Backup verification",
+        "Restore procedures",
+        "Backup monitoring and alerts"
+      ],
+      "scripts": [
+        "database-backup.sh (Laravel Task or Cron)",
+        "photos-backup.sh (Laravel Task or Cron)"
+      ]
+    },
+    "notifications": {
+      "status": "Not Started",
+      "completionLevel": 0,
+      "description": "Email and in-app notifications",
+      "components": [
+        "Order status change notifications",
+        "PDF delivery emails",
+        "Technician assignment notification",
+        "Order pause notifications",
+        "Admin alerts for new orders",
+        "Queue-based email sending",
+        "Notification templates"
+      ]
+    }
+  },
+  "currentStatus": {
+    "backend": {
+      "status": "Basic Structure Ready",
+      "completionPercentage": 15,
+      "description": "Laravel 11 initialized with basic auth setup",
+      "completed": [
+        "Laravel 11 scaffold",
+        "Database connection (MySQL 8.0)",
+        "User model and migration",
+        "Sanctum authentication setup",
+        "Docker container configuration",
+        "Queue system setup (Database)",
+        "GitHub Actions deployment workflow"
+      ],
+      "inProgress": [],
+      "remaining": [
+        "Client, ServiceCategory, Address models and migrations",
+        "Order, OrderMaterial, OrderPhoto models",
+        "API Controllers and routes",
+        "Authorization middleware",
+        "PDF generation integration",
+        "Email notification system",
+        "Backup scripts",
+        "Error handling and logging",
+        "API documentation (OpenAPI/Swagger)"
+      ]
+    },
+    "frontend": {
+      "status": "Basic Structure Ready",
+      "completionPercentage": 10,
+      "description": "Next.js 15 with Tailwind and basic setup",
+      "completed": [
+        "Next.js 15 App Router scaffold",
+        "TypeScript configuration",
+        "Tailwind CSS setup",
+        "Basic folder structure",
+        "Docker container configuration",
+        "GitHub Actions deployment workflow"
+      ],
+      "inProgress": [],
+      "remaining": [
+        "Login/Authentication page",
+        "Admin dashboard layout",
+        "Client order form",
+        "Client order list view",
+        "Technician mobile interface",
+        "Technician order list",
+        "Technician work reporting form",
+        "Photo upload component",
+        "Materials tracking UI",
+        "Admin user management pages",
+        "Admin category management",
+        "Admin address management",
+        "Order assignment interface",
+        "Reports dashboard",
+        "PDF preview component",
+        "API client/service layer",
+        "State management (TanStack Query)",
+        "Error handling and toasts",
+        "Internationalization setup"
+      ]
+    },
+    "infrastructure": {
+      "status": "Partially Configured",
+      "completionPercentage": 50,
+      "completed": [
+        "Docker Compose for both dev and prod",
+        "MySQL 8.0 container with health checks",
+        "Backend Docker image (ghcr.io)",
+        "Frontend Docker image (ghcr.io)",
+        "Nginx Proxy Manager integration",
+        "Network configuration (bridge + external)",
+        "Environment variable setup",
+        "GitHub Container Registry integration"
+      ],
+      "remaining": [
+        "SSL/TLS certificates (Let's Encrypt setup verification)",
+        "Backup automation scripts",
+        "Monitoring and alerting",
+        "Database optimization",
+        "Performance tuning",
+        "Load balancing (if needed)",
+        "Log aggregation",
+        "S3/SFTP external storage integration"
+      ]
+    }
+  },
+  "developmentPlan": [
+    {
+      "phase": 1,
+      "name": "Foundation & Architecture",
+      "duration": "2 weeks (Feb 19 - Mar 4)",
+      "status": "In Progress",
+      "completionPercentage": 40,
+      "tasks": [
+        {
+          "id": "1.1",
+          "name": "Database Setup & Migrations",
+          "status": "In Progress",
+          "description": "Create all database tables with proper relationships",
+          "effort": "3 days",
+          "dependencies": [],
+          "completed": false,
+          "subtasks": [
+            "Create client, service_category, address models and migrations",
+            "Create order, order_materials, order_photos models",
+            "Add soft delete support",
+            "Add proper foreign key constraints",
+            "Create database seeders for testing"
+          ]
+        },
+        {
+          "id": "1.2",
+          "name": "Backend API Structure",
+          "status": "Not Started",
+          "description": "Setup API routes, controllers, and response formatting",
+          "effort": "2 days",
+          "dependencies": ["1.1"],
+          "completed": false,
+          "subtasks": [
+            "Create resource controllers for all models",
+            "Setup API routes and versioning",
+            "Implement consistent JSON response format",
+            "Setup API error handling",
+            "Create API documentation"
+          ]
+        },
+        {
+          "id": "1.3",
+          "name": "Frontend Folder Structure",
+          "status": "Not Started",
+          "description": "Setup Next.js App Router structure and utilities",
+          "effort": "1 day",
+          "dependencies": [],
+          "completed": false,
+          "subtasks": [
+            "Create folder structure (components, pages, lib, hooks)",
+            "Setup API client service",
+            "Create layout templates",
+            "Setup environment variables for API endpoint"
+          ]
+        },
+        {
+          "id": "1.4",
+          "name": "Role-Based Access Control",
+          "status": "Not Started",
+          "description": "Implement authorization middleware and guards",
+          "effort": "2 days",
+          "dependencies": ["1.1", "1.2"],
+          "completed": false,
+          "subtasks": [
+            "Create Laravel middleware for role checking",
+            "Create route protection in Next.js",
+            "Implement permission checking system",
+            "Setup role guards for all modules"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Authentication & User Management",
+      "duration": "2 weeks (Mar 5 - Mar 18)",
+      "status": "Not Started",
+      "completionPercentage": 0,
+      "tasks": [
+        {
+          "id": "2.1",
+          "name": "Backend: User Management API",
+          "status": "Not Started",
+          "description": "Complete user CRUD endpoints with role management",
+          "effort": "3 days",
+          "dependencies": ["1.1", "1.2"],
+          "completed": false,
+          "subtasks": [
+            "Create UserController with CRUD methods",
+            "Implement user filtering (technicians, clients)",
+            "Add role assignment endpoints",
+            "Create user validation rules",
+            "Add activity logging"
+          ]
+        },
+        {
+          "id": "2.2",
+          "name": "Frontend: Login & Registration",
+          "status": "Not Started",
+          "description": "Implement authentication UI and flows",
+          "effort": "2 days",
+          "dependencies": ["1.3", "1.4"],
+          "completed": false,
+          "subtasks": [
+            "Create login form component",
+            "Create registration form (admin-only)",
+            "Implement auth state management",
+            "Add password reset flow",
+            "Create protected route wrapper"
+          ]
+        },
+        {
+          "id": "2.3",
+          "name": "Frontend: Admin User Management",
+          "status": "Not Started",
+          "description": "Create admin interface for managing users",
+          "effort": "3 days",
+          "dependencies": ["2.1", "2.2"],
+          "completed": false,
+          "subtasks": [
+            "Create user list page",
+            "Create user create/edit form",
+            "Add bulk operations",
+            "Add user search and filtering",
+            "Add role switching interface"
+          ]
+        },
+        {
+          "id": "2.4",
+          "name": "Backend: Client Profile & Settings",
+          "status": "Not Started",
+          "description": "API for client-specific configuration",
+          "effort": "2 days",
+          "dependencies": ["1.1", "1.2"],
+          "completed": false,
+          "subtasks": [
+            "Create ClientController",
+            "Create service category endpoints",
+            "Create address management endpoints",
+            "Add permission checking for client data"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Core Order Management",
+      "duration": "3 weeks (Mar 19 - Apr 8)",
+      "status": "Not Started",
+      "completionPercentage": 0,
+      "tasks": [
+        {
+          "id": "3.1",
+          "name": "Backend: Order Creation & Validation",
+          "status": "Not Started",
+          "description": "Implement order CRUD with complex validation",
+          "effort": "3 days",
+          "dependencies": ["1.1", "1.2"],
+          "completed": false,
+          "subtasks": [
+            "Create OrderController",
+            "Implement order number generation (id_client/id_address/id_order)",
+            "Add validation rules for each status transition",
+            "Add category selection logic",
+            "Add emergency order flag handling"
+          ]
+        },
+        {
+          "id": "3.2",
+          "name": "Backend: Order Status Workflow",
+          "status": "Not Started",
+          "description": "Implement state machine for order statuses",
+          "effort": "2 days",
+          "dependencies": ["3.1"],
+          "completed": false,
+          "subtasks": [
+            "Create status transition logic",
+            "Add pause/resume functionality",
+            "Add required field validation per status",
+            "Create transition event logging"
+          ]
+        },
+        {
+          "id": "3.3",
+          "name": "Frontend: Client Order Form",
+          "status": "Not Started",
+          "description": "Create order submission interface",
+          "effort": "2 days",
+          "dependencies": ["2.2", "2.4"],
+          "completed": false,
+          "subtasks": [
+            "Create multi-step form",
+            "Add address autocomplete",
+            "Add category selection",
+            "Add optional client ref number field",
+            "Add form validation and error display"
+          ]
+        },
+        {
+          "id": "3.4",
+          "name": "Frontend: Client Order List",
+          "status": "Not Started",
+          "description": "Create order viewing interface for clients",
+          "effort": "2 days",
+          "dependencies": ["3.1", "2.2"],
+          "completed": false,
+          "subtasks": [
+            "Create order list component with status colors",
+            "Add filtering and search",
+            "Add order detail view",
+            "Add status badge with colors",
+            "Add pause reason display"
+          ]
+        },
+        {
+          "id": "3.5",
+          "name": "Frontend: Admin Order Management",
+          "status": "Not Started",
+          "description": "Create admin interface for order control",
+          "effort": "3 days",
+          "dependencies": ["3.1", "2.2"],
+          "completed": false,
+          "subtasks": [
+            "Create order list (all orders)",
+            "Add technician assignment interface",
+            "Add pause order functionality",
+            "Add status change controls",
+            "Add financial parameter editing (VAT, etc)"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Technician Mobile Experience",
+      "duration": "2 weeks (Apr 9 - Apr 22)",
+      "status": "Not Started",
+      "completionPercentage": 0,
+      "tasks": [
+        {
+          "id": "4.1",
+          "name": "Frontend: Technician Dashboard",
+          "status": "Not Started",
+          "description": "Create mobile-optimized technician interface",
+          "effort": "2 days",
+          "dependencies": ["3.1", "2.2"],
+          "completed": false,
+          "subtasks": [
+            "Create assigned orders list",
+            "Add status filtering",
+            "Add quick-action buttons (Start, Pause)",
+            "Add touch-friendly UI",
+            "Add offline data caching"
+          ]
+        },
+        {
+          "id": "4.2",
+          "name": "Backend: Work Report & Materials API",
+          "status": "Not Started",
+          "description": "API for work completion and material tracking",
+          "effort": "2 days",
+          "dependencies": ["1.1", "1.2"],
+          "completed": false,
+          "subtasks": [
+            "Create work report endpoint",
+            "Create material CRUD endpoints",
+            "Add validation for material prices",
+            "Add total price calculation"
+          ]
+        },
+        {
+          "id": "4.3",
+          "name": "Frontend: Work Report Form",
+          "status": "Not Started",
+          "description": "Create form for technician to report completed work",
+          "effort": "2 days",
+          "dependencies": ["4.1", "4.2"],
+          "completed": false,
+          "subtasks": [
+            "Create work description textarea",
+            "Create dynamic material list component",
+            "Add price per material input",
+            "Add total calculation",
+            "Add form submission with error handling"
+          ]
+        },
+        {
+          "id": "4.4",
+          "name": "Frontend: Photo Gallery Upload",
+          "status": "Not Started",
+          "description": "Create mobile-friendly photo upload",
+          "effort": "2 days",
+          "dependencies": ["4.1"],
+          "completed": false,
+          "subtasks": [
+            "Create photo input component",
+            "Add image preview",
+            "Add multiple upload support",
+            "Add image compression",
+            "Add upload progress indicator"
+          ]
+        },
+        {
+          "id": "4.5",
+          "name": "Backend: Photo Management API",
+          "status": "Not Started",
+          "description": "API for photo upload and storage",
+          "effort": "1 day",
+          "dependencies": ["1.2"],
+          "completed": false,
+          "subtasks": [
+            "Create photo upload endpoint",
+            "Add image validation",
+            "Add storage configuration (local/S3)",
+            "Add photo deletion endpoint"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Document Generation & Notifications",
+      "duration": "2 weeks (Apr 23 - May 6)",
+      "status": "Not Started",
+      "completionPercentage": 0,
+      "tasks": [
+        {
+          "id": "5.1",
+          "name": "Backend: PDF Generation",
+          "status": "Not Started",
+          "description": "Implement service protocol PDF generation",
+          "effort": "3 days",
+          "dependencies": ["3.1", "4.2"],
+          "completed": false,
+          "subtasks": [
+            "Setup mPDF or TCPDF library",
+            "Create PDF template for service protocol",
+            "Add order details to PDF",
+            "Add technician information",
+            "Add photo inclusion in PDF"
+          ]
+        },
+        {
+          "id": "5.2",
+          "name": "Backend: Email Notifications",
+          "status": "Not Started",
+          "description": "Implement email queuing and sending",
+          "effort": "2 days",
+          "dependencies": ["1.1", "5.1"],
+          "completed": false,
+          "subtasks": [
+            "Create mail templates",
+            "Setup email configuration",
+            "Create queue jobs for email sending",
+            "Add PDF attachment handling",
+            "Add failure retry logic"
+          ]
+        },
+        {
+          "id": "5.3",
+          "name": "Frontend: PDF Preview",
+          "status": "Not Started",
+          "description": "Create PDF preview component",
+          "effort": "1 day",
+          "dependencies": ["5.1"],
+          "completed": false,
+          "subtasks": [
+            "Create PDF viewer component",
+            "Add download button",
+            "Add email send button",
+            "Add print functionality"
+          ]
+        },
+        {
+          "id": "5.4",
+          "name": "Backend: Order Completion Workflow",
+          "status": "Not Started",
+          "description": "Implement automatic PDF generation and sending",
+          "effort": "1 day",
+          "dependencies": ["3.2", "5.1", "5.2"],
+          "completed": false,
+          "subtasks": [
+            "Create completion listener/event",
+            "Generate PDF on order end",
+            "Send email to client automatically",
+            "Update order status to completed",
+            "Log all actions"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 6,
+      "name": "Reporting & Analytics",
+      "duration": "2 weeks (May 7 - May 20)",
+      "status": "Not Started",
+      "completionPercentage": 0,
+      "tasks": [
+        {
+          "id": "6.1",
+          "name": "Backend: Reporting API",
+          "status": "Not Started",
+          "description": "Create endpoints for reports and analytics",
+          "effort": "2 days",
+          "dependencies": ["1.1", "1.2", "3.1"],
+          "completed": false,
+          "subtasks": [
+            "Create technician revenue report endpoint",
+            "Add date range filtering",
+            "Calculate total revenue and emergency stats",
+            "Create order status distribution report",
+            "Create client performance metrics"
+          ]
+        },
+        {
+          "id": "6.2",
+          "name": "Frontend: Reports Dashboard",
+          "status": "Not Started",
+          "description": "Create admin reports and analytics UI",
+          "effort": "3 days",
+          "dependencies": ["6.1", "2.2"],
+          "completed": false,
+          "subtasks": [
+            "Create date range picker",
+            "Create technician selector",
+            "Display revenue metrics",
+            "Add emergency order statistics",
+            "Create charts and graphs",
+            "Add export to CSV/Excel"
+          ]
+        },
+        {
+          "id": "6.3",
+          "name": "Backend: Invoice Management",
+          "status": "Not Started",
+          "description": "Invoice numbering and management",
+          "effort": "1 day",
+          "dependencies": ["3.1"],
+          "completed": false,
+          "subtasks": [
+            "Add invoice number field handling",
+            "Add validation that invoice number exists when status=invoiced",
+            "Create invoice lookup endpoint"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 7,
+      "name": "Backup & Operations",
+      "duration": "1 week (May 21 - May 27)",
+      "status": "Not Started",
+      "completionPercentage": 0,
+      "tasks": [
+        {
+          "id": "7.1",
+          "name": "Database Backup Automation",
+          "status": "Not Started",
+          "description": "Implement automatic daily database backups with 14-day rotation",
+          "effort": "2 days",
+          "dependencies": [],
+          "completed": false,
+          "subtasks": [
+            "Create backup shell script",
+            "Setup cron job (02:00 daily)",
+            "Implement 14-day rotation logic",
+            "Add backup verification",
+            "Setup external storage upload (S3 or SFTP)",
+            "Add monitoring and alerting"
+          ]
+        },
+        {
+          "id": "7.2",
+          "name": "Photo Backup Automation",
+          "status": "Not Started",
+          "description": "Implement daily photo backup for last 24 hours",
+          "effort": "1 day",
+          "dependencies": [],
+          "completed": false,
+          "subtasks": [
+            "Create photo backup script",
+            "Setup 24-hour file filtering",
+            "Add external storage integration",
+            "Add local cleanup after verification",
+            "Setup cron job (02:00 daily)"
+          ]
+        },
+        {
+          "id": "7.3",
+          "name": "Backup Recovery Procedures",
+          "status": "Not Started",
+          "description": "Document and test backup recovery procedures",
+          "effort": "1 day",
+          "dependencies": ["7.1", "7.2"],
+          "completed": false,
+          "subtasks": [
+            "Create recovery documentation",
+            "Test database restore procedure",
+            "Test photo restoration",
+            "Create runbook for emergency restore"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 8,
+      "name": "Testing & Quality Assurance",
+      "duration": "2 weeks (May 28 - Jun 10)",
+      "status": "Not Started",
+      "completionPercentage": 0,
+      "tasks": [
+        {
+          "id": "8.1",
+          "name": "Backend: API Testing",
+          "status": "Not Started",
+          "description": "Create comprehensive API tests",
+          "effort": "3 days",
+          "dependencies": ["1.2"],
+          "completed": false,
+          "subtasks": [
+            "Write unit tests for models",
+            "Write feature tests for API endpoints",
+            "Add authentication tests",
+            "Add authorization tests",
+            "Add integration tests for workflows"
+          ]
+        },
+        {
+          "id": "8.2",
+          "name": "Frontend: Component Testing",
+          "status": "Not Started",
+          "description": "Create component and integration tests",
+          "effort": "2 days",
+          "dependencies": ["1.3"],
+          "completed": false,
+          "subtasks": [
+            "Setup testing framework (Jest/Vitest)",
+            "Write component tests",
+            "Write form validation tests",
+            "Add API client mocking"
+          ]
+        },
+        {
+          "id": "8.3",
+          "name": "End-to-End Testing",
+          "status": "Not Started",
+          "description": "Create E2E test scenarios",
+          "effort": "2 days",
+          "dependencies": ["8.1", "8.2"],
+          "completed": false,
+          "subtasks": [
+            "Setup Playwright or Cypress",
+            "Create login flow test",
+            "Create order creation flow test",
+            "Create technician workflow test",
+            "Test report generation"
+          ]
+        },
+        {
+          "id": "8.4",
+          "name": "Manual Testing & QA",
+          "status": "Not Started",
+          "description": "Comprehensive manual testing",
+          "effort": "3 days",
+          "dependencies": ["8.1", "8.2", "8.3"],
+          "completed": false,
+          "subtasks": [
+            "Test all user roles workflows",
+            "Test mobile responsiveness",
+            "Test error scenarios",
+            "Test edge cases",
+            "Performance testing",
+            "Security review"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 9,
+      "name": "Deployment & Launch",
+      "duration": "1 week (Jun 11 - Jun 17)",
+      "status": "Not Started",
+      "completionPercentage": 0,
+      "tasks": [
+        {
+          "id": "9.1",
+          "name": "Production Environment Setup",
+          "status": "In Progress",
+          "description": "Configure production servers and infrastructure",
+          "effort": "2 days",
+          "dependencies": [],
+          "completed": false,
+          "subtasks": [
+            "Setup production servers",
+            "Configure SSL/TLS certificates",
+            "Setup domain DNS",
+            "Configure Nginx Proxy Manager",
+            "Setup monitoring and logging"
+          ]
+        },
+        {
+          "id": "9.2",
+          "name": "Database Migration to Production",
+          "status": "Not Started",
+          "description": "Run migrations and seed initial data",
+          "effort": "1 day",
+          "dependencies": ["9.1"],
+          "completed": false,
+          "subtasks": [
+            "Run database migrations",
+            "Seed admin user",
+            "Verify data integrity",
+            "Create backups"
+          ]
+        },
+        {
+          "id": "9.3",
+          "name": "CI/CD Pipeline Verification",
+          "status": "In Progress",
+          "description": "Verify GitHub Actions deployment workflows",
+          "effort": "1 day",
+          "dependencies": [],
+          "completed": false,
+          "subtasks": [
+            "Test GitHub Actions workflows",
+            "Verify container registry integration",
+            "Test automatic deployments",
+            "Setup deployment notifications"
+          ]
+        },
+        {
+          "id": "9.4",
+          "name": "Documentation & Training",
+          "status": "Not Started",
+          "description": "Create documentation and train users",
+          "effort": "2 days",
+          "dependencies": [],
+          "completed": false,
+          "subtasks": [
+            "Create API documentation",
+            "Create user manuals per role",
+            "Create admin operational guide",
+            "Create troubleshooting guide",
+            "Train administrators"
+          ]
+        }
+      ]
+    }
+  ],
+  "technicalDebt": [
+    {
+      "id": "TD-1",
+      "title": "API Documentation",
+      "priority": "Medium",
+      "description": "Generate OpenAPI/Swagger documentation for all API endpoints",
+      "estimatedEffort": "2 days"
+    },
+    {
+      "id": "TD-2",
+      "title": "Frontend State Management",
+      "priority": "Medium",
+      "description": "Implement comprehensive state management with TanStack Query",
+      "estimatedEffort": "3 days"
+    },
+    {
+      "id": "TD-3",
+      "title": "Error Handling",
+      "priority": "High",
+      "description": "Implement consistent error handling throughout the application",
+      "estimatedEffort": "2 days"
+    },
+    {
+      "id": "TD-4",
+      "title": "Logging & Monitoring",
+      "priority": "Medium",
+      "description": "Implement comprehensive logging and monitoring",
+      "estimatedEffort": "3 days"
+    },
+    {
+      "id": "TD-5",
+      "title": "Internationalization",
+      "priority": "Low",
+      "description": "Setup i18n support for multiple languages",
+      "estimatedEffort": "2 days"
+    }
+  ],
+  "risksAndMitigation": [
+    {
+      "risk": "Database scaling issues as order volume increases",
+      "probability": "Medium",
+      "impact": "High",
+      "mitigation": "Implement proper indexing, consider read replicas, monitor query performance"
+    },
+    {
+      "risk": "Photo storage space exhaustion",
+      "probability": "Medium",
+      "impact": "Medium",
+      "mitigation": "Implement S3 storage with lifecycle policies, monitor usage"
+    },
+    {
+      "risk": "API rate limiting and abuse",
+      "probability": "Low",
+      "impact": "Medium",
+      "mitigation": "Implement API rate limiting, add authentication checks"
+    },
+    {
+      "risk": "Backup failure not detected",
+      "probability": "Medium",
+      "impact": "High",
+      "mitigation": "Add backup verification and alerting, test recovery regularly"
+    },
+    {
+      "risk": "Mobile connectivity issues for technicians",
+      "probability": "High",
+      "impact": "Medium",
+      "mitigation": "Implement offline capability with service workers, data sync"
+    }
+  ],
+  "deploymentChecklist": {
+    "preDeployment": [
+      "All tests passing (unit, integration, E2E)",
+      "Code review completed",
+      "Security review completed",
+      "Backup systems tested",
+      "SSL certificates configured",
+      "Environment variables set",
+      "Database migrations prepared",
+      "Documentation up-to-date"
+    ],
+    "deployment": [
+      "Database backup created",
+      "Run database migrations",
+      "Deploy backend container",
+      "Deploy frontend container",
+      "Verify health checks",
+      "Test all critical workflows",
+      "Verify SSL/TLS working"
+    ],
+    "postDeployment": [
+      "Monitor error logs",
+      "Monitor performance metrics",
+      "Verify all APIs responding",
+      "Test with real users",
+      "Check email delivery",
+      "Verify backup jobs running",
+      "Update status page"
+    ]
+  },
+  "timelineAndMilestones": {
+    "currentPhase": "Phase 1: Foundation & Architecture",
+    "currentDate": "2026-06-11",
+    "milestone1": {
+      "date": "2026-03-04",
+      "name": "Foundation Complete",
+      "deliverables": ["Database setup", "API structure", "Basic auth"],
+      "completionPercentage": 0
+    },
+    "milestone2": {
+      "date": "2026-03-18",
+      "name": "Authentication Complete",
+      "deliverables": ["Login system", "User management", "Admin dashboard"],
+      "completionPercentage": 0
+    },
+    "milestone3": {
+      "date": "2026-04-08",
+      "name": "Core Order System Complete",
+      "deliverables": ["Order creation", "Status workflow", "Admin controls"],
+      "completionPercentage": 0
+    },
+    "milestone4": {
+      "date": "2026-04-22",
+      "name": "Technician Mobile Complete",
+      "deliverables": ["Mobile UI", "Work reporting", "Photo upload"],
+      "completionPercentage": 0
+    },
+    "milestone5": {
+      "date": "2026-05-06",
+      "name": "Documents & Notifications",
+      "deliverables": ["PDF generation", "Email system", "Notifications"],
+      "completionPercentage": 0
+    },
+    "milestone6": {
+      "date": "2026-05-20",
+      "name": "Reporting Complete",
+      "deliverables": ["Reports dashboard", "Analytics", "Invoicing"],
+      "completionPercentage": 0
+    },
+    "milestone7": {
+      "date": "2026-05-27",
+      "name": "Backup Systems Live",
+      "deliverables": ["Daily backups", "Rotation policy", "Recovery tested"],
+      "completionPercentage": 0
+    },
+    "milestone8": {
+      "date": "2026-06-10",
+      "name": "Testing Complete",
+      "deliverables": ["All tests passing", "QA approved", "Ready for launch"],
+      "completionPercentage": 0
+    },
+    "milestone9": {
+      "date": "2026-06-17",
+      "name": "Production Launch",
+      "deliverables": ["Live system", "Users onboarded", "Support ready"],
+      "completionPercentage": 0
+    }
+  },
+  "gitWorkflow": {
+    "mainBranch": "main",
+    "developmentBranch": "develop",
+    "featureBranchPattern": "feature/phase-X-module-name",
+    "bugBranchPattern": "bugfix/description",
+    "prRequirements": [
+      "Code review approval",
+      "All tests passing",
+      "No merge conflicts",
+      "Documentation updated"
+    ],
+    "deploymentStrategy": "GitHub Actions: Push to main triggers production deployment"
+  },
+  "environmentConfiguration": {
+    "development": {
+      "backend": {
+        "APP_ENV": "local",
+        "APP_DEBUG": "true",
+        "DB_CONNECTION": "mysql",
+        "DB_HOST": "mysql",
+        "QUEUE_CONNECTION": "database"
+      },
+      "frontend": {
+        "NEXT_PUBLIC_API_URL": "http://localhost:8000"
+      }
+    },
+    "production": {
+      "backend": {
+        "APP_ENV": "production",
+        "APP_DEBUG": "false",
+        "DB_CONNECTION": "mysql",
+        "DB_HOST": "mysql",
+        "QUEUE_CONNECTION": "database"
+      },
+      "frontend": {
+        "NEXT_PUBLIC_API_URL": "https://api.domain.com"
+      }
+    }
+  },
+  "externalDependencies": [
+    {
+      "name": "Laravel 11",
+      "type": "Framework",
+      "version": "^11.0",
+      "purpose": "Backend framework"
+    },
+    {
+      "name": "Next.js",
+      "type": "Framework",
+      "version": "^15.0",
+      "purpose": "Frontend framework"
+    },
+    {
+      "name": "MySQL",
+      "type": "Database",
+      "version": "8.0",
+      "purpose": "Data storage"
+    },
+    {
+      "name": "Laravel Sanctum",
+      "type": "Package",
+      "version": "^4.0",
+      "purpose": "API authentication"
+    },
+    {
+      "name": "mPDF",
+      "type": "Package",
+      "version": "^8.1",
+      "purpose": "PDF generation"
+    },
+    {
+      "name": "Tailwind CSS",
+      "type": "CSS Framework",
+      "version": "^3.0",
+      "purpose": "Frontend styling"
+    },
+    {
+      "name": "Nginx Proxy Manager",
+      "type": "Reverse Proxy",
+      "purpose": "SSL/TLS termination and routing"
+    }
+  ]
+}

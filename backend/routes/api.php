@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\UserController;
 use App\Mail\VerifyEmailMail;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
@@ -69,5 +70,17 @@ Route::prefix('auth')->group(function () {
         Route::get('/me', function (Request $request) {
             return $request->user();
         });
+    });
+});
+
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::prefix('users')->group(function () {
+        Route::get('/', [UserController::class, 'index']);
+        Route::post('/', [UserController::class, 'store']);
+        Route::get('/technicians', [UserController::class, 'technicians']);
+        Route::get('/clients', [UserController::class, 'clients']);
+        Route::get('/{user}', [UserController::class, 'show']);
+        Route::put('/{user}', [UserController::class, 'update']);
+        Route::delete('/{user}', [UserController::class, 'destroy']);
     });
 });
