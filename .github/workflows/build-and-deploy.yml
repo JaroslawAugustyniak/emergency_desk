@@ -125,7 +125,8 @@ jobs:
             set -e
             cd ${{ secrets.DEPLOY_PATH || '/opt/emergency_desk' }}
 
-            # Pull latest docker-compose config
+            # Reset to latest and pull docker-compose config
+            git reset --hard origin/main
             git pull origin main
 
             # Log in to registry
