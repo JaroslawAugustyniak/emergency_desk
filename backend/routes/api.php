@@ -59,6 +59,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
     Route::post('/verify-email/resend', [AuthController::class, 'resendVerification']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/verify-2fa', [AuthController::class, 'verify2FA']);
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/validate-reset-token', [AuthController::class, 'validateResetToken']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslations } from 'next-intl';
 import Image from "next/image";
+import { useSessionContext } from "@/app/components/providers/SessionProvider";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://api.starter.localhost";
 
@@ -11,7 +12,10 @@ export default function VerifyEmailPage() {
   const t = useTranslations('auth');
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { setToken } = useSessionContext();
+  
   const email = searchParams.get('email');
+  const type = searchParams.get('type'); // 'login' for 2FA, undefined for email verification
 
   const [code, setCode] = useState<string[]>(["", "", "", "", "", ""]);
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +27,9 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     if (!email) {
-      router.push('/register');
+      router.push(type === 'login' ? '/login' : '/register');
     }
-  }, [email, router]);
+  }, [email, router, type]);
 
   const handleChange = (index: number, value: string) => {
     // Only allow digits
@@ -72,7 +76,10 @@ export default function VerifyEmailPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/verify-email`, {
+      // Use different endpoint based on flow type
+      const endpoint = type === 'login' ? '/api/auth/verify-2fa' : '/api/auth/verify-email';
+      
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: verificationCode }),
@@ -81,15 +88,25 @@ export default function VerifyEmailPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || t('verifyCodeError'));
+        setError(data.message || data.error || t('verifyCodeError'));
         setIsLoading(false);
         return;
       }
 
       setSuccess(true);
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
+
+      // If login 2FA, store token and redirect to dashboard
+      if (type === 'login' && data.data?.access_token) {
+        setToken(data.data.access_token);
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1000);
+      } else {
+        // For email verification, redirect to login
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      }
     } catch (err) {
       setError(t('verifyCodeError'));
       setIsLoading(false);
@@ -102,7 +119,9 @@ export default function VerifyEmailPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/verify-email/resend`, {
+      const endpoint = type === 'login' ? '/api/auth/verify-email/resend' : '/api/auth/verify-email/resend';
+      
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -111,7 +130,7 @@ export default function VerifyEmailPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || t('resendError'));
+        setError(data.message || data.error || t('resendError'));
         setResendLoading(false);
         return;
       }
@@ -145,15 +164,19 @@ export default function VerifyEmailPage() {
 
       <div className="w-full max-w-md space-y-4">
         <div className="text-center space-y-2">
-          <h1 className="text-xl font-semibold">{t('verifyEmail')}</h1>
+          <h1 className="text-xl font-semibold">
+            {type === 'login' ? '2-Factor Authentication' : t('verifyEmail')}
+          </h1>
           <p className="text-sm text-gray-600">
-            {t('verifyEmailDescription')} <strong>{email}</strong>
+            {type === 'login' 
+              ? 'Enter the verification code sent to your email' 
+              : t('verifyEmailDescription')} <strong>{email}</strong>
           </p>
         </div>
 
         {success ? (
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded text-sm text-center">
-            {t('verifySuccess')}
+            {type === 'login' ? 'Verification successful! Redirecting...' : t('verifySuccess')}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -205,11 +228,13 @@ export default function VerifyEmailPage() {
               </button>
             </div>
 
-            <div className="text-center">
-              <a href="/register" className="text-sm text-slate-500 hover:text-slate-700">
-                {t('backToRegister')}
-              </a>
-            </div>
+            {type !== 'login' && (
+              <div className="text-center">
+                <a href="/register" className="text-sm text-slate-500 hover:text-slate-700">
+                  {t('backToRegister')}
+                </a>
+              </div>
+            )}
           </form>
         )}
       </div>

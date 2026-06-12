@@ -108,14 +108,14 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            $token = $user->createToken('auth_token')->plainTextToken;
+            // Generate and send 2FA code
+            $this->authService->sendVerificationEmail($user);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Login successful',
+                'message' => 'Verification code sent to your email',
                 'data' => [
-                    'user' => $user,
-                    'access_token' => $token,
+                    'email' => $user->email,
                 ],
             ]);
         } catch (\Exception $e) {
@@ -129,6 +129,55 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Login failed: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function verify2FA(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email|exists:users',
+                'code' => 'required|string|size:6',
+            ]);
+
+            $user = User::where('email', $validated['email'])->first();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found',
+                ], 404);
+            }
+
+            if (!$this->authService->verifyEmail($user, $validated['code'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired verification code',
+                ], 400);
+            }
+
+            // Code verified, generate token
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => '2FA verified successfully',
+                'data' => [
+                    'user' => $user,
+                    'access_token' => $token,
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => '2FA verification failed: ' . $e->getMessage(),
             ], 500);
         }
     }

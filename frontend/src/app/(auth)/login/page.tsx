@@ -60,12 +60,8 @@ export default function LoginPage() {
       return;
     }
 
-    // Store access token via session context
-    if (result.data?.access_token) {
-      setToken(result.data.access_token);
-    }
-
-    router.push("/dashboard");
+    // Redirect to 2FA verification
+    router.push(`/verify-email?email=${encodeURIComponent(email)}&type=login`);
   };
 
   return (
