@@ -19,6 +19,7 @@ export default function Sidebar() {
   const menuItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard'), exact: true },
     { href: '/dashboard/clients', icon: Mountain, label: t('clients') },
+    { href: '/dashboard/users', icon: Mountain, label: t('users') },
     { href: '/dashboard/reports', icon: FileText, label: t('reports') },
   ];
 
