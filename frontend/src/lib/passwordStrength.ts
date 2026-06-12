@@ -1,21 +1,21 @@
 export type PasswordStrength = {
   score: number;
-  label: string;
+  labelKey: string;
   color: string;
-  suggestions: string[];
+  suggestionKeys: string[];
 };
 
 export function calculatePasswordStrength(password: string): PasswordStrength {
   let score = 0;
-  const suggestions: string[] = [];
+  const suggestionKeys: string[] = [];
 
   if (password.length === 0) {
-    return { score: 0, label: "", color: "", suggestions: [] };
+    return { score: 0, labelKey: "", color: "", suggestionKeys: [] };
   }
 
   // Length check
   if (password.length < 8) {
-    suggestions.push("Use at least 8 characters");
+    suggestionKeys.push("passwordStrength.minLength");
   } else if (password.length >= 8) {
     score += 1;
   }
@@ -25,46 +25,46 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
 
   // Lowercase check
   if (!/[a-z]/.test(password)) {
-    suggestions.push("Add lowercase letters");
+    suggestionKeys.push("passwordStrength.addLowercase");
   } else {
     score += 1;
   }
 
   // Uppercase check
   if (!/[A-Z]/.test(password)) {
-    suggestions.push("Add uppercase letters");
+    suggestionKeys.push("passwordStrength.addUppercase");
   } else {
     score += 1;
   }
 
   // Number check
   if (!/[0-9]/.test(password)) {
-    suggestions.push("Add numbers");
+    suggestionKeys.push("passwordStrength.addNumbers");
   } else {
     score += 1;
   }
 
   // Special character check
   if (!/[^A-Za-z0-9]/.test(password)) {
-    suggestions.push("Add special characters (!@#$%^&*)");
+    suggestionKeys.push("passwordStrength.addSpecialChars");
   } else {
     score += 1;
   }
 
   // Determine strength label and color
-  let label = "";
+  let labelKey = "";
   let color = "";
 
   if (score <= 2) {
-    label = "Weak";
+    labelKey = "passwordStrength.weak";
     color = "bg-red-500";
   } else if (score <= 4) {
-    label = "Medium";
+    labelKey = "passwordStrength.medium";
     color = "bg-yellow-500";
   } else {
-    label = "Strong";
+    labelKey = "passwordStrength.strong";
     color = "bg-green-500";
   }
 
-  return { score, label, color, suggestions };
+  return { score, labelKey, color, suggestionKeys };
 }

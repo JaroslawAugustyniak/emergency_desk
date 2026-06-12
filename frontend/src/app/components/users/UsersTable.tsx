@@ -159,7 +159,7 @@ export default function UsersTable({
             className="flex items-center gap-2 px-4 py-2 bg-black text-white hover:bg-gray-700 transition-colors whitespace-nowrap"
           >
             <Plus className="w-5 h-5" />
-            {t('addUser')}
+            {t('addNew')}
           </button>
         </div>
       </div>

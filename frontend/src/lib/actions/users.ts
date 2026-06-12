@@ -30,7 +30,21 @@ export async function createUser(userData: CreateUserData, token: string) {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.message || 'Failed to create user');
+      // Build detailed error message
+      let errorMsg = data.message || 'Failed to create user';
+
+      // If there are validation errors, include them
+      if (data.details && typeof data.details === 'object') {
+        const errors = Object.entries(data.details)
+          .map(([field, messages]: [string, any]) => {
+            const msgList = Array.isArray(messages) ? messages : [messages];
+            return `${field}: ${msgList.join(', ')}`;
+          })
+          .join('\n');
+        errorMsg = errors || errorMsg;
+      }
+
+      throw new Error(errorMsg);
     }
 
     return data.data;
@@ -57,7 +71,21 @@ export async function updateUser(
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.message || 'Failed to update user');
+      // Build detailed error message
+      let errorMsg = data.message || 'Failed to update user';
+
+      // If there are validation errors, include them
+      if (data.details && typeof data.details === 'object') {
+        const errors = Object.entries(data.details)
+          .map(([field, messages]: [string, any]) => {
+            const msgList = Array.isArray(messages) ? messages : [messages];
+            return `${field}: ${msgList.join(', ')}`;
+          })
+          .join('\n');
+        errorMsg = errors || errorMsg;
+      }
+
+      throw new Error(errorMsg);
     }
 
     return data.data;
@@ -78,7 +106,22 @@ export async function deleteUser(userId: number, token: string) {
 
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.message || 'Failed to delete user');
+
+      // Build detailed error message
+      let errorMsg = data.message || 'Failed to delete user';
+
+      // If there are validation errors, include them
+      if (data.details && typeof data.details === 'object') {
+        const errors = Object.entries(data.details)
+          .map(([field, messages]: [string, any]) => {
+            const msgList = Array.isArray(messages) ? messages : [messages];
+            return `${field}: ${msgList.join(', ')}`;
+          })
+          .join('\n');
+        errorMsg = errors || errorMsg;
+      }
+
+      throw new Error(errorMsg);
     }
 
     return true;

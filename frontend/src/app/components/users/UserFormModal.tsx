@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Modal from '@/app/components/ui/Modal';
 import { createUser, updateUser } from '@/lib/actions/users';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
+import { calculatePasswordStrength } from '@/lib/passwordStrength';
 
 type User = {
   id: number;
@@ -47,6 +48,11 @@ export default function UserFormModal({
 
   const isEditMode = !!user;
 
+  const passwordStrength = useMemo(
+    () => calculatePasswordStrength(formData.password),
+    [formData.password]
+  );
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -77,6 +83,19 @@ export default function UserFormModal({
 
     if (!token) {
       setError('Not authenticated');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate password
+    if (!isEditMode && !formData.password) {
+      setError(t('passwordRequired'));
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.password && passwordStrength.score < 3) {
+      setError(t('passwordTooWeak'));
       setIsSubmitting(false);
       return;
     }
@@ -150,7 +169,7 @@ export default function UserFormModal({
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={t('firstNamePlaceholder')}
+              
             />
           </div>
 
@@ -169,7 +188,7 @@ export default function UserFormModal({
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={t('lastNamePlaceholder')}
+              
             />
           </div>
         </div>
@@ -189,7 +208,7 @@ export default function UserFormModal({
             onChange={handleChange}
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={t('emailPlaceholder')}
+            placeholder={t('enterEmailAddressExample')}
           />
         </div>
 
@@ -227,7 +246,7 @@ export default function UserFormModal({
             value={formData.phone}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={t('phonePlaceholder')}
+            
           />
         </div>
 
@@ -247,8 +266,35 @@ export default function UserFormModal({
               onChange={handleChange}
               required={!isEditMode}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={t('passwordPlaceholder')}
+              
             />
+
+            {formData.password && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-300 ${passwordStrength.color}`}
+                      style={{ width: `${(passwordStrength.score / 6) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700">
+                    {t(passwordStrength.labelKey)}
+                  </span>
+                </div>
+
+                {passwordStrength.suggestionKeys.length > 0 && (
+                  <ul className="text-xs text-gray-600 space-y-1 bg-gray-50 p-2 rounded">
+                    {passwordStrength.suggestionKeys.map((suggestionKey, i) => (
+                      <li key={i} className="flex items-start gap-1">
+                        <span className="text-gray-400 mt-0.5">•</span>
+                        <span>{t(suggestionKey)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -269,11 +315,38 @@ export default function UserFormModal({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder={t('newPasswordPlaceholder')}
             />
+
+            {formData.password && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-300 ${passwordStrength.color}`}
+                      style={{ width: `${(passwordStrength.score / 6) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700">
+                    {t(passwordStrength.labelKey)}
+                  </span>
+                </div>
+
+                {passwordStrength.suggestionKeys.length > 0 && (
+                  <ul className="text-xs text-gray-600 space-y-1 bg-gray-50 p-2 rounded">
+                    {passwordStrength.suggestionKeys.map((suggestionKey, i) => (
+                      <li key={i} className="flex items-start gap-1">
+                        <span className="text-gray-400 mt-0.5">•</span>
+                        <span>{t(suggestionKey)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm whitespace-pre-wrap">
             {error}
           </div>
         )}
@@ -289,7 +362,11 @@ export default function UserFormModal({
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={
+              isSubmitting ||
+              (!isEditMode && !formData.password) ||
+              (formData.password && passwordStrength.score < 3)
+            }
             className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting

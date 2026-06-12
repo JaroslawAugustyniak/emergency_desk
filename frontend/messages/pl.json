@@ -15,7 +15,9 @@
     "no": "Nie",
     "next": "Następna",
     "previous": "Poprzednia",
-    "actions": "Akcje"
+    "actions": "Akcje",
+    "itemsPerPage": "Elementów na stronie",
+    "optional": "(opcjonalne)"
   },
   "auth": {
     "login": "Zaloguj się",
@@ -97,7 +99,7 @@
     "adminPanel": "Panel administracyjny",
     "dashboard": "Tablica",
     "clients": "Klienci",
-    "projects": "Projekty",
+    "users": "Użytkownicy",
     "hours": "Godziny",
     "revenue": "Przychód",
     "calendar": "Kalendarz pracy",
@@ -157,17 +159,21 @@
     "hasProjectsMessage": "Ten klient ma przypisane projekty. Usuń wszystkie projekty przed usunięciem klienta."
   },
   "users": {
-    "title": "Klienci",
-    "addNew": "Dodaj nowego klienta",
-    "edit": "Edytuj klienta",
+    "title": "Użytkownicy",
+    "addNew": "Dodaj nowego użytkownika",
+    "addUser": "Dodaj użytkownika",
+    "edit": "Edytuj użytkownika",
     "name": "Nazwa klienta",
-    "hash": "Hash klienta",
-    "generateNewHash": "Wygeneruj nowy hash podczas zapisywania",
-    "hashWarning": "⚠ Stary hash zostanie zastąpiony nowym po zapisaniu",
-    "search": "Szukaj klienta...",
+    "firstName": "Imie",
+    "lastName": "Nazwisko",
+    "role": "Rola",
+    "email": "Email",
+    "phone": "Telefon",
+    "password": "Hasło",
+    "search": "Szukaj użytkownika...",
     "nameColumn": "Nazwa",
-    "projectsValue": "Wartość projektów (zł)",
-    "hashColumn": "Hash",
+    "emailColumn": "Email",
+    "roleColumn": "Rola",
     "noClients": "Brak klientów do wyświetlenia",
     "showing": "Wyświetlono {shown} z {total} klientów na stronie",
     "page": "Strona {current} z {total} (łącznie: {count} klientów)",
@@ -189,12 +195,21 @@
     "sendPortalLinkTitle": "Wyślij zaproszenie do Portalu Klienta",
     "emailAddress": "Adres email",
     "enterEmailAddressExample": "np. klient@example.com",
-    "sendLink": "Wyślij link",
-    "sendingLink": "Wysyłanie linku...",
-    "linkSentSuccess": "zaproszenie zostało wysłane pomyślnie",
-    "linkSentError": "Błąd podczas wysyłania zaproszenia",
-    "hasProjectsTitle": "Nie można usunąć klienta",
-    "hasProjectsMessage": "Ten klient ma przypisane projekty. Usuń wszystkie projekty przed usunięciem klienta."
+    "passwordRequired": "Hasło jest wymagane",
+    "passwordTooWeak": "Hasło jest za słabe",
+    "savingError": "Błąd podczas zapisywania",
+    "newPassword": "Nowe hasło",
+    "newPasswordPlaceholder": "Pozostaw puste, aby zachować aktualne hasło",
+    "passwordStrength": {
+      "weak": "Słabe",
+      "medium": "Średnie",
+      "strong": "Silne",
+      "minLength": "Użyj co najmniej 8 znaków",
+      "addLowercase": "Dodaj małe litery",
+      "addUppercase": "Dodaj duże litery",
+      "addNumbers": "Dodaj cyfry",
+      "addSpecialChars": "Dodaj znaki specjalne (!@#$%^&*)"
+    }
   }
   
 }

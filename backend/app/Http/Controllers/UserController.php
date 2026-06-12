@@ -78,14 +78,23 @@ class UserController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8',
-            'role' => 'required|in:admin,client,technician',
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'phone' => 'nullable|string|max:20',
-        ]);
+        
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:8',
+                'role' => 'required|in:admin,client,technician',
+                'first_name' => 'required|string|max:100',
+                'last_name' => 'required|string|max:100',
+                'phone' => 'nullable|string|max:20',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+    
 
         $user = User::create([
             'email' => $validated['email'],
