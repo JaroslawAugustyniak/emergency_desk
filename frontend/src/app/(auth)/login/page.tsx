@@ -13,6 +13,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const reset = searchParams.get('reset');
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
   const { setToken } = useSessionContext();
@@ -37,7 +38,7 @@ export default function LoginPage() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const result = await login(email, password);
+    const result = await login(email, password, rememberMe);
 
     setIsLoading(false);
 
@@ -60,6 +61,13 @@ export default function LoginPage() {
       return;
     }
 
+    // Store remember_me flag if checked
+    if (rememberMe) {
+      localStorage.setItem('remember_me', 'true');
+    } else {
+      localStorage.removeItem('remember_me');
+    }
+
     // Redirect to 2FA verification
     router.push(`/verify-email?email=${encodeURIComponent(email)}&type=login`);
   };
@@ -70,8 +78,8 @@ export default function LoginPage() {
         <Image
           src="/images/logo-an-mar.png"
           alt="Logo"
-           width={150}
-                                        height={80}
+          width={150}
+          height={80}
           className="main-logo"
           priority
         />
@@ -93,6 +101,21 @@ export default function LoginPage() {
           placeholder={t('password')}
           disabled={isLoading}
         />
+
+        <div className="flex items-center gap-2 mb-4 mt-3">
+          <input
+            type="checkbox"
+            id="remember_me"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            disabled={isLoading}
+            className="w-4 h-4 rounded cursor-pointer"
+          />
+          <label htmlFor="remember_me" className="text-sm text-gray-700 cursor-pointer">
+            {t('rememberMe') || 'Remember me on this device'}
+          </label>
+        </div>
+
         <button
           type="submit"
           className="button"

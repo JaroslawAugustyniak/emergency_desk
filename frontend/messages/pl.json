@@ -70,6 +70,7 @@
     "resendError": "Błąd podczas wysyłania kodu",
     "backToRegister": "Powrót do rejestracji",
     "emailNotVerified": "Twój adres email nie został zweryfikowany. Sprawdź swoją skrzynkę pocztową.",
+    "rememberMe": "Zapamiętaj mnie na tym urządzeniu",
     "currency": "Waluta"
   },
   "profile": {

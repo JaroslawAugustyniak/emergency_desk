@@ -97,7 +97,15 @@ export default function VerifyEmailPage() {
 
       // If login 2FA, store token and redirect to dashboard
       if (type === 'login' && data.data?.access_token) {
-        setToken(data.data.access_token);
+        // Check if remember me was set during login
+        const rememberMe = localStorage.getItem('remember_me') === 'true';
+        
+        // Set token with remember me flag
+        setToken(data.data.access_token, rememberMe);
+        
+        // Clear remember me flag after using it
+        localStorage.removeItem('remember_me');
+        
         setTimeout(() => {
           router.push('/dashboard');
         }, 1000);
