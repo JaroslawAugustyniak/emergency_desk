@@ -27,12 +27,17 @@ php artisan config:clear
 php artisan route:clear
 php artisan cache:clear
 
-# Run migrations
-echo "Running migrations..."
-php artisan migrate --force
+# Run migrations (only for web/backend, not for queue worker)
+if [ "$CONTAINER_TYPE" != "queue-worker" ]; then
+  echo "Running migrations..."
+  php artisan migrate --force
+fi
 
-# Execute passed command or start dev server
-if [ $# -gt 0 ]; then
+# Execute based on container type
+if [ "$CONTAINER_TYPE" = "queue-worker" ]; then
+  echo "Starting queue worker..."
+  exec php artisan queue:work --delay=3 --max-jobs=1000 --max-time=3600
+elif [ $# -gt 0 ]; then
   echo "Executing command: $@"
   exec "$@"
 else
