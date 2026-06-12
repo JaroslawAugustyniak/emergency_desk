@@ -15,9 +15,58 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      deploy: ${{ steps.changes.outputs.deploy }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect file changes
+        id: changes
+        run: |
+          # Get list of changed files
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Check if backend files changed
+          if echo "$CHANGED_FILES" | grep -qE '^backend/|^Dockerfile$|^Dockerfile\.prod|^entrypoint\.sh|^docker-compose\.prod\.yml'; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check if frontend files changed
+          if echo "$CHANGED_FILES" | grep -qE '^frontend/|^Dockerfile\.frontend\.prod'; then
+            echo "frontend=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Deploy if anything changed (on main branch and push event)
+          if [ "${{ github.ref }}" == "refs/heads/main" ] && [ "${{ github.event_name }}" == "push" ]; then
+            echo "deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy=false" >> $GITHUB_OUTPUT
+          fi
+
   build-backend:
     name: Build & Push Backend Image
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || github.event_name == 'pull_request'
     permissions:
       contents: read
       packages: write
@@ -62,6 +111,8 @@ jobs:
   build-frontend:
     name: Build & Push Frontend Image
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'pull_request'
     permissions:
       contents: read
       packages: write
@@ -108,8 +159,8 @@ jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [build-backend, build-frontend]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [detect-changes, build-backend, build-frontend]
+    if: needs.detect-changes.outputs.deploy == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
