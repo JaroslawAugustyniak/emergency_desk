@@ -95,16 +95,16 @@ export default function RegisterPage() {
                 />
               </div>
               <span className="text-xs font-medium min-w-15">
-                {passwordStrength.label}
+                {t(passwordStrength.labelKey)}
               </span>
             </div>
 
-            {passwordStrength.suggestions.length > 0 && (
+            {passwordStrength.suggestionKeys.length > 0 && (
               <ul className="text-xs text-gray-600 space-y-1">
-                {passwordStrength.suggestions.map((suggestion, index) => (
+                {passwordStrength.suggestionKeys.map((suggestionKey, index) => (
                   <li key={index} className="flex items-center gap-1">
                     <span className="text-gray-400">•</span>
-                    {suggestion}
+                    {t(suggestionKey)}
                   </li>
                 ))}
               </ul>

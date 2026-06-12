@@ -365,7 +365,7 @@ export default function UserFormModal({
             disabled={
               isSubmitting ||
               (!isEditMode && !formData.password) ||
-              (formData.password && passwordStrength.score < 3)
+              (!!formData.password && passwordStrength.score < 3)
             }
             className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >

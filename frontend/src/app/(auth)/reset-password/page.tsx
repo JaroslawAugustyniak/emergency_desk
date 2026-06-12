@@ -141,14 +141,14 @@ export default function ResetPasswordPage() {
                   />
                 </div>
                 <span className="text-xs font-medium">
-                  {passwordStrength.label}
+                  {t(passwordStrength.labelKey)}
                 </span>
               </div>
 
-              {passwordStrength.suggestions.length > 0 && (
+              {passwordStrength.suggestionKeys.length > 0 && (
                 <ul className="text-xs text-gray-600 space-y-1">
-                  {passwordStrength.suggestions.map((s, i) => (
-                    <li key={i}>• {s}</li>
+                  {passwordStrength.suggestionKeys.map((suggestionKey, i) => (
+                    <li key={i}>• {t(suggestionKey)}</li>
                   ))}
                 </ul>
               )}
