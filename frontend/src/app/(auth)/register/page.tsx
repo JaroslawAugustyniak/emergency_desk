@@ -43,13 +43,13 @@ export default function RegisterPage() {
     <div className="flex flex-col items-center">
       <div className="mb-8">
         <Image
-                                                src="/images/logo.png"
-                                                alt="Logo"
-                                                width={150}
-                                                height={80}
-                                                className="main-logo mx-auto"
-                                                priority
-                                              />
+                  src="/images/logo-an-mar-big.png"
+                  alt="Logo"
+                  width={150}
+                  height={80}
+                  className="main-logo"
+                  priority
+                />
       </div>
     <form onSubmit={handleSubmit} className="space-y-4">
       <h1 className="text-xl font-semibold">{t('createAccount')}</h1>

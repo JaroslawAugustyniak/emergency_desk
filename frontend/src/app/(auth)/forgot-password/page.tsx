@@ -31,13 +31,13 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <>      <Image
-                                        src="/images/logo.png"
-                                        alt="Logo"
-                                        width={150}
-                                        height={80}
-                                        className="main-logo mx-auto"
-                                        priority
-                                      />
+                src="/images/logo-an-mar.png"
+                alt="Logo"
+                width={150}
+                height={80}
+                className="main-logo"
+                priority
+              />
                                       <h1 className="text-xl font-semibold  mt-2.5">{t('resetPassword')}</h1>
       <p className="text-sm text-slate-600 my-2.5">
         {t('resetLinkSent')}
@@ -52,13 +52,13 @@ export default function ForgotPasswordPage() {
     <>
     <form onSubmit={handleSubmit} className="space-y-4">
       <Image
-                                        src="/images/logo.png"
-                                        alt="Logo"
-                                        width={150}
-                                        height={80}
-                                        className="main-logo mx-auto"
-                                        priority
-                                      />
+                src="/images/logo-an-mar-big.png"
+                alt="Logo"
+                width={150}
+                height={80}
+                className="main-logo"
+                priority
+              />
                                       <h1 className="text-xl font-semibold">{t('resetPassword')}</h1>
       <div>
         <label className="label">{t('email')}</label>

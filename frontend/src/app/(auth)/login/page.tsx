@@ -76,7 +76,7 @@ export default function LoginPage() {
     <div className="flex flex-col items-center">
       <div className="mb-8">
         <Image
-          src="/images/logo-an-mar.png"
+          src="/images/logo-an-mar-big.png"
           alt="Logo"
           width={150}
           height={80}

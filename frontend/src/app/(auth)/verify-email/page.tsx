@@ -161,13 +161,13 @@ export default function VerifyEmailPage() {
     <div className="flex flex-col items-center">
       <div className="mb-8">
         <Image
-          src="/images/logo.png"
-          alt="Logo"
-          width={150}
-          height={80}
-          className="main-logo mx-auto"
-          priority
-        />
+                  src="/images/logo-an-mar-big.png"
+                  alt="Logo"
+                  width={150}
+                  height={80}
+                  className="main-logo"
+                  priority
+                />
       </div>
 
       <div className="w-full max-w-md space-y-4">

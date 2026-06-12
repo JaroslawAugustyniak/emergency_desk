@@ -95,11 +95,11 @@ export default function ResetPasswordPage() {
     <div className="flex flex-col items-center">
       <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-sm">
         <Image
-                  src="/images/logo.png"
+                  src="/images/logo-an-mar-big.png"
                   alt="Logo"
-                  width={200}
+                  width={150}
                   height={80}
-                  className="main-logo mx-auto"
+                  className="main-logo"
                   priority
                 />
         <h1 className="text-xl font-semibold">{t('resetPassword')}</h1>
