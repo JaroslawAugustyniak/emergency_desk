@@ -82,6 +82,21 @@ export default function UsersTable({
       return;
     }
 
+    const result = await Swal.fire({
+      title: t('deleteConfirm'),
+      text: t('deleteMessage'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: t('deleteButton'),
+      cancelButtonText: tCommon('cancel'),
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
     try {
       await deleteUser(id, token);
       router.refresh();
@@ -99,7 +114,7 @@ export default function UsersTable({
       console.error('Error deleting user:', error);
       await Swal.fire({
         title: 'Error',
-        text: t('deletedError'),
+        text: error instanceof Error ? error.message : t('deletedError'),
         icon: 'error',
         confirmButtonColor: '#3b82f6',
       });

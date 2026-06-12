@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import Swal from 'sweetalert2';
 import { useTranslations } from 'next-intl';
+import { useSessionContext } from "@/app/components/providers/SessionProvider";
 import { login } from "./actions";
 
 export default function LoginPage() {
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
+  const { setToken } = useSessionContext();
 
   useEffect(() => {
     if (reset === 'success') {
@@ -58,9 +60,9 @@ export default function LoginPage() {
       return;
     }
 
-    // Store access token
+    // Store access token via session context
     if (result.data?.access_token) {
-      localStorage.setItem('access_token', result.data.access_token);
+      setToken(result.data.access_token);
     }
 
     router.push("/dashboard");

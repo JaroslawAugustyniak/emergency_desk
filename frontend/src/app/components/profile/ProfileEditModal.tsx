@@ -6,6 +6,7 @@ import Modal from '@/app/components/ui/Modal';
 import { updateProfile, getProfile } from '@/lib/actions/profile';
 import { useTranslations } from 'next-intl';
 import Swal from 'sweetalert2';
+import { useSessionContext } from '@/app/components/providers/SessionProvider';
 
 type ProfileEditModalProps = {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function ProfileEditModal({
   const router = useRouter();
   const t = useTranslations('profile');
   const tCommon = useTranslations('common');
+  const { setToken } = useSessionContext();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -100,7 +102,7 @@ export default function ProfileEditModal({
       });
 
       // Clear token and redirect to login
-      localStorage.removeItem('access_token');
+      setToken(null);
       router.push('/login');
     } catch (err) {
       if (err instanceof Error) {

@@ -6,11 +6,13 @@ import { useTranslations } from 'next-intl';
 import { Menu, LogOut, User } from 'lucide-react';
 import Swal from 'sweetalert2';
 import ProfileEditModal from '@/app/components/profile/ProfileEditModal';
+import { useSessionContext } from '@/app/components/providers/SessionProvider';
 
 export default function UserMenu({ isPortalUser }: { isPortalUser: boolean }) {
   const router = useRouter();
   const t = useTranslations('profile');
   const tAuth = useTranslations('auth');
+  const { setToken } = useSessionContext();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -83,7 +85,7 @@ export default function UserMenu({ isPortalUser }: { isPortalUser: boolean }) {
         console.error('Logout failed:', error);
       }
 
-      localStorage.removeItem('access_token');
+      setToken(null);
       router.push('/login');
     }
   };
