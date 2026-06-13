@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ClientController;
 use App\Mail\VerifyEmailMail;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
@@ -83,5 +84,14 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/{user}', [UserController::class, 'show']);
         Route::put('/{user}', [UserController::class, 'update']);
         Route::delete('/{user}', [UserController::class, 'destroy']);
+    });
+
+    Route::prefix('clients')->group(function () {
+        Route::get('/', [ClientController::class, 'index']);
+        Route::post('/', [ClientController::class, 'store']);
+        Route::get('/{client}', [ClientController::class, 'show']);
+        Route::put('/{client}', [ClientController::class, 'update']);
+        Route::delete('/{client}', [ClientController::class, 'destroy']);
+        Route::post('/{client}/regenerate-hash', [ClientController::class, 'regenerateHash']);
     });
 });
