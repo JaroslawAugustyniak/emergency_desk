@@ -7,10 +7,9 @@ import ClientFormModal from '@/app/components/clients/ClientFormModal';
 import Pagination from '@/app/components/ui/Pagination';
 import { deleteClient } from '@/lib/actions/clients';
 import { useRouter } from 'next/navigation';
-import Swal from 'sweetalert2';
 import { useTranslations } from 'next-intl';
 import { useTableSearch } from '@/hooks/useTableSearch';
-import { useSessionContext } from '@/app/components/providers/SessionProvider';
+import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 
 type Client = {
   id: number;
@@ -40,8 +39,12 @@ export default function ClientsTable({
   const router = useRouter();
   const t = useTranslations('clients');
   const tCommon = useTranslations('common');
-  const { token } = useSessionContext();
   const { searchTerm, buildUrl, handleSearchChange } = useTableSearch();
+  const { handleDelete } = useDeleteHandler({
+    resourceKey: 'clients',
+    deleteFunction: deleteClient,
+    onSuccess: () => router.refresh(),
+  });
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,51 +75,6 @@ export default function ClientsTable({
     } else {
       setSortField(field);
       setSortDirection('asc');
-    }
-  };
-
-  const handleDeleteClick = async (id: number) => {
-    if (!token) {
-      alert('Not authenticated');
-      return;
-    }
-
-    const result = await Swal.fire({
-      title: t('deleteConfirm'),
-      text: t('deleteMessage'),
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: t('deleteButton'),
-      cancelButtonText: tCommon('cancel'),
-    });
-
-    if (!result.isConfirmed) {
-      return;
-    }
-
-    try {
-      await deleteClient(id, token);
-      router.refresh();
-
-      await Swal.fire({
-        title: t('deleted'),
-        text: t('deletedMessage'),
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false,
-        position: "top-end",
-        toast: true,
-      });
-    } catch (error) {
-      console.error('Error deleting client:', error);
-      await Swal.fire({
-        title: 'Error',
-        text: error instanceof Error ? error.message : t('deletedError'),
-        icon: 'error',
-        confirmButtonColor: '#3b82f6',
-      });
     }
   };
 
@@ -292,7 +250,7 @@ export default function ClientsTable({
                       </div>
                       <div className="relative group">
                         <button
-                          onClick={() => handleDeleteClick(client.id)}
+                          onClick={() => handleDelete(client.id)}
                           className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
                           title={tCommon('delete')}
                         >
@@ -367,7 +325,7 @@ export default function ClientsTable({
                       <Mail className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteClick(client.id)}
+                      onClick={() => handleDelete(client.id)}
                       className="flex-1 p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex items-center justify-center"
                       title={tCommon('delete')}
                     >

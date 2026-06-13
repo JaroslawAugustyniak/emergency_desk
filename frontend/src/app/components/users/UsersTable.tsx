@@ -7,10 +7,10 @@ import UserFormModal from '@/app/components/users/UserFormModal';
 import Pagination from '@/app/components/ui/Pagination';
 import { deleteUser } from '@/lib/actions/users';
 import { useRouter } from 'next/navigation';
-import Swal from 'sweetalert2';
 import { useTranslations } from 'next-intl';
 import { useTableSearch } from '@/hooks/useTableSearch';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
+import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 
 type User = {
   id: number;
@@ -41,8 +41,12 @@ export default function UsersTable({
   const router = useRouter();
   const t = useTranslations('users');
   const tCommon = useTranslations('common');
-  const { token } = useSessionContext();
   const { searchTerm, buildUrl, handleSearchChange } = useTableSearch();
+  const { handleDelete } = useDeleteHandler({
+    resourceKey: 'users',
+    deleteFunction: deleteUser,
+    onSuccess: () => router.refresh(),
+  });
   const [sortField, setSortField] = useState<SortField>('first_name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,51 +77,6 @@ export default function UsersTable({
     } else {
       setSortField(field);
       setSortDirection('asc');
-    }
-  };
-
-  const handleDeleteClick = async (id: number) => {
-    if (!token) {
-      alert('Not authenticated');
-      return;
-    }
-
-    const result = await Swal.fire({
-      title: t('deleteConfirm'),
-      text: t('deleteMessage'),
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: t('deleteButton'),
-      cancelButtonText: tCommon('cancel'),
-    });
-
-    if (!result.isConfirmed) {
-      return;
-    }
-
-    try {
-      await deleteUser(id, token);
-      router.refresh();
-
-      await Swal.fire({
-        title: t('deleted'),
-        text: t('deletedMessage'),
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false,
-        position: "top-end",
-        toast: true,
-      });
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      await Swal.fire({
-        title: 'Error',
-        text: error instanceof Error ? error.message : t('deletedError'),
-        icon: 'error',
-        confirmButtonColor: '#3b82f6',
-      });
     }
   };
 
@@ -252,7 +211,7 @@ export default function UsersTable({
                       </div>
                       <div className="relative group">
                         <button
-                          onClick={() => handleDeleteClick(user.id)}
+                          onClick={() => handleDelete(user.id)}
                           className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
                           title={tCommon('delete')}
                         >
@@ -313,7 +272,7 @@ export default function UsersTable({
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteClick(user.id)}
+                      onClick={() => handleDelete(user.id)}
                       className="flex-1 p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex items-center justify-center"
                       title={tCommon('delete')}
                     >

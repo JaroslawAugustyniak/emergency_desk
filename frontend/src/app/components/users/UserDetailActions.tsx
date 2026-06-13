@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Edit, Trash2 } from 'lucide-react';
 import { deleteUser } from '@/lib/actions/users';
 import { useTranslations } from 'next-intl';
-import Swal from 'sweetalert2';
 import UserFormModal from '@/app/components/users/UserFormModal';
-import { useSessionContext } from '@/app/components/providers/SessionProvider';
+import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 
 interface UserDetailActionsProps {
   user: {
@@ -22,55 +21,13 @@ interface UserDetailActionsProps {
 
 export default function UserDetailActions({ user }: UserDetailActionsProps) {
   const router = useRouter();
-  const t = useTranslations('users');
   const tCommon = useTranslations('common');
-  const { token } = useSessionContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleDeleteClick = async (id: number) => {
-    if (!token) {
-      alert('Not authenticated');
-      return;
-    }
-
-    const result = await Swal.fire({
-      title: t('deleteConfirm'),
-      text: t('deleteMessage'),
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: t('deleteButton'),
-      cancelButtonText: tCommon('cancel'),
-    });
-
-    if (!result.isConfirmed) {
-      return;
-    }
-
-    try {
-      await deleteUser(id, token);
-      router.push('/dashboard/users');
-
-      await Swal.fire({
-        title: t('deleted'),
-        text: t('deletedMessage'),
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false,
-        position: "top-end",
-        toast: true,
-      });
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      await Swal.fire({
-        title: 'Error',
-        text: error instanceof Error ? error.message : t('deletedError'),
-        icon: 'error',
-        confirmButtonColor: '#3b82f6',
-      });
-    }
-  };
+  const { handleDelete } = useDeleteHandler({
+    resourceKey: 'users',
+    deleteFunction: deleteUser,
+    onSuccess: () => router.push('/dashboard/users'),
+  });
 
   return (
     <>
@@ -88,7 +45,7 @@ export default function UserDetailActions({ user }: UserDetailActionsProps) {
 
         <div className="relative group">
           <button
-            onClick={() => handleDeleteClick(user.id)}
+            onClick={() => handleDelete(user.id)}
             className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
             title={tCommon('delete')}
           >
