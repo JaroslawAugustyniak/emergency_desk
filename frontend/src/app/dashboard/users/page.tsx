@@ -64,8 +64,6 @@ export default function UsersPage({
           queryParams.append('search', params.search);
         }
 
-        console.log(token);
-
         const res = await fetch(`/api/users?${queryParams.toString()}`, {
           headers: {
             'Authorization': `Bearer ${token}`,

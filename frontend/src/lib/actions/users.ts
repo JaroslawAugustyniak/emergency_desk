@@ -5,6 +5,7 @@ export type CreateUserData = {
   first_name: string;
   last_name: string;
   phone?: string;
+  client_id?: number;
 };
 
 export type UpdateUserData = {
@@ -14,6 +15,7 @@ export type UpdateUserData = {
   last_name?: string;
   phone?: string;
   password?: string;
+  client_id?: number;
 };
 
 export async function createUser(userData: CreateUserData, token: string) {

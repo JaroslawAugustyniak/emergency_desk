@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
       params.append('search', search);
     }
 
+    console.log('Fetching from:', `${API_URL}/api/clients?${params.toString()}`);
     const res = await fetch(`${API_URL}/api/clients?${params.toString()}`, {
       method: 'GET',
       headers: {
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
       contentType,
       bodyLength: text.length,
       bodyPreview: text.substring(0, 500),
+      authHeader: authHeader?.substring(0, 20) + '...',
     });
 
     if (!isJson) {

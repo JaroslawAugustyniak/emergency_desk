@@ -75,6 +75,10 @@ Route::prefix('auth')->group(function () {
     });
 });
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/clients', [ClientController::class, 'index']);
+});
+
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::prefix('users')->group(function () {
         Route::get('/', [UserController::class, 'index']);
@@ -87,7 +91,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     });
 
     Route::prefix('clients')->group(function () {
-        Route::get('/', [ClientController::class, 'index']);
         Route::post('/', [ClientController::class, 'store']);
         Route::get('/{client}', [ClientController::class, 'show']);
         Route::put('/{client}', [ClientController::class, 'update']);

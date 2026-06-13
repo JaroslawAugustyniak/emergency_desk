@@ -21,7 +21,9 @@
     "optional": "(opcjonalne)",
     "back": "Wróć",
     "copy": "Kopiuj",
-    "updated": "Zaktualizowano"
+    "updated": "Zaktualizowano",
+    "selectOption": "Wybierz", 
+    "idColumn": "ID"
   },
       
   "auth": {
@@ -179,7 +181,7 @@
     "sendingLink": "Wysyłanie linku...",
     "linkSentSuccess": "zaproszenie zostało wysłane pomyślnie",
     "linkSentError": "Błąd podczas wysyłania zaproszenia",
-    "idColumn": "ID",
+    
     "hashLabel": "Identyfikator (Hash)",
     "regenerateHashCheckbox": "Wygeneruj nowy hash",
     "regenerateHashConfirm": "Czy na pewno chcesz wygenerować nowy hash?",
@@ -202,6 +204,8 @@
     "firstName": "Imie",
     "lastName": "Nazwisko",
     "createdAt": "Data utworzenia",
+    "client": "Przypisz użytkownika do klienta",
+
     "role": "Rola",
     "email": "Email",
     "phone": "Telefon",

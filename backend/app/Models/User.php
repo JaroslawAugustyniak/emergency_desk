@@ -27,6 +27,7 @@ class User extends Authenticatable
         'first_name',
         'last_name',
         'phone',
+        'client_id',
         'email_verified_at',
         'verification_code',
         'verification_code_expires',
@@ -69,5 +70,10 @@ class User extends Authenticatable
     public function isEmailVerified(): bool
     {
         return $this->email_verified_at !== null;
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
     }
 }

@@ -15,6 +15,7 @@ type User = {
   last_name: string;
   role: string;
   phone?: string;
+  client_id?: number | null;
 };
 
 type UserFormModalProps = {
@@ -39,9 +40,12 @@ export default function UserFormModal({
     role: 'technician',
     phone: '',
     password: '',
+    client_id: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [clients, setClients] = useState<Array<{ id: number; name: string }>>([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
 
   const t = useTranslations('users');
   const c = useTranslations('common');
@@ -63,6 +67,7 @@ export default function UserFormModal({
         role: user.role,
         phone: user.phone || '',
         password: '',
+        client_id: user.client_id ? String(user.client_id) : '',
       });
     } else {
       setFormData({
@@ -72,10 +77,44 @@ export default function UserFormModal({
         role: 'technician',
         phone: '',
         password: '',
+        client_id: '',
       });
     }
     setError(null);
   }, [user, isOpen]);
+
+  useEffect(() => {
+    if (!token || !isOpen || formData.role !== 'client') return;
+
+    const fetchClients = async () => {
+      try {
+        setIsLoadingClients(true);
+        console.log('Fetching clients for role:', formData.role);
+        const res = await fetch('/api/clients?per_page=100', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        console.log('Clients response status:', res.status);
+        const data = await res.json();
+        console.log('Clients response data:', data);
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to fetch clients');
+        }
+
+        setClients(data.data || []);
+      } catch (err) {
+        console.error('Error fetching clients:', err);
+        setClients([]);
+      } finally {
+        setIsLoadingClients(false);
+      }
+    };
+
+    fetchClients();
+  }, [token, isOpen, formData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +151,7 @@ export default function UserFormModal({
             role: formData.role,
             phone: formData.phone,
             ...(formData.password && { password: formData.password }),
+            ...(formData.client_id && { client_id: Number(formData.client_id) }),
           },
           token
         );
@@ -124,6 +164,7 @@ export default function UserFormModal({
             first_name: formData.first_name,
             last_name: formData.last_name,
             phone: formData.phone,
+            ...(formData.client_id && { client_id: Number(formData.client_id) }),
           },
           token
         );
@@ -232,6 +273,37 @@ export default function UserFormModal({
             <option value="client">Client</option>
           </select>
         </div>
+
+        {formData.role === 'client' && (
+          <div>
+            <label
+              htmlFor="client_id"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t('client')}
+            </label>
+            {isLoadingClients ? (
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                {c('loading')}...
+              </div>
+            ) : (
+              <select
+                id="client_id"
+                name="client_id"
+                value={formData.client_id}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- {c('selectOption')} --</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    c{client.id} - {client.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
 
         <div>
           <label

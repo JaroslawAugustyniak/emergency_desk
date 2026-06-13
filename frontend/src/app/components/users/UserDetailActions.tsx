@@ -16,6 +16,7 @@ interface UserDetailActionsProps {
     last_name: string;
     role: string;
     phone?: string;
+    client_id?: number | null;
   };
 }
 

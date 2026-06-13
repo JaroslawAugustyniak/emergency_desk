@@ -37,4 +37,9 @@ class Client extends Model
         $this->hash = self::generateHash();
         $this->save();
     }
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

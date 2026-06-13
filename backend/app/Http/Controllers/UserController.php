@@ -78,7 +78,7 @@ class UserController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        
+
         try {
             $validated = $request->validate([
                 'email' => 'required|email|unique:users,email',
@@ -87,6 +87,7 @@ class UserController extends Controller
                 'first_name' => 'required|string|max:100',
                 'last_name' => 'required|string|max:100',
                 'phone' => 'nullable|string|max:20',
+                'client_id' => 'nullable|exists:clients,id',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -94,7 +95,7 @@ class UserController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         }
-    
+
 
         $user = User::create([
             'email' => $validated['email'],
@@ -103,6 +104,7 @@ class UserController extends Controller
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
             'phone' => $validated['phone'] ?? null,
+            'client_id' => $validated['client_id'] ?? null,
         ]);
 
         return response()->json([
@@ -123,6 +125,7 @@ class UserController extends Controller
             'last_name' => 'string|max:100',
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|min:8',
+            'client_id' => 'nullable|exists:clients,id',
         ]);
 
         $updateData = array_filter($validated, fn($value) => $value !== null);
@@ -221,6 +224,7 @@ class UserController extends Controller
             'first_name' => $user->first_name,
             'last_name' => $user->last_name,
             'phone' => $user->phone,
+            'client_id' => $user->client_id,
             'email_verified_at' => $user->email_verified_at,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,
