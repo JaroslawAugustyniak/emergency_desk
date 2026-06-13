@@ -16,7 +16,7 @@ class AuthService
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => $data['password'],  // Mutator will hash it
         ]);
 
         $this->sendVerificationCode($user);
@@ -99,7 +99,7 @@ class AuthService
         }
 
         $user->update([
-            'password' => Hash::make($newPassword),
+            'password' => $newPassword,  // Mutator will hash it
             'reset_password_token' => null,
             'reset_password_expires' => null,
         ]);

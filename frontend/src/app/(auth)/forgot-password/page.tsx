@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <>      <Image
-                src="/images/logo-an-mar.png"
+                src="/images/logo-an-mar-big.png"
                 alt="Logo"
                 width={150}
                 height={80}

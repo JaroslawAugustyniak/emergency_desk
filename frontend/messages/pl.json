@@ -19,14 +19,27 @@
     "itemsPerPage": "Elementów na stronie",
     "optional": "(opcjonalne)"
   },
+      
   "auth": {
+    "passwordStrength": {
+      "weak": "Słabe",
+      "medium": "Średnie",
+      "strong": "Silne",
+      "minLength": "Użyj co najmniej 8 znaków",
+      "addLowercase": "Dodaj małe litery",
+      "addUppercase": "Dodaj duże litery",
+      "addNumbers": "Dodaj cyfry",
+      "addSpecialChars": "Dodaj znaki specjalne (!@#$%^&*)"
+    },
     "login": "Zaloguj się",
     "logout": "Wyloguj",
     "register": "Zarejestruj się",
     "email": "Email",
     "password": "Hasło",
+    "error": "Wystąpił błąd",
     "repeatPassword": "Powtórz hasło",
     "name": "Imię",
+    "Failed to validate token": "Nie udało się odnaleźć konta przypisanego do tokenu",
     "forgotPassword": "Zapomniałeś hasła?",
     "noAccount": "Nie mam jeszcze konta. Zarejestruj się.",
     "haveAccount": "Mam już konto. Zaloguj się.",
@@ -202,17 +215,7 @@
     "passwordTooWeak": "Hasło jest za słabe",
     "savingError": "Błąd podczas zapisywania",
     "newPassword": "Nowe hasło",
-    "newPasswordPlaceholder": "Pozostaw puste, aby zachować aktualne hasło",
-    "passwordStrength": {
-      "weak": "Słabe",
-      "medium": "Średnie",
-      "strong": "Silne",
-      "minLength": "Użyj co najmniej 8 znaków",
-      "addLowercase": "Dodaj małe litery",
-      "addUppercase": "Dodaj duże litery",
-      "addNumbers": "Dodaj cyfry",
-      "addSpecialChars": "Dodaj znaki specjalne (!@#$%^&*)"
-    }
+    "newPasswordPlaceholder": "Pozostaw puste, aby zachować aktualne hasło"
   }
   
 }

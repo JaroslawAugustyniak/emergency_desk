@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useTranslations } from 'next-intl';
 import Swal from 'sweetalert2';
 
-import { calculatePasswordStrength, type PasswordStrength, } from "@/lib/passwordStrength";
+import { calculatePasswordStrength } from "@/lib/passwordStrength"; 
 import { resetPassword, validateToken } from "./actions";
 
 
@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
       if (!result.valid) {
         Swal.fire({
           title: t('error'),
-          text: result.error ?? t('invalidResetLink'),
+          text: t(result.error) ?? t('invalidResetLink'),
           icon: 'error',
           confirmButtonColor: '#dc2626',
           confirmButtonText: 'OK'

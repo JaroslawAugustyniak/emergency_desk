@@ -45,6 +45,7 @@ export default function UserFormModal({
 
   const t = useTranslations('users');
   const c = useTranslations('common');
+  const a = useTranslations('auth');
 
   const isEditMode = !!user;
 
@@ -279,7 +280,7 @@ export default function UserFormModal({
                     />
                   </div>
                   <span className="text-xs font-medium text-gray-700">
-                    {t(passwordStrength.labelKey)}
+                    {a(passwordStrength.labelKey)}
                   </span>
                 </div>
 
@@ -288,7 +289,7 @@ export default function UserFormModal({
                     {passwordStrength.suggestionKeys.map((suggestionKey, i) => (
                       <li key={i} className="flex items-start gap-1">
                         <span className="text-gray-400 mt-0.5">•</span>
-                        <span>{t(suggestionKey)}</span>
+                        <span>{a(suggestionKey)}</span>
                       </li>
                     ))}
                   </ul>
@@ -326,7 +327,7 @@ export default function UserFormModal({
                     />
                   </div>
                   <span className="text-xs font-medium text-gray-700">
-                    {t(passwordStrength.labelKey)}
+                    {a(passwordStrength.labelKey)}
                   </span>
                 </div>
 
@@ -335,7 +336,7 @@ export default function UserFormModal({
                     {passwordStrength.suggestionKeys.map((suggestionKey, i) => (
                       <li key={i} className="flex items-start gap-1">
                         <span className="text-gray-400 mt-0.5">•</span>
-                        <span>{t(suggestionKey)}</span>
+                        <span>{a(suggestionKey)}</span>
                       </li>
                     ))}
                   </ul>
