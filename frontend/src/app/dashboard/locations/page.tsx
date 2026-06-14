@@ -1,17 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import UsersTable from '@/app/components/users/UsersTable';
+import LocationsTable from '@/app/components/locations/LocationsTable';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 
-type User = {
+type Location = {
   id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  role: string;
-  phone?: string;
+  name: string;
+  address: string;
+  number: string;
+  zip: string;
+  city: string;
+  country: string;
+  client_id: number;
+  created_at: string;
+  updated_at: string;
 };
 
 type PaginationData = {
@@ -21,14 +25,14 @@ type PaginationData = {
   limit: number;
 };
 
-export default function UsersPage({
+export default function LocationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string; limit?: string; clientId?: string; role?: string; sort_by?: string; sort_order?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; limit?: string; sort_by?: string; sort_order?: string; clientId?: string }>;
 }) {
-  const t = useTranslations('users');
+  const t = useTranslations('locations');
   const { token, isLoading } = useSessionContext();
-  const [users, setUsers] = useState<User[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [pagination, setPagination] = useState<PaginationData>({
     currentPage: 1,
     totalPages: 1,
@@ -36,7 +40,7 @@ export default function UsersPage({
     limit: 10,
   });
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [params, setParams] = useState<{ page: number; search: string; limit: number; clientId: string; role: string; sort_by: string; sort_order: string } | null>(null);
+  const [params, setParams] = useState<{ page: number; search: string; limit: number; sort_by: string; sort_order: string; clientId: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -45,10 +49,9 @@ export default function UsersPage({
         page: Number(p.page) || 1,
         search: p.search || '',
         limit: Number(p.limit) || 10,
-        clientId: p.clientId || '',
-        role: p.role || '',
-        sort_by: p.sort_by || 'first_name',
+        sort_by: p.sort_by || 'name',
         sort_order: p.sort_order || 'asc',
+        clientId: p.clientId || '',
       });
     })();
   }, [searchParams]);
@@ -56,7 +59,7 @@ export default function UsersPage({
   useEffect(() => {
     if (!token || isLoading || !params) return;
 
-    const fetchUsers = async () => {
+    const fetchLocations = async () => {
       try {
         setIsLoadingData(true);
         const queryParams = new URLSearchParams({
@@ -72,10 +75,6 @@ export default function UsersPage({
           queryParams.append('client_id', params.clientId);
         }
 
-        if (params.role) {
-          queryParams.append('role', params.role);
-        }
-
         if (params.sort_by) {
           queryParams.append('sort_by', params.sort_by);
         }
@@ -84,19 +83,19 @@ export default function UsersPage({
           queryParams.append('sort_order', params.sort_order);
         }
 
-        const res = await fetch(`/api/users?${queryParams.toString()}`, {
+        const res = await fetch(`/api/locations?${queryParams.toString()}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         });
 
         if (!res.ok) {
-          throw new Error('Failed to fetch users');
+          throw new Error('Failed to fetch locations');
         }
 
         const data = await res.json();
 
-        setUsers(data.data || []);
+        setLocations(data.data || []);
         setPagination({
           currentPage: data.pagination?.page || 1,
           totalPages: data.pagination?.last_page || 1,
@@ -104,13 +103,13 @@ export default function UsersPage({
           limit: data.pagination?.per_page || params.limit,
         });
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error fetching locations:', error);
       } finally {
         setIsLoadingData(false);
       }
     };
 
-    fetchUsers();
+    fetchLocations();
   }, [token, isLoading, params]);
 
   if (isLoading || isLoadingData) {
@@ -125,11 +124,10 @@ export default function UsersPage({
   return (
     <div className="px-2 -mt-18">
       <h1 className="text-2xl font-bold mb-8">{t('title')}</h1>
-      <UsersTable
-        users={users}
+      <LocationsTable
+        locations={locations}
         pagination={pagination}
         clientId={params?.clientId ? Number(params.clientId) : undefined}
-        selectedRole={params?.role}
         sortBy={params?.sort_by}
         sortOrder={params?.sort_order}
       />

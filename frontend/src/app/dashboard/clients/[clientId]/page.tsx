@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
-import { Copy, RotateCcw } from 'lucide-react';
+import { Copy, RotateCcw, MapPin, Users } from 'lucide-react';
+import Link from 'next/link';
 import { regenerateClientHash } from '@/lib/actions/clients';
 import BackButton  from '@/app/components/ui/BackButton'; 
 import Swal from 'sweetalert2';
@@ -65,6 +66,10 @@ export default function ClientDetailPage() {
       setCopiedHash(true);
       setTimeout(() => setCopiedHash(false), 2000);
     }
+  };
+
+  const handleUsers = (clientId: number) => {
+    router.push(`/dashboard/users?role=client&clientId=${clientId}`);
   };
 
   const handleRegenerateHash = async () => {
@@ -188,6 +193,24 @@ export default function ClientDetailPage() {
                 {formatDate(client.updated_at)}
               </p>
             </div>
+          </div>
+
+          {/* Locations Button */}
+          <div className="pt-6 border-t border-gray-200">
+            <Link
+              href={`/dashboard/locations?clientId=${clientId}`}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+            >
+              <MapPin className="w-5 h-5" />
+              {t('viewLocations')}
+            </Link>
+            <Link
+              href={`/dashboard/users?role=client&clientId=${clientId}`}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+            >
+              <Users className="w-5 h-5" />
+              {t('viewUsers')}
+            </Link>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, Mountain, Target, CalendarDays, BanknoteArrowUp, FileText, CheckSquare, Loader2, Coins, Bell } from 'lucide-react';
+import { LayoutDashboard, Mountain, MapPin, Users, BanknoteArrowUp, FileText, CheckSquare, Loader2, Coins, Bell } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from "next/image";
 import { useSidebar } from "@/app/components/context/SidebarContext";
@@ -19,7 +19,8 @@ export default function Sidebar() {
   const menuItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard'), exact: true },
     { href: '/dashboard/clients', icon: Mountain, label: t('clients') },
-    { href: '/dashboard/users', icon: Mountain, label: t('users') },
+    { href: '/dashboard/locations', icon: MapPin, label: t('locations') },
+    { href: '/dashboard/users', icon: Users, label: t('users') },
     { href: '/dashboard/reports', icon: FileText, label: t('reports') },
   ];
 

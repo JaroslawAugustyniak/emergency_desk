@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\LocationController;
 use App\Mail\VerifyEmailMail;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
@@ -77,6 +78,7 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/clients', [ClientController::class, 'index']);
+    Route::get('/locations', [LocationController::class, 'index']);
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
@@ -96,5 +98,12 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/{client}', [ClientController::class, 'update']);
         Route::delete('/{client}', [ClientController::class, 'destroy']);
         Route::post('/{client}/regenerate-hash', [ClientController::class, 'regenerateHash']);
+    });
+
+    Route::prefix('locations')->group(function () {
+        Route::post('/', [LocationController::class, 'store']);
+        Route::get('/{location}', [LocationController::class, 'show']);
+        Route::put('/{location}', [LocationController::class, 'update']);
+        Route::delete('/{location}', [LocationController::class, 'destroy']);
     });
 });
