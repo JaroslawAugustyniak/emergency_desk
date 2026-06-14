@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { Edit, Trash2, ArrowUpDown, Plus, Users, Mail } from 'lucide-react';
 import Link from 'next/link';
 import ClientFormModal from '@/app/components/clients/ClientFormModal';
+import UserFormModal from '@/app/components/users/UserFormModal';
 import Pagination from '@/app/components/ui/Pagination';
 import { deleteClient } from '@/lib/actions/clients';
 import { useRouter } from 'next/navigation';
@@ -49,6 +50,8 @@ export default function ClientsTable({
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [currentClientForUser, setCurrentClientForUser] = useState<number | null>(null);
 
   const filteredAndSortedClients = useMemo(() => {
     let result = [...clients];
@@ -94,8 +97,8 @@ export default function ClientsTable({
   };
 
   const handleAddUser = (clientId: number) => {
-    // TODO: Navigate to add user page or open modal
-    console.log('Add user for client:', clientId);
+    setCurrentClientForUser(clientId);
+    setIsAddUserModalOpen(true);
   };
 
   const handleSendInvite = (clientId: number) => {
@@ -352,11 +355,22 @@ export default function ClientsTable({
         buildHref={(page) => `?page=${page}`}
       />
 
-      {/* Modal */}
+      {/* Modals */}
       <ClientFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         client={selectedClient}
+      />
+
+      <UserFormModal
+        isOpen={isAddUserModalOpen}
+        onClose={() => setIsAddUserModalOpen(false)}
+        presetRole="client"
+        presetClientId={currentClientForUser || undefined}
+        onSuccess={() => {
+          setIsAddUserModalOpen(false);
+          router.refresh();
+        }}
       />
     </div>
   );

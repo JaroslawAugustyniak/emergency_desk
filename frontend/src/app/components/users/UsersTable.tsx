@@ -9,7 +9,6 @@ import { deleteUser } from '@/lib/actions/users';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useTableSearch } from '@/hooks/useTableSearch';
-import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 
 type User = {

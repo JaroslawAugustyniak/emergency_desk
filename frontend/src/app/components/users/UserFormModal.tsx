@@ -23,6 +23,8 @@ type UserFormModalProps = {
   onClose: () => void;
   user?: User | null;
   onSuccess?: () => void;
+  presetRole?: string;
+  presetClientId?: number;
 };
 
 export default function UserFormModal({
@@ -30,6 +32,8 @@ export default function UserFormModal({
   onClose,
   user = null,
   onSuccess,
+  presetRole,
+  presetClientId,
 }: UserFormModalProps) {
   const router = useRouter();
   const { token } = useSessionContext();
@@ -74,17 +78,17 @@ export default function UserFormModal({
         email: '',
         first_name: '',
         last_name: '',
-        role: 'technician',
+        role: presetRole || 'technician',
         phone: '',
         password: '',
-        client_id: '',
+        client_id: presetClientId ? String(presetClientId) : '',
       });
     }
     setError(null);
-  }, [user, isOpen]);
+  }, [user, isOpen, presetRole, presetClientId]);
 
   useEffect(() => {
-    if (!token || !isOpen || formData.role !== 'client') return;
+    if (!token || !isOpen || formData.role !== 'client' || presetClientId) return;
 
     const fetchClients = async () => {
       try {
@@ -254,27 +258,29 @@ export default function UserFormModal({
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="role"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t('role')}
-          </label>
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="admin">Admin</option>
-            <option value="technician">Technician</option>
-            <option value="client">Client</option>
-          </select>
-        </div>
+        {!presetRole && (
+          <div>
+            <label
+              htmlFor="role"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t('role')}
+            </label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="admin">Admin</option>
+              <option value="technician">Technician</option>
+              <option value="client">Client</option>
+            </select>
+          </div>
+        )}
 
-        {formData.role === 'client' && (
+        {formData.role === 'client' && !presetClientId && (
           <div>
             <label
               htmlFor="client_id"
