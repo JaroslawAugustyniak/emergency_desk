@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Edit, Trash2, ArrowUpDown, Plus, Users, Mail } from 'lucide-react';
+import { Edit, Trash2, ArrowUpDown, Plus, Users, Mail, Loader } from 'lucide-react';
 import Link from 'next/link';
 import ClientFormModal from '@/app/components/clients/ClientFormModal';
 import Pagination from '@/app/components/ui/Pagination';
@@ -42,7 +42,7 @@ export default function ClientsTable({
   const router = useRouter();
   const t = useTranslations('clients');
   const tCommon = useTranslations('common');
-  const { searchTerm, buildUrl, handleSearchChange } = useTableSearch();
+  const { searchTerm, isLoadingSearch, buildUrl, handleSearchChange } = useTableSearch();
   const { handleDelete } = useDeleteHandler({
     resourceKey: 'clients',
     deleteFunction: deleteClient,
@@ -90,13 +90,18 @@ export default function ClientsTable({
     <div className="w-full">
       {/* Search bar and Add button */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <input
-          type="text"
-          placeholder={t('search')}
-          value={searchTerm}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full max-w-sm px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
-        />
+        <div className="flex items-center gap-2 w-full max-w-sm">
+          <input
+            type="text"
+            placeholder={t('search')}
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="flex-1 px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          {isLoadingSearch && (
+            <Loader className="w-5 h-5 text-gray-400 animate-spin shrink-0" />
+          )}
+        </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">

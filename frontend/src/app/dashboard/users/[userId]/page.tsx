@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import UserDetailActions from '@/app/components/users/UserDetailActions';
-import Link from 'next/link';
+import BackButton  from '@/app/components/ui/BackButton';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { useRouter } from 'next/navigation';
 
@@ -73,12 +73,7 @@ export default function UserDetailPage() {
     return (
       <div className="space-y-6">
         <div className="text-red-600">{error || 'User not found'}</div>
-        <Link
-          href="/dashboard/users"
-          className="text-blue-600 hover:text-blue-700"
-        >
-          ← {tCommon('back')}
-        </Link>
+        <BackButton />
       </div>
     );
   }
@@ -87,13 +82,10 @@ export default function UserDetailPage() {
     <div className="space-y-6">
       {/* Header with back button */}
       <div className="flex items-center justify-between">
+          <BackButton />
         <div>
-          <Link
-            href="/dashboard/users"
-            className="text-blue-600 hover:text-blue-700 text-sm mb-2 inline-block"
-          >
-            ← {tCommon('back')}
-          </Link>
+          
+
           <h1 className="text-3xl font-bold text-gray-900">
             {user.first_name} {user.last_name}
           </h1>

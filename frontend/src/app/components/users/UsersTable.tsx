@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Edit, Trash2, ArrowUpDown, Plus } from 'lucide-react';
+import { Edit, Trash2, ArrowUpDown, Plus, Loader } from 'lucide-react';
 import Link from 'next/link';
 import UserFormModal from '@/app/components/users/UserFormModal';
 import Pagination from '@/app/components/ui/Pagination';
@@ -10,6 +10,8 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useTableSearch } from '@/hooks/useTableSearch';  
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
+
+import BackButton  from '@/app/components/ui/BackButton'; 
 
 type User = {
   id: number;
@@ -48,7 +50,7 @@ export default function UsersTable({
   const router = useRouter();
   const t = useTranslations('users');
   const tCommon = useTranslations('common');
-  const { searchTerm, buildUrl, handleSearchChange } = useTableSearch();
+  const { searchTerm, isLoadingSearch, buildUrl, handleSearchChange } = useTableSearch();
   const { handleDelete } = useDeleteHandler({
     resourceKey: 'users',
     deleteFunction: deleteUser,
@@ -87,13 +89,21 @@ export default function UsersTable({
     <div className="w-full">
       {/* Search bar and Add button */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <input
-          type="text"
-          placeholder={t('search')}
-          value={searchTerm}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full max-w-sm px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
-        />
+        {clientId && (
+        <BackButton />
+        )}
+        <div className="flex items-center gap-2 w-full max-w-sm">
+          <input
+            type="text"
+            placeholder={t('search')}
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="flex-1 px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          {isLoadingSearch && (
+            <Loader className="w-5 h-5 text-gray-400 animate-spin shrink-0" />
+          )}
+        </div>
 
         <div className="flex flex-wrap items-center gap-3">
           {!clientId && (

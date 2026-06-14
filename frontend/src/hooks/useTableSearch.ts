@@ -1,11 +1,19 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useRef, useState, useEffect } from 'react';
 
 export function useTableSearch() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchTerm = searchParams.get('search') || '';
+  const [displayValue, setDisplayValue] = useState(searchTerm);
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setIsLoadingSearch(false);
+  }, [searchParams]);
 
   const buildUrl = (page: number, limit?: number) => {
     const params = new URLSearchParams(searchParams);
@@ -22,18 +30,29 @@ export function useTableSearch() {
   };
 
   const handleSearchChange = (value: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set('page', '1');
-    if (value) {
-      params.set('search', value);
-    } else {
-      params.delete('search');
+    setDisplayValue(value);
+    setIsLoadingSearch(true);
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
-    router.push(`?${params.toString()}`);
+
+    debounceTimerRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams);
+      params.set('page', '1');
+      if (value) {
+        params.set('search', value);
+      } else {
+        params.delete('search');
+      }
+      router.push(`?${params.toString()}`);
+      debounceTimerRef.current = null;
+    }, 1500);
   };
 
   return {
-    searchTerm,
+    searchTerm: displayValue,
+    isLoadingSearch,
     buildUrl,
     handleSearchChange,
   };

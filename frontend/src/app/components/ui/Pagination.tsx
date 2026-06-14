@@ -22,8 +22,10 @@ export default function Pagination({
   variant = 'black',
 }: PaginationProps) {
   const tCommon = useTranslations('common');
+  const page = Number(currentPage);
+  const pages = Number(totalPages);
 
-  if (totalPages <= 1) {
+  if (pages <= 1) {
     return null;
   }
 
@@ -34,15 +36,15 @@ export default function Pagination({
     <div className="mt-6 flex items-center justify-between">
       <div className="text-sm text-gray-600">
         {i18nKey === 'page'
-          ? `Page ${currentPage} of ${totalPages} (${totalCount} total items)`
-          : `Page ${currentPage} of ${totalPages} (${totalCount} total)`}
+          ? `Page ${page} of ${pages} (${totalCount} total items)`
+          : `Page ${page} of ${pages} (${totalCount} total)`}
       </div>
 
       <div className="flex gap-2">
         {/* Previous Button */}
-        {currentPage > 1 ? (
+        {page > 1 ? (
           <Link
-            href={buildHref(currentPage - 1)}
+            href={buildHref(page - 1)}
             className="flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -60,21 +62,21 @@ export default function Pagination({
 
         {/* Page Numbers */}
         <div className="flex gap-1">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+          {Array.from({ length: pages }, (_, i) => i + 1).map((pageNum) => {
             // Show: first, last, current, and adjacent pages
             const showPage =
-              page === 1 ||
-              page === totalPages ||
-              Math.abs(page - currentPage) <= 1;
+              pageNum === 1 ||
+              pageNum === pages ||
+              Math.abs(pageNum - page) <= 1;
 
             if (!showPage) {
               // Show '...' only once between groups
               if (
-                page === currentPage - 2 ||
-                page === currentPage + 2
+                pageNum === page - 2 ||
+                pageNum === page + 2
               ) {
                 return (
-                  <span key={page} className="px-2 py-1 text-gray-400">
+                  <span key={pageNum} className="px-2 py-1 text-gray-400">
                     ...
                   </span>
                 );
@@ -82,29 +84,29 @@ export default function Pagination({
               return null;
             }
 
-            return page === currentPage ? (
+            return pageNum === page ? (
               <span
-                key={page}
+                key={pageNum}
                 className={`px-4 py-1 ${bgColorClass} ${textColorClass} font-medium`}
               >
-                {page}
+                {pageNum}
               </span>
             ) : (
               <Link
-                key={page}
-                href={buildHref(page)}
+                key={pageNum}
+                href={buildHref(pageNum)}
                 className="px-4 py-1 bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
               >
-                {page}
+                {pageNum}
               </Link>
             );
           })}
         </div>
 
         {/* Next Button */}
-        {currentPage < totalPages ? (
+        {page < pages ? (
           <Link
-            href={buildHref(currentPage + 1)}
+            href={buildHref(page + 1)}
             className="flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
           >
             {tCommon('next')}

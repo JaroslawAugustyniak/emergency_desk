@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
-import { ArrowLeft, Copy, RotateCcw } from 'lucide-react';
+import { Copy, RotateCcw } from 'lucide-react';
 import { regenerateClientHash } from '@/lib/actions/clients';
+import BackButton  from '@/app/components/ui/BackButton'; 
 import Swal from 'sweetalert2';
 
 type Client = {
@@ -121,13 +122,7 @@ export default function ClientDetailPage() {
   if (isLoading || isLoadingData) {
     return (
       <div className="px-2 -mt-18">
-        <button
-          onClick={() => router.back()}
-          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {tCommon('back')}
-        </button>
+       <BackButton />
         <div className="text-center py-8">Ładowanie...</div>
       </div>
     );
@@ -135,30 +130,18 @@ export default function ClientDetailPage() {
 
   if (!client) {
     return (
-      <div className="px-2 -mt-18">
-        <button
-          onClick={() => router.back()}
-          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {tCommon('back')}
-        </button>
+      <div className="px-2">
+        <BackButton />
         <div className="text-center py-8 text-gray-500">{t('clientNotFound')}</div>
       </div>
     );
   }
 
   return (
-    <div className="px-2 -mt-18">
-      <button
-        onClick={() => router.back()}
-        className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {tCommon('back')}
-      </button>
+    <div className="px-2">
+     <BackButton/>
 
-      <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl">
+      <div className="mt-2 bg-white rounded-lg shadow-md p-6 max-w-2xl">
         <h1 className="text-3xl font-bold mb-6">
           c{client.id} - {client.name}
         </h1>
