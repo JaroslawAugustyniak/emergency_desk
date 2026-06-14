@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get('page') || '1';
     const per_page = searchParams.get('per_page') || '10';
     const search = searchParams.get('search') || '';
+    const sort_by = searchParams.get('sort_by') || '';
+    const sort_order = searchParams.get('sort_order') || '';
 
     const params = new URLSearchParams({
       page,
@@ -22,6 +24,14 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       params.append('search', search);
+    }
+
+    if (sort_by) {
+      params.append('sort_by', sort_by);
+    }
+
+    if (sort_order) {
+      params.append('sort_order', sort_order);
     }
 
     console.log('Fetching from:', `${API_URL}/api/clients?${params.toString()}`);

@@ -23,7 +23,7 @@ type PaginationData = {
 export default function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string; limit?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; limit?: string; sort_by?: string; sort_order?: string }>;
 }) {
   const t = useTranslations('clients');
   const { token, isLoading } = useSessionContext();
@@ -35,7 +35,7 @@ export default function ClientsPage({
     limit: 10,
   });
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [params, setParams] = useState({ page: 1, search: '', limit: 10 });
+  const [params, setParams] = useState<{ page: number; search: string; limit: number; sort_by: string; sort_order: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -44,12 +44,14 @@ export default function ClientsPage({
         page: Number(p.page) || 1,
         search: p.search || '',
         limit: Number(p.limit) || 10,
+        sort_by: p.sort_by || 'name',
+        sort_order: p.sort_order || 'asc',
       });
     })();
   }, [searchParams]);
 
   useEffect(() => {
-    if (!token || isLoading) return;
+    if (!token || isLoading || !params) return;
 
     const fetchClients = async () => {
       try {
@@ -61,6 +63,14 @@ export default function ClientsPage({
 
         if (params.search) {
           queryParams.append('search', params.search);
+        }
+
+        if (params.sort_by) {
+          queryParams.append('sort_by', params.sort_by);
+        }
+
+        if (params.sort_order) {
+          queryParams.append('sort_order', params.sort_order);
         }
 
         const res = await fetch(`/api/clients?${queryParams.toString()}`, {
@@ -104,7 +114,12 @@ export default function ClientsPage({
   return (
     <div className="px-2 -mt-18">
       <h1 className="text-2xl font-bold mb-8">{t('title')}</h1>
-      <ClientsTable clients={clients} pagination={pagination} />
+      <ClientsTable
+        clients={clients}
+        pagination={pagination}
+        sortBy={params?.sort_by}
+        sortOrder={params?.sort_order}
+      />
     </div>
   );
 }

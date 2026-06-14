@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Edit, Trash2, ArrowUpDown, Plus } from 'lucide-react';
 import Link from 'next/link';
 import UserFormModal from '@/app/components/users/UserFormModal';
@@ -29,18 +29,21 @@ type Pagination = {
 };
 
 type SortField = 'first_name' | 'email';
-type SortDirection = 'asc' | 'desc';
 
 export default function UsersTable({
   users,
   pagination,
   clientId,
   selectedRole = '',
+  sortBy = 'first_name',
+  sortOrder = 'asc',
 }: {
   users: User[];
   pagination: Pagination;
   clientId?: number;
   selectedRole?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }) {
   const router = useRouter();
   const t = useTranslations('users');
@@ -51,37 +54,15 @@ export default function UsersTable({
     deleteFunction: deleteUser,
     onSuccess: () => router.refresh(),
   });
-  const [sortField, setSortField] = useState<SortField>('first_name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const filteredAndSortedUsers = useMemo(() => {
-    let result = [...users];
-
-    result.sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc'
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-
-      return 0;
-    });
-
-    return result;
-  }, [users, sortField, sortDirection]);
-
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
+    const params = new URLSearchParams(window.location.search);
+    const newSortOrder = sortBy === field && sortOrder === 'asc' ? 'desc' : 'asc';
+    params.set('sort_by', field);
+    params.set('sort_order', newSortOrder);
+    router.push(`?${params.toString()}`);
   };
 
   const handleEdit = (user: User) => {
@@ -207,14 +188,14 @@ export default function UsersTable({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAndSortedUsers.length === 0 ? (
+            {users.length === 0 ? (
               <tr>
                 <td colSpan={clientId ? 3 : 4} className="px-6 py-8 text-center text-gray-500">
                   {t('noUsers')}
                 </td>
               </tr>
             ) : (
-              filteredAndSortedUsers.map((user) => (
+              users.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {user.client_id ? `c${user.client_id}/` : ''}u{user.id}
@@ -274,13 +255,13 @@ export default function UsersTable({
 
       {/* Mobile Card View */}
       <div className="lg:hidden">
-        {filteredAndSortedUsers.length === 0 ? (
+        {users.length === 0 ? (
           <div className="py-8 text-center text-gray-500">
             {t('noUsers')}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {filteredAndSortedUsers.map((user) => (
+            {users.map((user) => (
               <div
                 key={user.id}
                 className="bg-white border border-gray-200 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
@@ -330,7 +311,7 @@ export default function UsersTable({
 
       {/* Summary */}
       <div className="mt-4 text-sm text-gray-600">
-        {t('showing', { shown: filteredAndSortedUsers.length, total: users.length })}
+        {t('showing', { shown: users.length, total: users.length })}
       </div>
 
       {/* Pagination */}

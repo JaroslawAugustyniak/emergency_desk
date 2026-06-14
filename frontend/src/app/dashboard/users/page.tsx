@@ -24,7 +24,7 @@ type PaginationData = {
 export default function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string; limit?: string; clientId?: string; role?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; limit?: string; clientId?: string; role?: string; sort_by?: string; sort_order?: string }>;
 }) {
   const t = useTranslations('users');
   const { token, isLoading } = useSessionContext();
@@ -36,7 +36,7 @@ export default function UsersPage({
     limit: 10,
   });
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [params, setParams] = useState<{ page: number; search: string; limit: number; clientId: string; role: string } | null>(null);
+  const [params, setParams] = useState<{ page: number; search: string; limit: number; clientId: string; role: string; sort_by: string; sort_order: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -47,6 +47,8 @@ export default function UsersPage({
         limit: Number(p.limit) || 10,
         clientId: p.clientId || '',
         role: p.role || '',
+        sort_by: p.sort_by || 'first_name',
+        sort_order: p.sort_order || 'asc',
       });
     })();
   }, [searchParams]);
@@ -72,6 +74,14 @@ export default function UsersPage({
 
         if (params.role) {
           queryParams.append('role', params.role);
+        }
+
+        if (params.sort_by) {
+          queryParams.append('sort_by', params.sort_by);
+        }
+
+        if (params.sort_order) {
+          queryParams.append('sort_order', params.sort_order);
         }
 
         const res = await fetch(`/api/users?${queryParams.toString()}`, {
@@ -120,6 +130,8 @@ export default function UsersPage({
         pagination={pagination}
         clientId={params.clientId ? Number(params.clientId) : undefined}
         selectedRole={params.role}
+        sortBy={params.sort_by}
+        sortOrder={params.sort_order}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Edit, Trash2, ArrowUpDown, Plus, Users, Mail } from 'lucide-react';
 import Link from 'next/link';
 import ClientFormModal from '@/app/components/clients/ClientFormModal';
@@ -27,14 +27,17 @@ type Pagination = {
 };
 
 type SortField = 'name' | 'created_at';
-type SortDirection = 'asc' | 'desc';
 
 export default function ClientsTable({
   clients,
-  pagination
+  pagination,
+  sortBy = 'name',
+  sortOrder = 'asc',
 }: {
   clients: Client[];
   pagination: Pagination;
+  sortBy?: string;
+  sortOrder?: string;
 }) {
   const router = useRouter();
   const t = useTranslations('clients');
@@ -45,37 +48,15 @@ export default function ClientsTable({
     deleteFunction: deleteClient,
     onSuccess: () => router.refresh(),
   });
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
-  const filteredAndSortedClients = useMemo(() => {
-    let result = [...clients];
-
-    result.sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc'
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-
-      return 0;
-    });
-
-    return result;
-  }, [clients, sortField, sortDirection]);
-
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
+    const params = new URLSearchParams(window.location.search);
+    const newSortOrder = sortBy === field && sortOrder === 'asc' ? 'desc' : 'asc';
+    params.set('sort_by', field);
+    params.set('sort_order', newSortOrder);
+    router.push(`?${params.toString()}`);
   };
 
   const handleEdit = (client: Client) => {
@@ -182,14 +163,14 @@ export default function ClientsTable({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAndSortedClients.length === 0 ? (
+            {clients.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                   {t('noClients')}
                 </td>
               </tr>
             ) : (
-              filteredAndSortedClients.map((client) => (
+              clients.map((client) => (
                 <tr key={client.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     c{client.id}
@@ -269,13 +250,13 @@ export default function ClientsTable({
 
       {/* Mobile Card View */}
       <div className="lg:hidden">
-        {filteredAndSortedClients.length === 0 ? (
+        {clients.length === 0 ? (
           <div className="py-8 text-center text-gray-500">
             {t('noClients')}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {filteredAndSortedClients.map((client) => (
+            {clients.map((client) => (
               <div
                 key={client.id}
                 className="bg-white border border-gray-200 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
@@ -339,7 +320,7 @@ export default function ClientsTable({
 
       {/* Summary */}
       <div className="mt-4 text-sm text-gray-600">
-        {t('showing', { shown: filteredAndSortedClients.length, total: clients.length })}
+        {t('showing', { shown: clients.length, total: clients.length })}
       </div>
 
       {/* Pagination */}
