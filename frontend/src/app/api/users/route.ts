@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get('page') || '1';
     const per_page = searchParams.get('per_page') || '10';
     const search = searchParams.get('search') || '';
+    const role = searchParams.get('role') || '';
+    const client_id = searchParams.get('client_id') || '';
 
     const params = new URLSearchParams({
       page,
@@ -23,7 +25,13 @@ export async function GET(request: NextRequest) {
     if (search) {
       params.append('search', search);
     }
-
+    if (role) {
+      params.append('role', role);
+    }
+    if (client_id) {
+      params.append('client_id', client_id);
+    }
+    console.log(`${API_URL}/api/users?${params.toString()}`);
     const res = await fetch(`${API_URL}/api/users?${params.toString()}`, {
       method: 'GET',
       headers: {

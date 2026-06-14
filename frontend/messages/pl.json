@@ -205,8 +205,8 @@
     "lastName": "Nazwisko",
     "createdAt": "Data utworzenia",
     "client": "Przypisz użytkownika do klienta",
-
     "role": "Rola",
+    "allRoles": "Wszystkie",
     "email": "Email",
     "phone": "Telefon",
     "password": "Hasło",

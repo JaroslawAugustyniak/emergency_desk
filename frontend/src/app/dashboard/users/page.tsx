@@ -24,7 +24,7 @@ type PaginationData = {
 export default function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string; limit?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; limit?: string; clientId?: string; role?: string }>;
 }) {
   const t = useTranslations('users');
   const { token, isLoading } = useSessionContext();
@@ -36,7 +36,7 @@ export default function UsersPage({
     limit: 10,
   });
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [params, setParams] = useState({ page: 1, search: '', limit: 10 });
+  const [params, setParams] = useState<{ page: number; search: string; limit: number; clientId: string; role: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -45,12 +45,14 @@ export default function UsersPage({
         page: Number(p.page) || 1,
         search: p.search || '',
         limit: Number(p.limit) || 10,
+        clientId: p.clientId || '',
+        role: p.role || '',
       });
     })();
   }, [searchParams]);
 
   useEffect(() => {
-    if (!token || isLoading) return;
+    if (!token || isLoading || !params) return;
 
     const fetchUsers = async () => {
       try {
@@ -62,6 +64,14 @@ export default function UsersPage({
 
         if (params.search) {
           queryParams.append('search', params.search);
+        }
+
+        if (params.clientId) {
+          queryParams.append('client_id', params.clientId);
+        }
+
+        if (params.role) {
+          queryParams.append('role', params.role);
         }
 
         const res = await fetch(`/api/users?${queryParams.toString()}`, {
@@ -105,7 +115,12 @@ export default function UsersPage({
   return (
     <div className="px-2 -mt-18">
       <h1 className="text-2xl font-bold mb-8">{t('title')}</h1>
-      <UsersTable users={users} pagination={pagination} />
+      <UsersTable
+        users={users}
+        pagination={pagination}
+        clientId={params.clientId ? Number(params.clientId) : undefined}
+        selectedRole={params.role}
+      />
     </div>
   );
 }

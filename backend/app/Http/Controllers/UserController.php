@@ -17,6 +17,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'page' => 'integer|min:1',
             'per_page' => 'integer|min:1|max:100',
+            'client_id' => 'integer',
             'role' => 'string|in:admin,client,technician',
             'search' => 'string|max:255',
             'sort_by' => 'string|in:id,email,first_name,last_name,role,created_at',
@@ -26,6 +27,7 @@ class UserController extends Controller
         $page = $validated['page'] ?? 1;
         $perPage = $validated['per_page'] ?? 15;
         $role = $validated['role'] ?? null;
+        $client_id = $validated['client_id'] ?? null;
         $search = $validated['search'] ?? null;
         $sortBy = $validated['sort_by'] ?? 'created_at';
         $sortOrder = $validated['sort_order'] ?? 'desc';
@@ -34,6 +36,9 @@ class UserController extends Controller
 
         if ($role) {
             $query->where('role', $role);
+        }
+        if ($client_id) {
+            $query->where('client_id', $client_id);
         }
 
         if ($search) {

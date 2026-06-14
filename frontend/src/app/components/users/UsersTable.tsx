@@ -8,7 +8,7 @@ import Pagination from '@/app/components/ui/Pagination';
 import { deleteUser } from '@/lib/actions/users';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useTableSearch } from '@/hooks/useTableSearch';
+import { useTableSearch } from '@/hooks/useTableSearch';  
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 
 type User = {
@@ -33,10 +33,14 @@ type SortDirection = 'asc' | 'desc';
 
 export default function UsersTable({
   users,
-  pagination
+  pagination,
+  clientId,
+  selectedRole = '',
 }: {
   users: User[];
   pagination: Pagination;
+  clientId?: number;
+  selectedRole?: string;
 }) {
   const router = useRouter();
   const t = useTranslations('users');
@@ -90,6 +94,8 @@ export default function UsersTable({
     setIsModalOpen(true);
   };
 
+  const shouldUsePresets = clientId && selectedRole === 'client';
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedUser(null);
@@ -109,6 +115,31 @@ export default function UsersTable({
         />
 
         <div className="flex flex-wrap items-center gap-3">
+          {!clientId && (
+            <div className="flex items-center gap-2">
+              <label htmlFor="role" className="text-sm text-gray-600">
+                {t('role')}
+              </label>
+              <select
+                id="role"
+                value={selectedRole}
+                onChange={(e) => {
+                  const params = new URLSearchParams();
+                  if (e.target.value) {
+                    params.append('role', e.target.value);
+                  }
+                  router.push(`?${params.toString()}`);
+                }}
+                className="px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-sm"
+              >
+                <option value="">-- {t('allRoles')} --</option>
+                <option value="admin">Admin</option>
+                <option value="technician">Technician</option>
+                <option value="client">Client</option>
+              </select>
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             <label htmlFor="limit" className="text-sm text-gray-600">
               {tCommon('itemsPerPage')}
@@ -128,6 +159,7 @@ export default function UsersTable({
               <option value="100">100</option>
             </select>
           </div>
+
           <button
             onClick={handleAddNew}
             className="flex items-center gap-2 px-4 py-2 bg-black text-white hover:bg-gray-700 transition-colors whitespace-nowrap"
@@ -164,9 +196,11 @@ export default function UsersTable({
                   <ArrowUpDown className="w-4 h-4" />
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('roleColumn')}
-              </th>
+              {!clientId && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('roleColumn')}
+                </th>
+              )}
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {tCommon('actions')}
               </th>
@@ -175,7 +209,7 @@ export default function UsersTable({
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredAndSortedUsers.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={clientId ? 3 : 4} className="px-6 py-8 text-center text-gray-500">
                   {t('noUsers')}
                 </td>
               </tr>
@@ -196,11 +230,13 @@ export default function UsersTable({
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {user.email}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    <span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium">
-                      {user.role}
-                    </span>
-                  </td>
+                  {!clientId && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium">
+                        {user.role}
+                      </span>
+                    </td>
+                  )}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-2">
                       <div className="relative group">
@@ -310,6 +346,8 @@ export default function UsersTable({
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         user={selectedUser}
+        presetRole={shouldUsePresets ? 'client' : undefined}
+        presetClientId={shouldUsePresets ? clientId : undefined}
       />
     </div>
   );
