@@ -14,13 +14,20 @@ class ClientController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'page' => 'integer|min:1',
-            'per_page' => 'integer|min:1|max:100',
-            'search' => 'string|max:255',
-            'sort_by' => 'string|in:id,name,created_at',
-            'sort_order' => 'string|in:asc,desc',
-        ]);
+        try {
+            $validated = $request->validate([
+                'page' => 'integer|min:1',
+                'per_page' => 'integer|min:1|max:100',
+                'search' => 'string|max:255',
+                'sort_by' => 'string|in:id,name,created_at',
+                'sort_order' => 'string|in:asc,desc',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
 
         $page = $validated['page'] ?? 1;
         $perPage = $validated['per_page'] ?? 15;
@@ -77,7 +84,7 @@ class ClientController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
-                'errors' => $e->errors(),
+                'details' => $e->errors(),
             ], 422);
         }
 
@@ -97,9 +104,16 @@ class ClientController extends Controller
      */
     public function update(Request $request, Client $client): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'string|max:255',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'string|max:255',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
 
         $updateData = array_filter($validated, fn($value) => $value !== null);
 

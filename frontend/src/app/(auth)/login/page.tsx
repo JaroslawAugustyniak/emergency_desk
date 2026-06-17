@@ -16,7 +16,13 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
-  const { setToken } = useSessionContext();
+  const { token, isLoading: isSessionLoading } = useSessionContext();
+
+  useEffect(() => {
+    if (!isSessionLoading && token) {
+      router.push('/dashboard');
+    }
+  }, [token, isSessionLoading, router]);
 
   useEffect(() => {
     if (reset === 'success') {

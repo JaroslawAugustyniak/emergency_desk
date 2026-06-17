@@ -3,21 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class LocationController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'page' => 'integer|min:1',
-            'per_page' => 'integer|min:1|max:100',
-            'search' => 'string|max:255',
-            'client_id' => 'integer|exists:clients,id',
-            'sort_by' => 'in:id,name,address,city,created_at',
-            'sort_order' => 'in:asc,desc',
-        ]);
+        try {
+            $validated = $request->validate([
+                'page' => 'integer|min:1',
+                'per_page' => 'integer|min:1|max:100',
+                'search' => 'string|max:255',
+                'client_id' => 'integer|exists:clients,id',
+                'sort_by' => 'in:id,name,address,city,created_at',
+                'sort_order' => 'in:asc,desc',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
 
         $page = $validated['page'] ?? 1;
         $perPage = $validated['per_page'] ?? 15;
@@ -57,54 +65,72 @@ class LocationController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'number' => 'required|string|max:50',
-            'zip' => 'required|string|max:20',
-            'city' => 'required|string|max:100',
-            'country' => 'nullable|string|max:2',
-            'client_id' => 'required|integer|exists:clients,id',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'address' => 'required|string|max:255',
+                'number' => 'required|string|max:50',
+                'zip' => 'required|string|max:20',
+                'city' => 'required|string|max:100',
+                'country' => 'nullable|string|max:2',
+                'client_id' => 'required|integer|exists:clients,id',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
 
         $location = Location::create($validated);
 
         return response()->json([
+            'message' => 'Location created successfully',
             'data' => $location,
         ], 201);
     }
 
-    public function show(Location $location)
+    public function show(Location $location): JsonResponse
     {
         return response()->json([
             'data' => $location,
         ]);
     }
 
-    public function update(Request $request, Location $location)
+    public function update(Request $request, Location $location): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'address' => 'sometimes|required|string|max:255',
-            'number' => 'sometimes|required|string|max:50',
-            'zip' => 'sometimes|required|string|max:20',
-            'city' => 'sometimes|required|string|max:100',
-            'country' => 'nullable|string|max:2',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'sometimes|required|string|max:255',
+                'address' => 'sometimes|required|string|max:255',
+                'number' => 'sometimes|required|string|max:50',
+                'zip' => 'sometimes|required|string|max:20',
+                'city' => 'sometimes|required|string|max:100',
+                'country' => 'nullable|string|max:2',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
 
         $location->update($validated);
 
         return response()->json([
+            'message' => 'Location updated successfully',
             'data' => $location,
         ]);
     }
 
-    public function destroy(Location $location)
+    public function destroy(Location $location): JsonResponse
     {
         $location->delete();
 
-        return response()->json(null, 204);
+        return response()->json([
+            'message' => 'Location deleted successfully',
+        ]);
     }
 }

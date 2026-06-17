@@ -76,10 +76,6 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/clients', [ClientController::class, 'index']);
-    Route::get('/locations', [LocationController::class, 'index']);
-});
 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::prefix('users')->group(function () {
@@ -93,6 +89,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     });
 
     Route::prefix('clients')->group(function () {
+        Route::get('/', [ClientController::class, 'index']);
         Route::post('/', [ClientController::class, 'store']);
         Route::get('/{client}', [ClientController::class, 'show']);
         Route::put('/{client}', [ClientController::class, 'update']);
@@ -101,6 +98,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     });
 
     Route::prefix('locations')->group(function () {
+        Route::get('/', [LocationController::class, 'index']);
         Route::post('/', [LocationController::class, 'store']);
         Route::get('/{location}', [LocationController::class, 'show']);
         Route::put('/{location}', [LocationController::class, 'update']);

@@ -1,3 +1,5 @@
+import { apiClient } from '@/lib/api/apiClient';
+
 export type CreateLocationData = {
   name: string;
   address: string;
@@ -31,22 +33,8 @@ type Location = {
 };
 
 export async function createLocation(data: CreateLocationData, token: string): Promise<Location> {
-  const response = await fetch('/api/locations', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to create location');
-  }
-
-  const result = await response.json();
-  return result.data;
+  apiClient.setToken(token);
+  return apiClient.post('/locations', data);
 }
 
 export async function updateLocation(
@@ -54,34 +42,11 @@ export async function updateLocation(
   data: UpdateLocationData,
   token: string
 ): Promise<Location> {
-  const response = await fetch(`/api/locations/${locationId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to update location');
-  }
-
-  const result = await response.json();
-  return result.data;
+  apiClient.setToken(token);
+  return apiClient.put(`/locations/${locationId}`, data);
 }
 
 export async function deleteLocation(locationId: number, token: string): Promise<void> {
-  const response = await fetch(`/api/locations/${locationId}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to delete location');
-  }
+  apiClient.setToken(token);
+  return apiClient.delete(`/locations/${locationId}`);
 }

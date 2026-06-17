@@ -47,7 +47,6 @@ export default function UserFormModal({
     client_id: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [clients, setClients] = useState<Array<{ id: number; name: string }>>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(false);
 
@@ -84,7 +83,6 @@ export default function UserFormModal({
         client_id: presetClientId ? String(presetClientId) : '',
       });
     }
-    setError(null);
   }, [user, isOpen, presetRole, presetClientId]);
 
   useEffect(() => {
@@ -93,21 +91,17 @@ export default function UserFormModal({
     const fetchClients = async () => {
       try {
         setIsLoadingClients(true);
-        console.log('Fetching clients for role:', formData.role);
         const res = await fetch('/api/clients?per_page=100', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         });
 
-        console.log('Clients response status:', res.status);
-        const data = await res.json();
-        console.log('Clients response data:', data);
-
         if (!res.ok) {
-          throw new Error(data.error || 'Failed to fetch clients');
+          throw new Error('Failed to fetch clients');
         }
 
+        const data = await res.json();
         setClients(data.data || []);
       } catch (err) {
         console.error('Error fetching clients:', err);
@@ -123,23 +117,18 @@ export default function UserFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
 
     if (!token) {
-      setError('Not authenticated');
       setIsSubmitting(false);
       return;
     }
 
-    // Validate password
     if (!isEditMode && !formData.password) {
-      setError(t('passwordRequired'));
       setIsSubmitting(false);
       return;
     }
 
-    if (formData.password && passwordStrength.score < 3) {
-      setError(t('passwordTooWeak'));
+    if (formData.password && (formData.password.length < 8 || passwordStrength.score < 3)) {
       setIsSubmitting(false);
       return;
     }
@@ -177,8 +166,6 @@ export default function UserFormModal({
       router.refresh();
       onSuccess?.();
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('savingError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -424,12 +411,6 @@ export default function UserFormModal({
           </div>
         )}
 
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm whitespace-pre-wrap">
-            {error}
-          </div>
-        )}
-
         <div className="flex gap-3 pt-4">
           <button
             type="button"
@@ -444,7 +425,7 @@ export default function UserFormModal({
             disabled={
               isSubmitting ||
               (!isEditMode && !formData.password) ||
-              (!!formData.password && passwordStrength.score < 3)
+              (!!formData.password && (formData.password.length < 8 || passwordStrength.score < 3))
             }
             className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >

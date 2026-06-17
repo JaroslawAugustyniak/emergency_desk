@@ -22,7 +22,7 @@ class ResetPasswordMail extends Mailable
     {
         return new Envelope(
             to: $this->user->email,
-            subject: 'Reset Your Password',
+            subject: 'Resetowanie hasła',
         );
     }
 

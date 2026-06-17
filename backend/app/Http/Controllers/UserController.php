@@ -14,15 +14,22 @@ class UserController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'page' => 'integer|min:1',
-            'per_page' => 'integer|min:1|max:100',
-            'client_id' => 'integer',
-            'role' => 'string|in:admin,client,technician',
-            'search' => 'string|max:255',
-            'sort_by' => 'string|in:id,email,first_name,last_name,role,created_at',
-            'sort_order' => 'string|in:asc,desc',
-        ]);
+        try {
+            $validated = $request->validate([
+                'page' => 'integer|min:1',
+                'per_page' => 'integer|min:1|max:100',
+                'client_id' => 'integer',
+                'role' => 'string|in:admin,client,technician',
+                'search' => 'string|max:255',
+                'sort_by' => 'string|in:id,email,first_name,last_name,role,created_at',
+                'sort_order' => 'string|in:asc,desc',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
 
         $page = $validated['page'] ?? 1;
         $perPage = $validated['per_page'] ?? 15;
@@ -97,7 +104,7 @@ class UserController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
-                'errors' => $e->errors(),
+                'details' => $e->errors(),
             ], 422);
         }
 
@@ -123,19 +130,35 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): JsonResponse
     {
-        $validated = $request->validate([
-            'email' => ['email', Rule::unique('users')->ignore($user->id)],
-            'role' => 'in:admin,client,technician',
-            'first_name' => 'string|max:100',
-            'last_name' => 'string|max:100',
-            'phone' => 'nullable|string|max:20',
-            'password' => 'nullable|min:8',
-            'client_id' => 'nullable|exists:clients,id',
-        ]);
+        try {
+            $validated = $request->validate([
+                'email' => ['email', Rule::unique('users')->ignore($user->id)],
+                'role' => 'in:admin,client,technician',
+                'first_name' => 'string|max:100',
+                'last_name' => 'string|max:100',
+                'phone' => 'nullable|string|max:20',
+                'password' => 'nullable|min:8',
+                'client_id' => 'nullable|exists:clients,id',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
 
         $updateData = array_filter($validated, fn($value) => $value !== null);
 
-        $user->update($updateData);
+        // Handle password separately to ensure mutator is triggered
+        if (isset($updateData['password'])) {
+            $password = $updateData['password'];
+            unset($updateData['password']);
+            $user->update($updateData);
+            $user->password = $password;
+            $user->save();
+        } else {
+            $user->update($updateData);
+        }
 
         return response()->json([
             'message' => 'User updated successfully',

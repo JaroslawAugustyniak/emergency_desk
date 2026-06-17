@@ -22,7 +22,7 @@ class VerifyEmailMail extends Mailable
     {
         return new Envelope(
             to: $this->user->email,
-            subject: 'Verify Your Email Address',
+            subject: 'Twój kod weryfikacji dwuetapowej (2FA)',
         );
     }
 

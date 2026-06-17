@@ -7,6 +7,8 @@ import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { deleteLocation } from '@/lib/actions/locations';
 import Swal from 'sweetalert2';
+
+import BackButton  from '@/app/components/ui/BackButton';
 import LocationFormModal from '@/app/components/locations/LocationFormModal';
 
 type Location = {
@@ -117,14 +119,8 @@ export default function LocationDetailPage() {
 
   if (isLoading || isLoadingData) {
     return (
-      <div className="px-2 -mt-18">
-        <button
-          onClick={() => router.back()}
-          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {tCommon('back')}
-        </button>
+      <div className="px-2">
+        <BackButton />
         <div className="text-center py-8">Ładowanie...</div>
       </div>
     );
@@ -132,30 +128,17 @@ export default function LocationDetailPage() {
 
   if (!location) {
     return (
-      <div className="px-2 -mt-18">
-        <button
-          onClick={() => router.back()}
-          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {tCommon('back')}
-        </button>
+      <div className="px-2">
+        <BackButton />
         <div className="text-center py-8 text-gray-500">{t('locationNotFound')}</div>
       </div>
     );
   }
 
   return (
-    <div className="px-2 -mt-18">
-      <button
-        onClick={() => router.back()}
-        className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {tCommon('back')}
-      </button>
-
-      <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl">
+    <div className="px-2">
+      <BackButton />
+      <div className="bg-white mt-2 rounded-lg shadow-md p-6 max-w-2xl">
         <div className="flex items-start justify-between mb-6">
           <h1 className="text-3xl font-bold">
             {location.name}
