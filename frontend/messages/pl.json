@@ -22,8 +22,10 @@
     "back": "Wróć",
     "copy": "Kopiuj",
     "updated": "Zaktualizowano",
-    "selectOption": "Wybierz", 
-    "idColumn": "ID"
+    "selectOption": "Wybierz",
+    "idColumn": "ID",
+    "error": "Błąd",
+    "confirmDelete": "Potwierdzić usunięcie?"
   },
       
   "auth": {
@@ -232,6 +234,26 @@
     "updated": "Punkt zaktualizowany!",
     "updatedMessage": "Punkt został zaktualizowany pomyślnie.",
     "locationNotFound": "Punkt nie został znaleziony",
+    "savingError": "Błąd podczas zapisywania"
+  },
+  "serviceCategories": {
+    "title": "Kategorie usług",
+    "addNew": "Dodaj nową kategorię",
+    "edit": "Edytuj kategorię",
+    "nameColumn": "Nazwa",
+    "colorColumn": "Kolor",
+    "noCategories": "Brak kategorii do wyświetlenia",
+    "enterName": "np. Naprawa",
+    "created": "Kategoria utworzona!",
+    "createdMessage": "Kategoria została dodana pomyślnie.",
+    "updated": "Kategoria zaktualizowana!",
+    "updatedMessage": "Kategoria została zaktualizowana pomyślnie.",
+    "deleted": "Kategoria usunięta!",
+    "deletedMessage": "Kategoria została usunięta.",
+    "deleteConfirm": "Czy na pewno chcesz usunąć kategorię",
+    "nameRequired": "Nazwa kategorii jest wymagana",
+    "fetchError": "Błąd podczas pobierania kategorii",
+    "deleteError": "Błąd podczas usuwania kategorii",
     "savingError": "Błąd podczas zapisywania"
   },
   "users": {

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\ServiceCategoryController;
 use App\Mail\VerifyEmailMail;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
@@ -103,5 +104,13 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/{location}', [LocationController::class, 'show']);
         Route::put('/{location}', [LocationController::class, 'update']);
         Route::delete('/{location}', [LocationController::class, 'destroy']);
+    });
+
+    Route::prefix('service-categories')->group(function () {
+        Route::get('/', [ServiceCategoryController::class, 'index']);
+        Route::post('/', [ServiceCategoryController::class, 'store']);
+        Route::get('/{categoryId}', [ServiceCategoryController::class, 'show']);
+        Route::put('/{categoryId}', [ServiceCategoryController::class, 'update']);
+        Route::delete('/{categoryId}', [ServiceCategoryController::class, 'destroy']);
     });
 });

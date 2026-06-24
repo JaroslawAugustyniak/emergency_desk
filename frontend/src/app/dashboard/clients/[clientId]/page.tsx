@@ -7,8 +7,9 @@ import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { Copy, RotateCcw, MapPin, Users } from 'lucide-react';
 import Link from 'next/link';
 import { regenerateClientHash } from '@/lib/actions/clients';
-import BackButton  from '@/app/components/ui/BackButton'; 
+import BackButton  from '@/app/components/ui/BackButton';
 import Swal from 'sweetalert2';
+import ServiceCategoriesSection from '@/app/components/serviceCategories/ServiceCategoriesSection';
 
 type Client = {
   id: number;
@@ -213,6 +214,11 @@ export default function ClientDetailPage() {
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Service Categories Section */}
+      <div className="mt-6 max-w-2xl">
+        <ServiceCategoriesSection clientId={Number(clientId)} />
       </div>
     </div>
   );

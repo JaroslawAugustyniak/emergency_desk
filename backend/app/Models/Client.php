@@ -47,4 +47,9 @@ class Client extends Model
     {
         return $this->hasMany(Location::class);
     }
+
+    public function serviceCategories()
+    {
+        return $this->hasMany(ServiceCategory::class);
+    }
 }
