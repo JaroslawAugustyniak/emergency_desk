@@ -210,6 +210,7 @@
     "cityColumn": "Miasto",
     "countryColumn": "Kraj",
     "createdColumn": "Utworzono",
+    "userColumn": "Zarządca",
     "noLocations": "Brak punktów do wyświetlenia",
     "showing": "Wyświetlono {shown} z {total} punktów na stronie",
     "deleteConfirm": "Czy na pewno?",

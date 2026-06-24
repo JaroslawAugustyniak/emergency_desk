@@ -18,11 +18,18 @@ class Location extends Model
         'zip',
         'city',
         'country',
+        'nip',
         'client_id',
+        'user_id',
     ];
 
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

@@ -19,7 +19,9 @@ type Location = {
   zip: string;
   city: string;
   country: string;
+  nip: string;
   client_id: number;
+  user_id: number;
   created_at: string;
   updated_at: string;
 };

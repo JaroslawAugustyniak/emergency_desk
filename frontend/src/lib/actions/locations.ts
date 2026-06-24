@@ -7,7 +7,9 @@ export type CreateLocationData = {
   zip: string;
   city: string;
   country?: string;
+  nip?: string;
   client_id: number;
+  user_id?: number | null;
 };
 
 export type UpdateLocationData = {
@@ -17,6 +19,8 @@ export type UpdateLocationData = {
   zip?: string;
   city?: string;
   country?: string;
+  nip?: string;
+  user_id?: number | null;
 };
 
 type Location = {
@@ -27,7 +31,9 @@ type Location = {
   zip: string;
   city: string;
   country: string;
+  nip?: string;
   client_id: number;
+  user_id?: number | null;
   created_at: string;
   updated_at: string;
 };

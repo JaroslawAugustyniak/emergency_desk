@@ -75,7 +75,9 @@ class LocationController extends Controller
                 'zip' => 'required|string|max:20',
                 'city' => 'required|string|max:100',
                 'country' => 'nullable|string|max:2',
+                'nip' => 'nullable|string|max:20',
                 'client_id' => 'required|integer|exists:clients,id',
+                'user_id' => 'nullable|integer|exists:users,id',
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -109,6 +111,8 @@ class LocationController extends Controller
                 'zip' => 'sometimes|required|string|max:20',
                 'city' => 'sometimes|required|string|max:100',
                 'country' => 'nullable|string|max:2',
+                'nip' => 'nullable|string|max:20',
+                'user_id' => 'nullable|integer|exists:users,id',
             ]);
         } catch (ValidationException $e) {
             return response()->json([
