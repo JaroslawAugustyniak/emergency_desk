@@ -83,13 +83,7 @@ export default function UserDetailPage() {
       {/* Header with back button */}
       <div className="flex items-center justify-between">
           <BackButton />
-        <div>
-          
 
-          <h1 className="text-3xl font-bold text-gray-900">
-            {user.first_name} {user.last_name}
-          </h1>
-        </div>
         <UserDetailActions user={user} />
       </div>
 

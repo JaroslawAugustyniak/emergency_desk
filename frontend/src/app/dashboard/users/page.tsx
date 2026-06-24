@@ -91,6 +91,7 @@ export default function UsersPage({
         });
 
         if (!res.ok) {
+          console.log(res);
           throw new Error('Failed to fetch users');
         }
 

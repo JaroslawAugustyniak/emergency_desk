@@ -7,46 +7,49 @@ import { useTranslations } from 'next-intl';
 
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 
-export default function ClientDetailLayout({
+export default function LocationDetailLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const params = useParams();
-  const clientId = Array.isArray(params.clientId) ? params.clientId[0] : params.clientId;
-  const [clientName, setClientName] = useState<string>('');
+  const locationId = params.locationId as string;
+
   const { token } = useSessionContext();
+  const [locationName, setLocationName] = useState<string>('');
 
   useEffect(() => {
-    if (!token || !clientId) return;
+    if (!token || !locationId) return;
 
-    const fetchClient = async () => {
+    const fetchLocation = async () => {
       try {
-        const res = await fetch(`/api/clients/${clientId}`, {
+        const res = await fetch(`/api/locations/${locationId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         });
 
         if (!res.ok) {
-          throw new Error('Failed to fetch client');
+          throw new Error('Failed to fetch location');
         }
 
         const data = await res.json();
-        setClientName(data.data.name);
+        
+        setLocationName(`c${data.data.client_id}p${data.data.id} - ${data.data.name}`);
+
       } catch (error) {
-        console.error('Error fetching client:', error);
+        console.error('Error fetching location:', error);
         
       } 
     };
 
-    fetchClient();
-  }, [token, clientId]);
+    fetchLocation();
+  }, [token, locationId]);
 
-  const t = useTranslations('clients');
+  const t = useTranslations('locations');
 
-  useSetPageTitle(
-    clientName ? `c${clientId} - ${clientName}` : ''
+  useSetPageTitle( 
+    locationName ? `${locationName}` : ''
   );
 
   return <>{children}</>;
