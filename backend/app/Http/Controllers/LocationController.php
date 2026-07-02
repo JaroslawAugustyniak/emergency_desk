@@ -52,7 +52,7 @@ class LocationController extends Controller
 
         $query->orderBy($sortBy, $sortOrder);
 
-        $paginated = $query->paginate($perPage, ['*'], 'page', $page);
+        $paginated = $query->with('user')->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'data' => $paginated->items(),
@@ -87,6 +87,7 @@ class LocationController extends Controller
         }
 
         $location = Location::create($validated);
+        $location->load('user');
 
         return response()->json([
             'message' => 'Location created successfully',
@@ -96,6 +97,7 @@ class LocationController extends Controller
 
     public function show(Location $location): JsonResponse
     {
+        $location->load('user');
         return response()->json([
             'data' => $location,
         ]);
@@ -122,6 +124,7 @@ class LocationController extends Controller
         }
 
         $location->update($validated);
+        $location->load('user');
 
         return response()->json([
             'message' => 'Location updated successfully',
