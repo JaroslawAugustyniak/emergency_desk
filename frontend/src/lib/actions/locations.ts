@@ -23,7 +23,7 @@ export type UpdateLocationData = {
   user_id?: number | null;
 };
 
-type Location = {
+export type Location = {
   id: number;
   name: string;
   address: string;
@@ -34,6 +34,11 @@ type Location = {
   nip?: string;
   client_id: number;
   user_id?: number | null;
+  user?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+  } | null;
   created_at: string;
   updated_at: string;
 };

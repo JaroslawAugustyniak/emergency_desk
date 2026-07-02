@@ -207,6 +207,7 @@
     "search": "Szukaj punktu...",
     "nameColumn": "Nazwa",
     "addressColumn": "Adres",
+    "nipColumn": "NIP",
     "numberColumn": "Numer",
     "zipColumn": "Kod pocztowy",
     "cityColumn": "Miasto",

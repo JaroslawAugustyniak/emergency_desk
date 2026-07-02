@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import ClientsTable from '@/app/components/clients/ClientsTable';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
+import { getClients } from '@/lib/actions/clients';
 
 type Client = {
   id: number;
@@ -56,34 +57,16 @@ export default function ClientsPage({
     const fetchClients = async () => {
       try {
         setIsLoadingData(true);
-        const queryParams = new URLSearchParams({
-          page: String(params.page),
-          per_page: String(params.limit),
-        });
-
-        if (params.search) {
-          queryParams.append('search', params.search);
-        }
-
-        if (params.sort_by) {
-          queryParams.append('sort_by', params.sort_by);
-        }
-
-        if (params.sort_order) {
-          queryParams.append('sort_order', params.sort_order);
-        }
-
-        const res = await fetch(`/api/clients?${queryParams.toString()}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
+        const data = await getClients(
+          {
+            page: params.page,
+            per_page: params.limit,
+            search: params.search || undefined,
+            sort_by: params.sort_by as 'id' | 'name' | 'created_at' | undefined,
+            sort_order: params.sort_order as 'asc' | 'desc' | undefined,
           },
-        });
-
-        if (!res.ok) {
-          throw new Error('Failed to fetch clients');
-        }
-
-        const data = await res.json();
+          token
+        );
 
         setClients(data.data || []);
         setPagination({

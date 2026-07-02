@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { createLocation, updateLocation } from '@/lib/actions/locations';
+import { getClients } from '@/lib/actions/clients';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 
@@ -101,15 +102,8 @@ export default function LocationFormModal({
       if (!presetClientId) {
         const fetchClients = async () => {
           try {
-            const res = await fetch('/api/clients?per_page=100', {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-              },
-            });
-            if (res.ok) {
-              const data = await res.json();
-              setClients(data.data || []);
-            }
+            const data = await getClients({ per_page: 100 }, token);
+            setClients(data.data || []);
           } catch (error) {
             console.error('Error fetching clients:', error);
           }
@@ -241,8 +235,8 @@ export default function LocationFormModal({
               required
             />
           </div>
-<div className="grid grid-cols-2 gap-3">
-          <div>
+          <div className="grid grid-cols-4 gap-3">
+          <div className="col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {t('addressColumn')} *
             </label>

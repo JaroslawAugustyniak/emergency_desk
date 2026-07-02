@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { Copy, RotateCcw, MapPin, Users } from 'lucide-react';
 import Link from 'next/link';
-import { regenerateClientHash } from '@/lib/actions/clients';
+import { regenerateClientHash, getClient } from '@/lib/actions/clients';
 import BackButton  from '@/app/components/ui/BackButton';
 import Swal from 'sweetalert2';
 import ServiceCategoriesSection from '@/app/components/serviceCategories/ServiceCategoriesSection';
@@ -38,17 +38,10 @@ export default function ClientDetailPage() {
     const fetchClient = async () => {
       try {
         setIsLoadingData(true);
-        const res = await fetch(`/api/clients/${clientId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+        const data = await getClient(Number(clientId), token);
 
-        if (!res.ok) {
-          throw new Error('Failed to fetch client');
-        }
+        console.log(data);
 
-        const data = await res.json();
         setClient(data.data);
       } catch (error) {
         console.error('Error fetching client:', error);

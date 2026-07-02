@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Modal from '@/app/components/ui/Modal';
 import { createUser, updateUser } from '@/lib/actions/users';
+import { getClients } from '@/lib/actions/clients';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
@@ -91,17 +92,7 @@ export default function UserFormModal({
     const fetchClients = async () => {
       try {
         setIsLoadingClients(true);
-        const res = await fetch('/api/clients?per_page=100', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error('Failed to fetch clients');
-        }
-
-        const data = await res.json();
+        const data = await getClients({ per_page: 100 }, token);
         setClients(data.data || []);
       } catch (err) {
         console.error('Error fetching clients:', err);

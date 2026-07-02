@@ -4,27 +4,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
-import { deleteLocation } from '@/lib/actions/locations';
+import { Building2, MapPinHouse, Edit, Trash2, User } from 'lucide-react';
+import { deleteLocation, type Location } from '@/lib/actions/locations';
 import Swal from 'sweetalert2';
 
 import BackButton  from '@/app/components/ui/BackButton';
 import LocationFormModal from '@/app/components/locations/LocationFormModal';
-
-type Location = {
-  id: number;
-  name: string;
-  address: string;
-  number: string;
-  zip: string;
-  city: string;
-  country: string;
-  nip: string;
-  client_id: number;
-  user_id: number;
-  created_at: string;
-  updated_at: string;
-};
 
 export default function LocationDetailPage() {
   const params = useParams();
@@ -163,21 +148,43 @@ export default function LocationDetailPage() {
           </div>
         </div>
 
-        <div className="space-y-6">
-          {/* Address Section */}
-          <div>
-            <h2 className="text-lg font-semibold mb-3">{t('addressColumn')}</h2>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-900 font-medium">
-                {location.address} {location.number}
-              </p>
-              <p className="text-gray-600">
-                {location.zip} {location.city}
-              </p>
-              <p className="text-gray-500 text-sm mt-2">
-                {location.country.toUpperCase()}
-              </p>
+        <div className="space-y-6 ">
+            {/* Address Section */}
+            <div className="grid grid-cols-2">
+              <div>
+              <h2 className="text-lg font-semibold mb-3 flex gap-1.5"><MapPinHouse /> {t('addressColumn')}</h2>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-gray-900 font-medium">
+                  {location.address} {location.number}
+                </p>
+                <p className="text-gray-600">
+                  {location.zip} {location.city}
+                </p>
+                <p className="text-gray-500 text-sm mt-2">
+                  {location.country.toUpperCase()}
+                </p> 
+              </div>
             </div>
+
+            {/* Address Section */}
+            <div>
+              <h2 className="text-lg font-semibold mb-3 flex gap-1.5"><Building2 /> {t('nipColumn')}</h2>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-gray-900 font-medium">
+                  {location.nip}
+                </p>
+              </div>
+            </div>
+            
+            <div>
+              <h2 className="text-lg font-semibold mb-3 flex gap-1.5"><User /> {t('userColumn')}</h2>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-gray-900 font-medium">
+                  {location.user ? `${location.user.first_name} ${location.user.last_name}` : '-'}
+                </p>
+              </div>
+            </div>
+
           </div>
 
           {/* Metadata */}

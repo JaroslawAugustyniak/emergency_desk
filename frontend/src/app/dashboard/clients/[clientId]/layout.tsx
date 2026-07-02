@@ -6,6 +6,7 @@ import { useSetPageTitle } from '@/hooks/useSetPageTitle';
 import { useTranslations } from 'next-intl';
 
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
+import { getClient } from '@/lib/actions/clients';
 
 export default function ClientDetailLayout({
   children,
@@ -22,22 +23,11 @@ export default function ClientDetailLayout({
 
     const fetchClient = async () => {
       try {
-        const res = await fetch(`/api/clients/${clientId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error('Failed to fetch client');
-        }
-
-        const data = await res.json();
+        const data = await getClient(Number(clientId), token);
         setClientName(data.data.name);
       } catch (error) {
         console.error('Error fetching client:', error);
-        
-      } 
+      }
     };
 
     fetchClient();
