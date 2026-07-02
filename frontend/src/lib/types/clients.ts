@@ -2,16 +2,22 @@ export type Client = {
   id: number;
   name: string;
   hash: string;
+  has_internal_no: boolean;
+  internal_no?: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export type CreateClientData = {
   name: string;
+  has_internal_no?: boolean;
+  internal_no?: string | null;
 };
 
 export type UpdateClientData = {
   name?: string;
+  has_internal_no?: boolean;
+  internal_no?: string | null;
 };
 
 export type ClientFilters = {

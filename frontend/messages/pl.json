@@ -186,6 +186,7 @@
     "linkSentError": "Błąd podczas wysyłania zaproszenia",
     
     "hashLabel": "Identyfikator (Hash)",
+    "internalNoLabel": "Numer wewnętrzny",
     "regenerateHashCheckbox": "Wygeneruj nowy hash",
     "regenerateHashConfirm": "Czy na pewno chcesz wygenerować nowy hash?",
     "regenerateHashMessage": "Stary hash nie będzie już działać. Stary identyfikator może być nadal używany w systemu.",
@@ -198,7 +199,10 @@
     "hasProjectsMessage": "Ten klient ma przypisane projekty. Usuń wszystkie projekty przed usunięciem klienta.",
     "savingError": "Błąd podczas zapisywania",
     "viewLocations": "Wyświetl punkty",
-    "viewUsers": "Wyświetl użytkowników"
+    "viewUsers": "Wyświetl użytkowników",
+    "hasInternalNo": "Posiada numer wewnętrzny",
+    "internalNo": "Numer wewnętrzny",
+    "enterInternalNo": "Wprowadź numer wewnętrzny"
   },
   "locations": {
     "title": "Punkty klienta",

@@ -14,6 +14,8 @@ class Client extends Model
     protected $fillable = [
         'name',
         'hash',
+        'has_internal_no',
+        'internal_no',
     ];
 
     protected static function boot()

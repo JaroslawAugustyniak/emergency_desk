@@ -80,6 +80,8 @@ class ClientController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
+                'has_internal_no' => 'boolean',
+                'internal_no' => 'nullable|string|max:100',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -91,6 +93,8 @@ class ClientController extends Controller
         $client = Client::create([
             'name' => $validated['name'],
             'hash' => Client::generateHash(),
+            'has_internal_no' => $validated['has_internal_no'] ?? false,
+            'internal_no' => $validated['internal_no'] ?? null,
         ]);
 
         return response()->json([
@@ -107,6 +111,8 @@ class ClientController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'string|max:255',
+                'has_internal_no' => 'boolean',
+                'internal_no' => 'nullable|string|max:100',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -159,6 +165,8 @@ class ClientController extends Controller
             'id' => $client->id,
             'name' => $client->name,
             'hash' => $client->hash,
+            'has_internal_no' => $client->has_internal_no,
+            'internal_no' => $client->internal_no,
             'created_at' => $client->created_at,
             'updated_at' => $client->updated_at,
         ];

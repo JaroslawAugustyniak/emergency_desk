@@ -15,6 +15,8 @@ type Client = {
   id: number;
   name: string;
   hash: string;
+  has_internal_no: boolean;
+  internal_no?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -180,9 +182,14 @@ export default function ClientsTable({
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     <Link
                       href={`/dashboard/clients/${client.id}`}
-                      className="hover:text-blue-600"
+                      className="hover:text-blue-600 flex items-center gap-2"
                     >
                       {client.name}
+                      {client.has_internal_no && client.internal_no && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {client.internal_no}
+                        </span>
+                      )}
                     </Link>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 truncate" title={client.hash}>
@@ -266,11 +273,16 @@ export default function ClientsTable({
               >
                 <Link
                   href={`/dashboard/clients/${client.id}`}
-                  className="flex items-start mb-3 group"
+                  className="flex items-center gap-2 mb-3 group flex-wrap"
                 >
                   <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                     c{client.id} - {client.name}
                   </h3>
+                  {client.has_internal_no && client.internal_no && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {client.internal_no}
+                    </span>
+                  )}
                 </Link>
 
                 <div className="mb-3 pb-3 border-b border-gray-200">

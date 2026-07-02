@@ -6,14 +6,7 @@ import { createClient, updateClient, regenerateClientHash } from '@/lib/actions/
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
-
-type Client = {
-  id: number;
-  name: string;
-  hash: string;
-  created_at: string;
-  updated_at: string;
-};
+import type { Client } from '@/lib/types/clients';
 
 type ClientFormModalProps = {
   isOpen: boolean;
@@ -32,6 +25,8 @@ export default function ClientFormModal({
   const { token } = useSessionContext();
   const [formData, setFormData] = useState({
     name: '',
+    has_internal_no: false,
+    internal_no: '',
   });
   const [regenerateHash, setRegenerateHash] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,11 +41,15 @@ export default function ClientFormModal({
     if (client) {
       setFormData({
         name: client.name,
+        has_internal_no: client.has_internal_no || false,
+        internal_no: client.internal_no || '',
       });
       setRegenerateHash(false);
     } else {
       setFormData({
         name: '',
+        has_internal_no: false,
+        internal_no: '',
       });
     }
     setError(null);
@@ -73,6 +72,8 @@ export default function ClientFormModal({
           client.id,
           {
             name: formData.name,
+            has_internal_no: formData.has_internal_no,
+            internal_no: formData.internal_no || null,
           },
           token
         );
@@ -84,6 +85,8 @@ export default function ClientFormModal({
         await createClient(
           {
             name: formData.name,
+            has_internal_no: formData.has_internal_no,
+            internal_no: formData.internal_no || null,
           },
           token
         );
@@ -132,6 +135,42 @@ export default function ClientFormModal({
             placeholder={t('enterClientName')}
           />
         </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="has_internal_no"
+            checked={formData.has_internal_no}
+            onChange={(e) => setFormData({ ...formData, has_internal_no: e.target.checked, internal_no: e.target.checked ? formData.internal_no : '' })}
+            className="w-4 h-4 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          />
+          <label
+            htmlFor="has_internal_no"
+            className="text-sm text-gray-700 cursor-pointer"
+          >
+            {t('hasInternalNo')}
+          </label>
+        </div>
+
+        {formData.has_internal_no && (
+          <div>
+            <label
+              htmlFor="internal_no"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t('internalNo')}
+            </label>
+            <input
+              type="text"
+              id="internal_no"
+              name="internal_no"
+              value={formData.internal_no}
+              onChange={(e) => setFormData({ ...formData, internal_no: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder={t('enterInternalNo')}
+            />
+          </div>
+        )}
 
         {isEditMode && client && (
           <>

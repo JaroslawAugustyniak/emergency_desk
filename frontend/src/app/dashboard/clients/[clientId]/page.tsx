@@ -4,17 +4,21 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
-import { Copy, RotateCcw, MapPin, Users } from 'lucide-react';
+import { Copy, RotateCcw, MapPin, Users, Edit, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { regenerateClientHash, getClient } from '@/lib/actions/clients';
+import { regenerateClientHash, getClient, deleteClient } from '@/lib/actions/clients';
 import BackButton  from '@/app/components/ui/BackButton';
 import Swal from 'sweetalert2';
 import ServiceCategoriesSection from '@/app/components/serviceCategories/ServiceCategoriesSection';
+import ClientFormModal from '@/app/components/clients/ClientFormModal';
+import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 
 type Client = {
   id: number;
   name: string;
   hash: string;
+  has_internal_no: boolean;
+  internal_no?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -31,6 +35,13 @@ export default function ClientDetailPage() {
   const [client, setClient] = useState<Client | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [copiedHash, setCopiedHash] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { handleDelete } = useDeleteHandler({
+    resourceKey: 'clients',
+    deleteFunction: deleteClient,
+    onSuccess: () => router.push('/dashboard/clients'),
+  });
 
   useEffect(() => {
     if (!token || isLoading) return;
@@ -64,6 +75,14 @@ export default function ClientDetailPage() {
 
   const handleUsers = (clientId: number) => {
     router.push(`/dashboard/users?role=client&clientId=${clientId}`);
+  };
+
+  const handleEdit = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
   };
 
   const handleRegenerateHash = async () => {
@@ -141,11 +160,43 @@ export default function ClientDetailPage() {
      <BackButton/>
 
       <div className="mt-2 bg-white rounded-lg shadow-md p-6 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-6">
-          c{client.id} - {client.name}
-        </h1>
+        <div className="flex items-start justify-between mb-6">
+          <h1 className="text-3xl font-bold mb-6">
+            c{client.id} - {client.name}
+          </h1>
+          <div className="flex gap-2">
+              <button
+                onClick={handleEdit}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                title={tCommon('edit')}
+              >
+                <Edit className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => handleDelete(client.id)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                title={tCommon('delete')}
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+          </div>
+        </div>
+
+        
 
         <div className="space-y-6">
+          {/* Internal Number Section */}
+            <div>
+              <h2 className="text-lg font-semibold mb-3">{t('internalNoLabel')}</h2>
+              <div className="flex gap-2 items-center">
+                  {client.internal_no && (
+                <div className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm text-gray-600 break-all">
+                    {client.internal_no}
+                </div>
+                  )}
+              </div>
+            </div>
+
           {/* Hash Section */}
           <div>
             <h2 className="text-lg font-semibold mb-3">{t('hashLabel')}</h2>
@@ -189,11 +240,12 @@ export default function ClientDetailPage() {
             </div>
           </div>
 
-          {/* Locations Button */}
-          <div className="pt-6 border-t border-gray-200">
+          {/* Action Buttons */}
+          <div className="pt-6 border-t border-gray-200 flex flex-wrap gap-2">
+            
             <Link
               href={`/dashboard/locations?clientId=${clientId}`}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors"
             >
               <MapPin className="w-5 h-5" />
               {t('viewLocations')}
@@ -213,6 +265,13 @@ export default function ClientDetailPage() {
       <div className="mt-6 max-w-2xl">
         <ServiceCategoriesSection clientId={Number(clientId)} />
       </div>
+
+      {/* Modal */}
+      <ClientFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        client={client}
+      />
     </div>
   );
 }

@@ -10,6 +10,8 @@ type Client = {
   id: number;
   name: string;
   hash: string;
+  has_internal_no: boolean;
+  internal_no?: string | null;
   created_at: string;
   updated_at: string;
 };
