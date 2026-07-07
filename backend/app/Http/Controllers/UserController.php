@@ -117,6 +117,7 @@ class UserController extends Controller
             'last_name' => $validated['last_name'],
             'phone' => $validated['phone'] ?? null,
             'client_id' => $validated['client_id'] ?? null,
+            'email_verified_at' => now(),
         ]);
 
         return response()->json([
