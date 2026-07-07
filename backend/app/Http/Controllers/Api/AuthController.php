@@ -108,14 +108,16 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            // Generate and send 2FA code
-            $this->authService->sendVerificationEmail($user);
+            // TODO: 2FA verification temporarily disabled - generate token directly
+            // $this->authService->sendVerificationEmail($user);
+            $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'success' => true,
-                'message' => 'Verification code sent to your email',
+                'message' => 'Login successful',
                 'data' => [
-                    'email' => $user->email,
+                    'user' => $user,
+                    'access_token' => $token,
                 ],
             ]);
         } catch (\Exception $e) {
@@ -198,7 +200,8 @@ class AuthController extends Controller
                 ], 404);
             }
 
-            $this->authService->sendVerificationEmail($user);
+            // TODO: 2FA verification temporarily disabled - skip sending email
+            // $this->authService->sendVerificationEmail($user);
 
             return response()->json([
                 'success' => true,

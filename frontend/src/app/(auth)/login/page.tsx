@@ -74,8 +74,9 @@ export default function LoginPage() {
       localStorage.removeItem('remember_me');
     }
 
-    // Redirect to 2FA verification
-    router.push(`/verify-email?email=${encodeURIComponent(email)}&type=login`);
+    // TODO: 2FA verification temporarily disabled - redirect directly to dashboard
+    // router.push(`/verify-email?email=${encodeURIComponent(email)}&type=login`);
+    router.push('/dashboard');
   };
 
   return (

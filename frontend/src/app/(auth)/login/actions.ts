@@ -24,6 +24,11 @@ export async function login(email: string, password: string, remember_me: boolea
       };
     }
 
+    // Store token in localStorage
+    if (data.data?.access_token) {
+      localStorage.setItem('auth_token', data.data.access_token);
+    }
+
     return {
       success: true,
       data: data.data,
