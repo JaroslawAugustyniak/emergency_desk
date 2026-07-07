@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('invoice_no')->nullable();
             $table->decimal('price_total', 10, 2)->nullable();
             $table->text('work_report')->nullable();
-            $table->dateTime('order_date');
+            $table->dateTime('order_date')->nullable();
             $table->dateTime('start_at')->nullable();
             $table->dateTime('end_at')->nullable();
             $table->timestamps();
