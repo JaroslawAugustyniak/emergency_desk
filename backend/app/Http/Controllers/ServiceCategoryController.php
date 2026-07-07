@@ -23,7 +23,7 @@ class ServiceCategoryController extends Controller
                 'details' => $e->errors(),
             ], 422);
         }
-
+        //tu damy coś żeby się deployment uruchomił. 
         $page = $validated['page'] ?? 1;
         $perPage = $validated['per_page'] ?? 50;
         $clientId = $validated['client_id'];
