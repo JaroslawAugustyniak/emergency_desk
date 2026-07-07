@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ServiceCategoryController;
+use App\Http\Controllers\OrderController;
 use App\Mail\VerifyEmailMail;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
@@ -112,5 +113,15 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/{categoryId}', [ServiceCategoryController::class, 'show']);
         Route::put('/{categoryId}', [ServiceCategoryController::class, 'update']);
         Route::delete('/{categoryId}', [ServiceCategoryController::class, 'destroy']);
+    });
+
+    Route::prefix('orders')->group(function () {
+        Route::get('/', [OrderController::class, 'index']);
+        Route::post('/', [OrderController::class, 'store']);
+        Route::get('/{order}', [OrderController::class, 'show']);
+        Route::put('/{order}', [OrderController::class, 'update']);
+        Route::delete('/{order}', [OrderController::class, 'destroy']);
+        Route::patch('/{order}/status', [OrderController::class, 'changeStatus']);
+        Route::patch('/{order}/assign-technician', [OrderController::class, 'assignTechnician']);
     });
 });

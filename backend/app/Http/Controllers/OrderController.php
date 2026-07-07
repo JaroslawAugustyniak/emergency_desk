@@ -1,0 +1,299 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Order;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+
+class OrderController extends Controller
+{
+    /**
+     * Get paginated list of orders
+     */
+    public function index(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'page' => 'integer|min:1',
+                'per_page' => 'integer|min:1|max:100',
+                'search' => 'string|max:255',
+                'client_id' => 'integer',
+                'location_id' => 'integer',
+                'status' => 'string|in:new,assigned,in_progress,paused,completed,invoiced',
+                'sort_by' => 'string|in:id,order_number,status,order_date,created_at',
+                'sort_order' => 'string|in:asc,desc',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
+
+        $page = $validated['page'] ?? 1;
+        $perPage = $validated['per_page'] ?? 15;
+        $search = $validated['search'] ?? null;
+        $clientId = $validated['client_id'] ?? null;
+        $locationId = $validated['location_id'] ?? null;
+        $status = $validated['status'] ?? null;
+        $sortBy = $validated['sort_by'] ?? 'created_at';
+        $sortOrder = $validated['sort_order'] ?? 'desc';
+
+        $query = Order::query()
+            ->with(['client', 'technician', 'location', 'serviceCategory']);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('client_ref_no', 'like', "%{$search}%");
+            });
+        }
+
+        if ($clientId) {
+            $query->where('client_id', $clientId);
+        }
+
+        if ($locationId) {
+            $query->where('location_id', $locationId);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $total = $query->count();
+        $orders = $query
+            ->orderBy($sortBy, $sortOrder)
+            ->forPage($page, $perPage)
+            ->get()
+            ->map(fn($order) => $this->formatOrder($order));
+
+        return response()->json([
+            'data' => $orders,
+            'pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'last_page' => ceil($total / $perPage),
+            ],
+        ]);
+    }
+
+    /**
+     * Get single order
+     */
+    public function show(Order $order): JsonResponse
+    {
+        $order->load(['client', 'technician', 'location', 'serviceCategory']);
+        return response()->json([
+            'data' => $this->formatOrder($order),
+        ]);
+    }
+
+    /**
+     * Create new order
+     */
+    public function store(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'client_id' => 'required|integer|exists:clients,id',
+                'location_id' => 'required|integer|exists:locations,id',
+                'service_category_id' => 'required|integer|exists:service_categories,id',
+                'description' => 'nullable|string',
+                // 'is_emergency' => 'boolean',
+                // 'client_ref_no' => 'nullable|string|max:100',
+                // 'order_date' => 'required|date_format:Y-m-d H:i:s',
+                // 'vat_rate' => 'numeric|min:0|max:100',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
+
+        $order = Order::create([
+            'order_number' => $this->generateOrderNumber(),
+            'client_id' => $validated['client_id'],
+            'location_id' => $validated['location_id'],
+            'service_category_id' => $validated['service_category_id'],
+            'description' => $validated['description'] ?? null,
+            // 'is_emergency' => $validated['is_emergency'] ?? false,
+            // 'client_ref_no' => $validated['client_ref_no'] ?? null,
+            // 'order_date' => $validated['order_date'],
+            // 'vat_rate' => $validated['vat_rate'] ?? 23.00,
+            'status' => 'new',
+        ]);
+
+        $order->load(['client', 'technician', 'location', 'serviceCategory']);
+
+        return response()->json([
+            'message' => 'Order created successfully',
+            'data' => $this->formatOrder($order),
+        ], 201);
+    }
+
+    /**
+     * Update order
+     */
+    public function update(Request $request, Order $order): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'description' => 'string',
+                'client_ref_no' => 'nullable|string|max:100',
+                'vat_rate' => 'numeric|min:0|max:100',
+                'is_emergency' => 'boolean',
+                'work_report' => 'nullable|string',
+                'price_total' => 'nullable|numeric|min:0',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
+
+        $updateData = array_filter($validated, fn($value) => $value !== null);
+        $order->update($updateData);
+        $order->load(['client', 'technician', 'location', 'serviceCategory']);
+
+        return response()->json([
+            'message' => 'Order updated successfully',
+            'data' => $this->formatOrder($order),
+        ]);
+    }
+
+    /**
+     * Delete order (soft delete)
+     */
+    public function destroy(Order $order): JsonResponse
+    {
+        $order->delete();
+
+        return response()->json([
+            'message' => 'Order deleted successfully',
+        ]);
+    }
+
+    /**
+     * Change order status
+     */
+    public function changeStatus(Request $request, Order $order): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'status' => 'required|string|in:new,assigned,in_progress,paused,completed,invoiced',
+                'stop_reason' => 'nullable|string',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
+
+        $order->status = $validated['status'];
+        if ($validated['status'] === 'paused') {
+            $order->stop_reason = $validated['stop_reason'] ?? null;
+        }
+        $order->save();
+
+        $order->load(['client', 'technician', 'location', 'serviceCategory']);
+
+        return response()->json([
+            'message' => 'Order status changed successfully',
+            'data' => $this->formatOrder($order),
+        ]);
+    }
+
+    /**
+     * Assign technician to order
+     */
+    public function assignTechnician(Request $request, Order $order): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'technician_id' => 'required|integer|exists:users,id',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
+
+        $order->technician_id = $validated['technician_id'];
+        $order->status = 'assigned';
+        $order->save();
+
+        $order->load(['client', 'technician', 'location', 'serviceCategory']);
+
+        return response()->json([
+            'message' => 'Technician assigned successfully',
+            'data' => $this->formatOrder($order),
+        ]);
+    }
+
+    /**
+     * Format order data for response
+     */
+    private function formatOrder(Order $order): array
+    {
+        return [
+            'id' => $order->id,
+            'order_number' => $order->order_number,
+            'client_id' => $order->client_id,
+            'client' => $order->client ? [
+                'id' => $order->client->id,
+                'name' => $order->client->name,
+            ] : null,
+            'technician_id' => $order->technician_id,
+            'technician' => $order->technician ? [
+                'id' => $order->technician->id,
+                'first_name' => $order->technician->first_name,
+                'last_name' => $order->technician->last_name,
+            ] : null,
+            'location_id' => $order->location_id,
+            'location' => $order->location ? [
+                'id' => $order->location->id,
+                'street_no' => $order->location->street_no,
+                'apartment_no' => $order->location->apartment_no,
+                'city' => $order->location->city,
+            ] : null,
+            'service_category_id' => $order->service_category_id,
+            'service_category' => $order->serviceCategory ? [
+                'id' => $order->serviceCategory->id,
+                'name' => $order->serviceCategory->name,
+                'color' => $order->serviceCategory->color,
+            ] : null,
+            'status' => $order->status,
+            'description' => $order->description,
+            'stop_reason' => $order->stop_reason,
+            'vat_rate' => $order->vat_rate,
+            'is_emergency' => $order->is_emergency,
+            'client_ref_no' => $order->client_ref_no,
+            'invoice_no' => $order->invoice_no,
+            'price_total' => $order->price_total,
+            'work_report' => $order->work_report,
+            'order_date' => $order->order_date,
+            'start_at' => $order->start_at,
+            'end_at' => $order->end_at,
+            'created_at' => $order->created_at,
+            'updated_at' => $order->updated_at,
+        ];
+    }
+
+    /**
+     * Generate unique order number
+     */
+    private function generateOrderNumber(): string
+    {
+        $timestamp = time();
+        $random = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        return 'ORD-' . date('Ymd') . '-' . $random;
+    }
+}
