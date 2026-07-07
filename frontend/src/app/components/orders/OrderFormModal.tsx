@@ -122,9 +122,9 @@ export default function OrderFormModal({
       if (isEditMode && order) {
         // Initialize with order data for edit mode
         setFormData({
-          client_id: order.client_id,
-          location_id: order.location_id,
-          service_category_id: order.service_category_id,
+          client_id: String(order.client_id),
+          location_id: String(order.location_id),
+          service_category_id: String(order.service_category_id),
           description: order.description || '',
         });
         // Fetch locations and categories for edit mode
@@ -222,7 +222,7 @@ export default function OrderFormModal({
         await updateOrder(
           order.id,
           {
-            description: formData.description || null,
+            description: formData.description || undefined,
           },
           token
         );

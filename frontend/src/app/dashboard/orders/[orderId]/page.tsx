@@ -11,33 +11,8 @@ import BackButton from '@/app/components/ui/BackButton';
 import OrderFormModal from '@/app/components/orders/OrderFormModal';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 import Swal from 'sweetalert2';
+import type { Order } from '@/lib/types/orders';
 
-type Order = {
-  id: number;
-  order_number: string;
-  client_id: number;
-  client: { id: number; name: string } | null;
-  technician_id: number | null;
-  technician: { id: number; first_name: string; last_name: string } | null;
-  location_id: number;
-  location: { id: number; address: string; number: string | null; nip: string | null; zip: string | null; city: string } | null;
-  service_category_id: number;
-  service_category: { id: number; name: string; color: string } | null;
-  status: 'new' | 'assigned' | 'in_progress' | 'paused' | 'completed' | 'invoiced';
-  description: string | null;
-  stop_reason: string | null;
-  vat_rate: number;
-  is_emergency: boolean;
-  client_ref_no: string | null;
-  invoice_no: string | null;
-  price_total: number | null;
-  work_report: string | null;
-  order_date: string;
-  start_at: string | null;
-  end_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
 
 const statusColors: Record<string, string> = {
   new: 'bg-gray-100 text-gray-800',
@@ -207,8 +182,8 @@ export default function OrderDetailPage() {
             <div>
               <h3 className="text-sm font-semibold text-gray-500 mb-1">{t('location')}</h3>
               <p className="text-gray-900">
-                {order.location?.address}
-                {order.location?.number && ` / ${order.location.number}`}
+                {order.location?.street_no}
+                {order.location?.street_no && ` / ${order.location.apartment_no}`}
                 {order.location?.city && `, ${order.location.city}`}
               </p>
             </div>
