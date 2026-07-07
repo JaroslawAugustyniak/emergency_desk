@@ -35,13 +35,14 @@ class ApiClient {
     } else if (typeof error === 'string') {
       message = error;
     } else if (typeof error === 'object' && error !== null) {
-      if ((error as ApiErrorResponse).message) {
-        message = (error as ApiErrorResponse).message;
+      const apiError = error as ApiErrorResponse;
+      if (apiError.message) {
+        message = apiError.message;
       }
-      if ((error as ApiErrorResponse).details) {
-        details = (error as ApiErrorResponse).details;
-      } else if ((error as ApiErrorResponse).error) {
-        message = (error as ApiErrorResponse).error;
+      if (apiError.details) {
+        details = apiError.details;
+      } else if (apiError.error) {
+        message = apiError.error;
       }
     }
 
