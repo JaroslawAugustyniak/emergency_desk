@@ -189,7 +189,7 @@ jobs:
 
             # Create .env file from secrets if it doesn't exist
             if [ ! -f backend/.env ]; then
-              cat > backend/.env << 'ENVEOF'
+              cat > backend/.env << EOF
 APP_NAME=EmergencyDesk
 APP_ENV=production
 APP_DEBUG=false
@@ -215,7 +215,7 @@ MAIL_FROM_ADDRESS=${{ secrets.MAIL_FROM_ADDRESS }}
 MAIL_FROM_NAME=${{ secrets.MAIL_FROM_NAME }}
 
 QUEUE_CONNECTION=database
-ENVEOF
+EOF
             fi
 
             # Start services
