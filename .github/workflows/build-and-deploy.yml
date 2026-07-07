@@ -187,39 +187,11 @@ jobs:
             # Pull latest images (built in CI, no server resources used)
             docker compose -f docker-compose.prod.yml pull
 
-            # Create .env file from secrets if it doesn't exist
-            if [ ! -f backend/.env ]; then
-              cat > backend/.env << EOF
-APP_NAME=EmergencyDesk
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://app.example.com
-FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-
-DB_CONNECTION=mysql
-DB_HOST=mysql
-DB_PORT=3306
-DB_DATABASE=${{ secrets.DB_DATABASE }}
-DB_USERNAME=${{ secrets.DB_USERNAME }}
-DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-
-APP_KEY=${{ secrets.APP_KEY }}
-
-MAIL_MAILER=${{ secrets.MAIL_MAILER }}
-MAIL_HOST=${{ secrets.MAIL_HOST }}
-MAIL_PORT=${{ secrets.MAIL_PORT }}
-MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
-MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
-MAIL_ENCRYPTION=${{ secrets.MAIL_ENCRYPTION }}
-MAIL_FROM_ADDRESS=${{ secrets.MAIL_FROM_ADDRESS }}
-MAIL_FROM_NAME=${{ secrets.MAIL_FROM_NAME }}
-
-QUEUE_CONNECTION=database
-EOF
-            fi
-
             # Start services
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Copy .env to backend container
+            docker compose -f docker-compose.prod.yml cp backend/.env backend:/app/.env 2>/dev/null || true
 
             # Run migrations
             docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
