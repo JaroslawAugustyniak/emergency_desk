@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
-  const { token, isLoading: isSessionLoading } = useSessionContext();
+  const { token, isLoading: isSessionLoading, setToken } = useSessionContext();
 
   useEffect(() => {
     if (!isSessionLoading && token) {
@@ -67,11 +67,10 @@ export default function LoginPage() {
       return;
     }
 
-    // Store remember_me flag if checked
-    if (rememberMe) {
-      localStorage.setItem('remember_me', 'true');
-    } else {
-      localStorage.removeItem('remember_me');
+    
+    // Store token and update session
+    if (result.data?.access_token) {
+      setToken(result.data.access_token, rememberMe);
     }
 
     // TODO: 2FA verification temporarily disabled - redirect directly to dashboard

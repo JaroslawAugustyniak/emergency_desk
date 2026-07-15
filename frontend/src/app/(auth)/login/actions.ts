@@ -8,6 +8,7 @@ export async function login(email: string, password: string, remember_me: boolea
   }
 
   try {
+    
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -17,16 +18,12 @@ export async function login(email: string, password: string, remember_me: boolea
     const data = await res.json();
 
     if (!res.ok) {
+      
       return {
         success: false,
         error: data.message || "Login failed",
         statusCode: res.status,
       };
-    }
-
-    // Store token in localStorage
-    if (data.data?.access_token) {
-      localStorage.setItem('auth_token', data.data.access_token);
     }
 
     return {
@@ -35,6 +32,7 @@ export async function login(email: string, password: string, remember_me: boolea
       statusCode: 200,
     };
   } catch (error: any) {
+    console.log(error);
     return { success: false, error: "Login failed. Please try again.", statusCode: 500 };
   }
 }

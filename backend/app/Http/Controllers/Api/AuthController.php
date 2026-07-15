@@ -99,12 +99,14 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
 
+
+
             $user = $this->authService->login($validated['email'], $validated['password']);
 
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid email or password',
+                    'message' => 'Invalid email or password '.$validated['email'].' '.$validated['password'],
                 ], 401);
             }
 
@@ -130,7 +132,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Login failed: ' . $e->getMessage(),
+                'message' => 'Login failed 1: ' . $e->getMessage(),
             ], 500);
         }
     }
