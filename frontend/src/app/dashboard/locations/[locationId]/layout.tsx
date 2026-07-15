@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSetPageTitle } from '@/hooks/useSetPageTitle';
 import { useTranslations } from 'next-intl';
+import { formatPointNumber } from '@/lib/functions/formatting';
 
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 
@@ -35,7 +36,7 @@ export default function LocationDetailLayout({
 
         const data = await res.json();
         
-        setLocationName(`c${data.data.client_id}p${data.data.id} - ${data.data.name}`);
+        setLocationName(`${formatPointNumber(data.data.client_id, data.data.id)} - ${data.data.name}`);
 
       } catch (error) {
         console.error('Error fetching location:', error);

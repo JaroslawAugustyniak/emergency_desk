@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
-import { Edit, Trash2, FileText } from 'lucide-react';
+import { Edit, Trash2, FileText, UserPlus, FingerprintPattern, MapPin, Mountain, UserRound, BookCheck } from 'lucide-react';
 import Link from 'next/link';
 import { getOrder, deleteOrder, changeOrderStatus } from '@/lib/actions/orders';
 import BackButton from '@/app/components/ui/BackButton';
+import FormattedOrderNumber from '@/app/components/orders/FormattedOrderNumber';
 import OrderFormModal from '@/app/components/orders/OrderFormModal';
+import AssignTechnicianModal from '@/app/components/orders/AssignTechnicianModal';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 import Swal from 'sweetalert2';
 import type { Order } from '@/lib/types/orders';
@@ -29,12 +31,14 @@ export default function OrderDetailPage() {
   const orderId = Array.isArray(params.orderId) ? params.orderId[0] : params.orderId;
 
   const t = useTranslations('orders');
+  const tL = useTranslations('locations');
   const tCommon = useTranslations('common');
   const { token, isLoading } = useSessionContext();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
   const { handleDelete } = useDeleteHandler({
     resourceKey: 'orders',
@@ -67,6 +71,14 @@ export default function OrderDetailPage() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+
+  const handleAssignTechnician = () => {
+    setIsAssignModalOpen(true);
+  };
+
+  const handleCloseAssignModal = () => {
+    setIsAssignModalOpen(false);
   };
 
   const handleStatusChange = async (newStatus: string) => {
@@ -155,45 +167,70 @@ export default function OrderDetailPage() {
   return (
     <div className="px-2">
       <BackButton />
+      <div className="flex items-center justify-end mb-6 gap-1">
+          <div className="flex items-center gap-3">
 
-      <div className="mt-2 bg-white rounded-lg shadow-md p-6 max-w-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">
-            {order.client_id ? `c${order.client_id}/` : ''}
-            {order.location_id ? `p${order.location_id}/` : ''}o{order.id}
-          </h1>
+            {order.is_emergency && (
+              <span className="inline-flex items-center gap-1 px-4 py-2 bg-red-100 text-red-700 rounded-md text-sm font-medium">
+                🚨 {t('emergency')}
+              </span>
+            )}
+
+          </div>
+
           <div>
-            <span className={`px-4 py-2 rounded-full text-sm font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
+            <span className={`px-4 py-2 rounded-md text-sm font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
               {getStatusLabel(order.status)}
-              {order.is_emergency && <span className="ml-2">🚨</span>}
             </span>
           </div>
         </div>
+      <div className="grid gap-2 grid-cols-2">
+      <div className="bg-white rounded-lg flex flex-wrap gap-1 shadow-md p-6">
+        {/* Action Buttons */}
+          
+            {order.status === 'new' || order.status === 'assigned' && (
+              <button
+                onClick={handleAssignTechnician}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                title={t('assignTechnician')}
+              >
+                <UserPlus className="w-5 h-5" />
+                {t('assignTechnician')}
+              </button>
+            )}
+            <button
+              onClick={handleEdit}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+              title={tCommon('edit')}
+            >
+              <Edit className="w-5 h-5" />
+              {tCommon('edit')}
+            </button>
+            <button
+              onClick={() => handleDelete(order.id)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+              title={tCommon('delete')}
+            >
+              <Trash2 className="w-5 h-5" />
+              {tCommon('delete')}
+            </button>
+            <button
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+              title={t('generatePDF')}
+            >
+              <FileText className="w-5 h-5" />
+              {t('generatePDF')}
+            </button>
+          
+      </div>
 
-        <div className="space-y-6">
-          {/* Client and Location */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 mb-1">{t('client')}</h3>
-              <Link href={`/dashboard/clients/${order.client_id}`} className="text-blue-600 hover:underline font-medium">
-                {order.client?.name || '-'}
-              </Link>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 mb-1">{t('location')}</h3>
-              <p className="text-gray-900">
-                {order.location?.street_no}
-                {order.location?.street_no && ` / ${order.location.apartment_no}`}
-                {order.location?.city && `, ${order.location.city}`}
-              </p>
-            </div>
-          </div>
+      <div className=" bg-white rounded-lg grid gap-1.5 shadow-md p-6">
 
           {/* Service Category */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-500 mb-2">{t('serviceCategory')}</h3>
+            <h3 className="text-sm font-semibold text-gray-500 mb-2 flex gap-2"><BookCheck /> {t('serviceCategory')}</h3>
             {order.service_category && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 pl-8">
                 <div
                   className="w-4 h-4 rounded-full"
                   style={{ backgroundColor: order.service_category.color }}
@@ -243,39 +280,60 @@ export default function OrderDetailPage() {
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="pt-6 border-t border-gray-200 flex flex-wrap gap-2">
-            <button
-              onClick={handleEdit}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-              title={tCommon('edit')}
-            >
-              <Edit className="w-5 h-5" />
-              {tCommon('edit')}
-            </button>
-            <button
-              onClick={() => handleDelete(order.id)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-              title={tCommon('delete')}
-            >
-              <Trash2 className="w-5 h-5" />
-              {tCommon('delete')}
-            </button>
-            <button
-              className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
-              title={t('generatePDF')}
-            >
-              <FileText className="w-5 h-5" />
-              {t('generatePDF')}
-            </button>
-          </div>
+          
+        
+      </div>
+
+      <div className=" bg-white rounded-lg shadow-md p-6">
+        <div className="space-y-6">
+          {/* Client and Location */}
+          
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 mb-1 flex gap-2"><Mountain />{t('client')}</h3>
+              <Link href={`/dashboard/clients/${order.client_id}`} className="text-gray-900 pl-8 hover:underline">
+                {order.client?.name || '-'}
+              </Link>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 mb-1 flex gap-2"><MapPin /> {t('location')}</h3>
+              <p className="text-gray-900 pl-8">
+                
+                {order.location?.name}<br />
+                {order.location?.address} {order.location?.number}
+                
+                {order.location?.zip && `, ${order.location.zip}`}
+                {order.location?.city && ` ${order.location.city}`}</p>
+              <h3 className="text-sm font-semibold text-slate-900 mt-3 mb-1 flex gap-2"><FingerprintPattern /> {tL('nipColumn')}</h3>
+              <p className="text-grey-900 pl-8"> {order.location?.nip && `${order.location.nip}`}</p>
+              
+            </div>
+          
         </div>
       </div>
 
-      {/* Modal */}
+      <div className="bg-white rounded-lg grid gap-1.5 shadow-md p-6">
+
+          {/* Technician */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-500 mb-1 flex gap-2"><UserRound />{t('technician')}</h3>
+            <p className="text-gray-900 pl-8">
+              {order.technician
+                ? `${order.technician.first_name} ${order.technician.last_name}`
+                : '-'}
+            </p>
+          </div>
+      </div>
+      </div>
+
+      {/* Modals */}
       <OrderFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        order={order}
+      />
+      <AssignTechnicianModal
+        isOpen={isAssignModalOpen}
+        onClose={handleCloseAssignModal}
         order={order}
       />
     </div>

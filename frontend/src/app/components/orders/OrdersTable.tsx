@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, ArrowUpDown, Plus, Loader } from 'lucide-react';
-import Link from 'next/link';
+import { Edit, Trash2, ArrowUpDown, Plus, Loader, UserPlus } from 'lucide-react';
 import OrderFormModal from '@/app/components/orders/OrderFormModal';
+import AssignTechnicianModal from '@/app/components/orders/AssignTechnicianModal';
+import FormattedOrderNumber from '@/app/components/orders/FormattedOrderNumber';
 import Pagination from '@/app/components/ui/Pagination';
 import { deleteOrder } from '@/lib/actions/orders';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -75,6 +76,8 @@ export default function OrdersTable({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [orderToAssign, setOrderToAssign] = useState<Order | null>(null);
   const [selectedClient, setSelectedClient] = useState<number | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -174,9 +177,20 @@ export default function OrdersTable({
     setSelectedOrder(null);
   };
 
+  const handleAssignTechnician = (order: Order) => {
+    setOrderToAssign(order);
+    setIsAssignModalOpen(true);
+  };
+
+  const handleCloseAssignModal = () => {
+    setIsAssignModalOpen(false);
+    setOrderToAssign(null);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pl-PL');
   };
+
 
   const getStatusLabel = (status: string): string => {
     const labels: Record<string, string> = {
@@ -343,14 +357,18 @@ export default function OrdersTable({
               orders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <Link
-                      href={`/dashboard/orders/${order.id}`}
-                      className="hover:text-blue-600"
-                    >
-                      {order.client_id ? `c${order.client_id}/` : ''}
-                      {order.location_id ? `p${order.location_id}/` : ''}
-                      o{order.id}
-                      </Link>
+                    <div className="flex items-center gap-2">
+                      <FormattedOrderNumber
+                        clientId={order.client_id}
+                        locationId={order.location_id}
+                        orderId={order.id}
+                      />
+                      {order.is_emergency && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">
+                          🚨 {t('emergency')}
+                        </span>
+                      )}
+                    </div>
                   </td>
  
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -367,6 +385,20 @@ export default function OrdersTable({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-2">
+                      {order.status === 'new' || order.status === 'assigned' && (
+                        <div className="relative group">
+                          <button
+                            onClick={() => handleAssignTechnician(order)}
+                            className="p-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                            title={t('assignTechnician')}
+                          >
+                            <UserPlus className="w-4 h-4" />
+                          </button>
+                          <span className="tooltip tooltip-top-right">
+                            {t('assignTechnician')}
+                          </span>
+                        </div>
+                      )}
                       <div className="relative group">
                         <button
                           onClick={() => handleEdit(order)}
@@ -413,14 +445,22 @@ export default function OrdersTable({
                 key={order.id}
                 className="bg-white border border-gray-200 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
               >
-                <Link
-                  href={`/dashboard/orders/${order.id}`}
-                  className="block mb-3 group"
-                >
-                  <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                    o{order.id}
-                  </h3>
-                </Link>
+                <div className="mb-3">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-gray-900">
+                      <FormattedOrderNumber
+                        clientId={order.client_id}
+                        locationId={order.location_id}
+                        orderId={order.id}
+                      />
+                    </h3>
+                    {order.is_emergency && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">
+                        🚨 {t('emergency')}
+                      </span>
+                    )}
+                  </div>
+                </div>
 
                 <div className="mb-3 pb-3 border-b border-gray-200">
                   <p className="text-xs text-gray-500 mb-1">{t('client')}</p>
@@ -444,6 +484,15 @@ export default function OrdersTable({
 
                 <div className="space-y-2">
                   <div className="flex gap-2">
+                    {order.status === 'new' && (
+                      <button
+                        onClick={() => handleAssignTechnician(order)}
+                        className="flex-1 p-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors flex items-center justify-center"
+                        title={t('assignTechnician')}
+                      >
+                        <UserPlus className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleEdit(order)}
                       className="flex-1 p-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center justify-center"
@@ -479,13 +528,18 @@ export default function OrdersTable({
         buildHref={(page) => `?page=${page}`}
       />
 
-      {/* Modal */}
+      {/* Modals */}
       <OrderFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         order={selectedOrder}
         clientId={selectedClient || undefined}
         locationId={selectedLocation || undefined}
+      />
+      <AssignTechnicianModal
+        isOpen={isAssignModalOpen}
+        onClose={handleCloseAssignModal}
+        order={orderToAssign}
       />
     </div>
   );

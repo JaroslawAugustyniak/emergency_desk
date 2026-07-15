@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useSetPageTitle } from '@/hooks/useSetPageTitle';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { getOrder } from '@/lib/actions/orders';
+import { formatOrderNumber } from '@/lib/functions/formatting';
 
 export default function OrderDetailLayout({
   children,
@@ -24,12 +25,12 @@ export default function OrderDetailLayout({
         const data = await getOrder(Number(orderId), token);
         const order = data.data;
 
-        var  orderNumber = (order.client_id ? `c${order.client_id}/` : '');
-        orderNumber += (order.location_id ? `p${order.location_id}/` : '');
-        orderNumber += `o${order.id}`;
+        
+        
+        
 
 
-        setOrderNumber(orderNumber);
+        setOrderNumber(formatOrderNumber(order.client_id, order.location_id, order.id));
       } catch (error) {
         console.error('Error fetching order:', error);
       }

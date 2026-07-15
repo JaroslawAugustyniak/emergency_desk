@@ -162,7 +162,7 @@ export default function ClientDetailPage() {
       <div className="mt-2 bg-white rounded-lg shadow-md p-6 max-w-2xl">
         <div className="flex items-start justify-between mb-6">
           <h1 className="text-3xl font-bold mb-6">
-            c{client.id} - {client.name}
+            {client.name}
           </h1>
           <div className="flex gap-2">
               <button

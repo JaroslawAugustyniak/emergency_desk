@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { Building2, MapPinHouse, Edit, Trash2, User } from 'lucide-react';
 import { deleteLocation, type Location } from '@/lib/actions/locations';
+import FormattedLocationNumber from '@/app/components/locations/FormattedLocationNumber';
 import Swal from 'sweetalert2';
 
 import BackButton  from '@/app/components/ui/BackButton';
@@ -123,13 +124,21 @@ export default function LocationDetailPage() {
   }
 
   return (
+    <>
     <div className="px-2">
       <BackButton />
       <div className="bg-white mt-2 rounded-lg shadow-md p-6 max-w-2xl">
         <div className="flex items-start justify-between mb-6">
-          <h1 className="text-3xl font-bold">
-            {location.name}
-          </h1>
+          <div>
+            <h1 className="text-3xl font-bold mb-2">
+              <FormattedLocationNumber
+                clientId={location.client_id}
+                locationId={location.id}
+                showLink={false}
+              />
+            </h1>
+            <p className="text-lg text-gray-600">{location.name}</p>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={() => setIsModalOpen(true)}
@@ -150,8 +159,7 @@ export default function LocationDetailPage() {
 
         <div className="space-y-6 ">
             {/* Address Section */}
-            <div className="grid grid-cols-2">
-              <div>
+            <div>
               <h2 className="text-lg font-semibold mb-3 flex gap-1.5"><MapPinHouse /> {t('addressColumn')}</h2>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-gray-900 font-medium">
@@ -162,11 +170,11 @@ export default function LocationDetailPage() {
                 </p>
                 <p className="text-gray-500 text-sm mt-2">
                   {location.country.toUpperCase()}
-                </p> 
+                </p>
               </div>
             </div>
 
-            {/* Address Section */}
+            {/* NIP Section */}
             <div>
               <h2 className="text-lg font-semibold mb-3 flex gap-1.5"><Building2 /> {t('nipColumn')}</h2>
               <div className="bg-gray-50 p-4 rounded-lg">
@@ -210,6 +218,8 @@ export default function LocationDetailPage() {
         onClose={() => setIsModalOpen(false)}
         location={location}
       />
-    </div>
+
+      </>
+    
   );
 }

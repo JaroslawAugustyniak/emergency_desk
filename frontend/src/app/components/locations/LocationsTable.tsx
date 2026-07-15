@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Edit, Trash2, ArrowUpDown, Plus, Loader } from 'lucide-react';
 import Link from 'next/link';
 import LocationFormModal from '@/app/components/locations/LocationFormModal';
+import FormattedLocationNumber from '@/app/components/locations/FormattedLocationNumber';
 import Pagination from '@/app/components/ui/Pagination';
 import { deleteLocation } from '@/lib/actions/locations';
 import { useRouter } from 'next/navigation';
@@ -192,7 +193,10 @@ export default function LocationsTable({
               locations.map((location) => (
                 <tr key={location.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {location.client_id ? `c${location.client_id}/` : ''}p{location.id}
+                    <FormattedLocationNumber
+                      clientId={location.client_id}
+                      locationId={location.id}
+                    />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     <Link

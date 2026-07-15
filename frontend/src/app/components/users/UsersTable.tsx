@@ -12,6 +12,7 @@ import { useTableSearch } from '@/hooks/useTableSearch';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 
 import BackButton  from '@/app/components/ui/BackButton'; 
+import FormattedUserNumber from '@/app/components/users/FormattedUserNumber';
 
 type User = {
   id: number;
@@ -208,7 +209,7 @@ export default function UsersTable({
               users.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {user.client_id ? `c${user.client_id}/` : ''}u{user.id}
+                    <FormattedUserNumber clientId={user.client_id} userId={user.id} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     <Link

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Edit, Trash2, ArrowUpDown, Plus, Users, Mail, Loader, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import ClientFormModal from '@/app/components/clients/ClientFormModal';
+import FormattedClientNumber from '@/app/components/clients/FormattedClientNumber';
 import Pagination from '@/app/components/ui/Pagination';
 import { deleteClient } from '@/lib/actions/clients';
 import { useRouter } from 'next/navigation';
@@ -176,8 +177,8 @@ export default function ClientsTable({
             ) : (
               clients.map((client) => (
                 <tr key={client.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    c{client.id}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                    <FormattedClientNumber clientId={client.id} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     <Link

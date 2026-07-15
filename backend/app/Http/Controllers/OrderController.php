@@ -103,10 +103,6 @@ class OrderController extends Controller
                 'location_id' => 'required|integer|exists:locations,id',
                 'service_category_id' => 'required|integer|exists:service_categories,id',
                 'description' => 'nullable|string',
-                // 'is_emergency' => 'boolean',
-                // 'client_ref_no' => 'nullable|string|max:100',
-                // 'order_date' => 'required|date_format:Y-m-d H:i:s',
-                // 'vat_rate' => 'numeric|min:0|max:100',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -116,15 +112,10 @@ class OrderController extends Controller
         }
 
         $order = Order::create([
-            'order_number' => $this->generateOrderNumber(),
             'client_id' => $validated['client_id'],
             'location_id' => $validated['location_id'],
             'service_category_id' => $validated['service_category_id'],
             'description' => $validated['description'] ?? null,
-            // 'is_emergency' => $validated['is_emergency'] ?? false,
-            // 'client_ref_no' => $validated['client_ref_no'] ?? null,
-            // 'order_date' => $validated['order_date'],
-            // 'vat_rate' => $validated['vat_rate'] ?? 23.00,
             'status' => 'new',
         ]);
 
@@ -218,6 +209,7 @@ class OrderController extends Controller
         try {
             $validated = $request->validate([
                 'technician_id' => 'required|integer|exists:users,id',
+                'is_emergency' => 'nullable|boolean',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -228,6 +220,9 @@ class OrderController extends Controller
 
         $order->technician_id = $validated['technician_id'];
         $order->status = 'assigned';
+        if (isset($validated['is_emergency'])) {
+            $order->is_emergency = $validated['is_emergency'];
+        }
         $order->save();
 
         $order->load(['client', 'technician', 'location', 'serviceCategory']);
@@ -260,8 +255,12 @@ class OrderController extends Controller
             'location_id' => $order->location_id,
             'location' => $order->location ? [
                 'id' => $order->location->id,
-                'street_no' => $order->location->street_no,
-                'apartment_no' => $order->location->apartment_no,
+                'name' => $order->location->name,
+                'address' => $order->location->address,
+                'number' => $order->location->number,
+                'zip' => $order->location->zip,
+                'nip' => $order->location->nip,
+                'country' => $order->location->country,
                 'city' => $order->location->city,
             ] : null,
             'service_category_id' => $order->service_category_id,

@@ -15,9 +15,13 @@ export type Order = {
   location_id: number;
   location: {
     id: number;
-    street_no: string;
-    apartment_no: string | null;
+    name: string;
+    address: string;
+    number: string | null;
+    zip: string | null;
+    nip: string | null;
     city: string;
+    country: string;
   } | null;
   service_category_id: number;
   service_category: {
@@ -89,4 +93,5 @@ export type ChangeStatusData = {
 
 export type AssignTechnicianData = {
   technician_id: number;
+  is_emergency?: boolean;
 };

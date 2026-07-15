@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { getClient } from '@/lib/actions/clients';
+import { formatClientsNumber } from '@/lib/functions/formatting';
 
 export default function ClientDetailLayout({
   children,
@@ -14,7 +15,7 @@ export default function ClientDetailLayout({
   children: React.ReactNode;
 }) {
   const params = useParams();
-  const clientId = Array.isArray(params.clientId) ? params.clientId[0] : params.clientId;
+  const clientId = Array.isArray(params.clientId) ? Number(params.clientId[0]) : Number(params.clientId);
   const [clientName, setClientName] = useState<string>('');
   const { token } = useSessionContext();
 
@@ -36,7 +37,7 @@ export default function ClientDetailLayout({
   const t = useTranslations('clients');
 
   useSetPageTitle(
-    clientName ? `c${clientId} - ${clientName}` : ''
+    clientName ? `${formatClientsNumber(clientId)} - ${clientName}` : ''
   );
 
   return <>{children}</>;
