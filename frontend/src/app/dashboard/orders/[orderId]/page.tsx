@@ -64,6 +64,18 @@ export default function OrderDetailPage() {
     onSuccess: () => router.push('/dashboard/orders'),
   });
 
+  // Load lightbox CSS
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/yet-another-react-lightbox/3.17.6/styles.min.css';
+    document.head.appendChild(link);
+
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
+
   useEffect(() => {
     if (!token || isLoading) return;
 
