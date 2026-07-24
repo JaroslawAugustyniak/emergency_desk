@@ -1,3 +1,9 @@
+export type Photo = {
+  id: number;
+  url: string;
+  created_at: string;
+};
+
 export type Order = {
   id: number;
   order_number: string;
@@ -38,6 +44,7 @@ export type Order = {
   invoice_no: string | null;
   price_total: number | null;
   work_report: string | null;
+  photos: Photo[];
   order_date: string;
   start_at: string | null;
   end_at: string | null;

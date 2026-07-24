@@ -15,6 +15,7 @@
     "@fullcalendar/react": "^6.1.19",
     "@fullcalendar/timegrid": "^6.1.19",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "browser-image-compression": "^2.0.2",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "jspdf": "^4.0.0",
@@ -28,7 +29,8 @@
     "react-dom": "19.2.1",
     "recharts": "^3.6.0",
     "resend": "^6.6.0",
-    "sweetalert2": "^11.26.17"
+    "sweetalert2": "^11.26.17",
+    "yet-another-react-lightbox": "^3.32.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",

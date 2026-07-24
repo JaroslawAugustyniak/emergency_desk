@@ -379,6 +379,16 @@
     "workReportPlaceholder": "Opisz wykonaną pracę, zastosowane rozwiązania, wymienione części...",
     "saveWorkReport": "Zapisz opis",
     "workReportSaved": "Opis naprawy zapisany!",
-    "workReportSaveError": "Błąd podczas zapisywania opisu naprawy"
+    "workReportSaveError": "Błąd podczas zapisywania opisu naprawy",
+    "repairPhotos": "Zdjęcia z naprawy",
+    "uploadPhotos": "Wgraj zdjęcia",
+    "dragDropPhotos": "Przeciągnij zdjęcia tutaj lub kliknij aby wybrać",
+    "photosUploading": "Wgrywanie zdjęć...",
+    "photosUploaded": "Zdjęcia wgrane pomyślnie!",
+    "photosUploadError": "Błąd podczas wgrywania zdjęć",
+    "deletePhoto": "Usuń zdjęcie",
+    "photoDeletedSuccess": "Zdjęcie usunięte!",
+    "photoDeleteError": "Błąd podczas usuwania zdjęcia",
+    "noPhotos": "Brak zdjęć z naprawy"
   }
 }

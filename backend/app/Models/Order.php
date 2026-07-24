@@ -58,4 +58,9 @@ class Order extends Model
     {
         return $this->belongsTo(ServiceCategory::class, 'service_category_id');
     }
+
+    public function photos()
+    {
+        return $this->hasMany(Photo::class);
+    }
 }

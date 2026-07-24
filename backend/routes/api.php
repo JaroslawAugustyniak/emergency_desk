@@ -89,6 +89,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{order}', [OrderController::class, 'destroy']);
         Route::patch('/{order}/status', [OrderController::class, 'changeStatus']);
         Route::patch('/{order}/assign-technician', [OrderController::class, 'assignTechnician']);
+
+        // Photo routes
+        Route::post('/{order}/photos', [OrderController::class, 'uploadPhotos']);
+        Route::get('/{order}/photos', [OrderController::class, 'getPhotos']);
+        Route::delete('/{order}/photos/{photoId}', [OrderController::class, 'deletePhoto']);
     });
 
     Route::prefix('clients')->group(function () {

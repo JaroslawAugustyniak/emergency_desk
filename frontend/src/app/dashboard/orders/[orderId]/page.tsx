@@ -11,9 +11,11 @@ import BackButton from '@/app/components/ui/BackButton';
 import FormattedOrderNumber from '@/app/components/orders/FormattedOrderNumber';
 import OrderFormModal from '@/app/components/orders/OrderFormModal';
 import AssignTechnicianModal from '@/app/components/orders/AssignTechnicianModal';
+import PhotoUploadSection from '@/app/components/orders/PhotoUploadSection';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 import Swal from 'sweetalert2';
-import type { Order } from '@/lib/types/orders';
+import Lightbox from 'yet-another-react-lightbox';
+import type { Order, Photo } from '@/lib/types/orders';
 
 
 const statusColors: Record<string, string> = {
@@ -41,6 +43,11 @@ export default function OrderDetailPage() {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [workReport, setWorkReport] = useState('');
   const [isSavingWorkReport, setIsSavingWorkReport] = useState(false);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const isAdmin = (role == 'admin' ? true : false);
   const isClient = (role == 'client' ? true : false);
@@ -62,6 +69,7 @@ export default function OrderDetailPage() {
         const data = await getOrder(Number(orderId), token);
         setOrder(data.data);
         setWorkReport(data.data.work_report || '');
+        setPhotos(data.data.photos || []);
       } catch (error) {
         console.error('Error fetching order:', error);
         router.push('/dashboard/orders');
@@ -300,6 +308,141 @@ export default function OrderDetailPage() {
       });
     } finally {
       setIsSavingWorkReport(false);
+    }
+  };
+
+  const handlePhotoUpload = async (files: FileList) => {
+    if (!token || !order) return;
+
+    const imageFiles = Array.from(files).filter((file) =>
+      file.type.startsWith('image/')
+    );
+
+    if (imageFiles.length === 0) {
+      await Swal.fire({
+        title: 'Error',
+        text: 'Please select image files',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const imageCompression = await import('browser-image-compression');
+      const formData = new FormData();
+
+      for (const file of imageFiles) {
+        const compressedFile = await imageCompression.default(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        });
+        formData.append('photos[]', compressedFile);
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            setUploadProgress(Math.round(percentComplete));
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              setPhotos(data.data || []);
+              resolve();
+            } catch (error) {
+              reject(new Error('Failed to parse response'));
+            }
+          } else {
+            reject(new Error(t('photosUploadError')));
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          reject(new Error(t('photosUploadError')));
+        });
+
+        xhr.open('POST', `/api/orders/${order.id}/photos`);
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.send(formData);
+      });
+
+      await Swal.fire({
+        title: t('photosUploaded'),
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : t('photosUploadError'),
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handlePhotoDelete = async (photoId: number) => {
+    const result = await Swal.fire({
+      title: t('deletePhoto'),
+      text: tCommon('confirmDelete'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: tCommon('yes'),
+      cancelButtonText: tCommon('no'),
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const response = await fetch(`/api/orders/${order?.id}/photos/${photoId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(t('photoDeleteError'));
+      }
+
+      setPhotos(photos.filter((p) => p.id !== photoId));
+
+      await Swal.fire({
+        title: t('photoDeletedSuccess'),
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Delete error:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : t('photoDeleteError'),
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
     }
   };
 
@@ -571,6 +714,96 @@ export default function OrderDetailPage() {
           {isSavingWorkReport ? tCommon('saving') : t('saveWorkReport')}
         </button>
       </div>
+      )}
+
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-sm font-semibold text-gray-900 mb-4">
+          {t('repairPhotos')}
+        </h3>
+
+        {isTechnician && (
+          <div className="mb-6">
+            <div className="border-2 border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 rounded-lg p-6 text-center cursor-pointer transition-colors">
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    handlePhotoUpload(e.target.files);
+                  }
+                }}
+                className="hidden"
+                id="photo-input"
+                disabled={isLoadingData || isUploading}
+              />
+              <label htmlFor="photo-input" className="cursor-pointer">
+                <div className="text-blue-600 hover:text-blue-700 font-medium">
+                  {isUploading ? t('photosUploading') : t('dragDropPhotos')}
+                </div>
+              </label>
+            </div>
+
+            {isUploading && (
+              <div className="mt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700">
+                    {t('photosUploading')}
+                  </span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {uploadProgress}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {photos.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {photos.map((photo, index) => (
+              <div key={photo.id} className="relative group">
+                <img
+                  src={photo.url}
+                  alt="Repair photo"
+                  className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => {
+                    setLightboxIndex(index);
+                    setLightboxOpen(true);
+                  }}
+                />
+                {isTechnician && (
+                  <button
+                    onClick={() => handlePhotoDelete(photo.id)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold"
+                    title={t('deletePhoto')}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500">
+            {t('noPhotos')}
+          </div>
+        )}
+      </div>
+
+      {lightboxOpen && (
+        <Lightbox
+          open={lightboxOpen}
+          close={() => setLightboxOpen(false)}
+          slides={photos.map((p) => ({ src: p.url }))}
+          index={lightboxIndex}
+        />
       )}
 
       { !isTechnician && (

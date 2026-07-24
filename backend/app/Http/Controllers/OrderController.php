@@ -42,7 +42,7 @@ class OrderController extends Controller
         $sortOrder = $validated['sort_order'] ?? 'desc';
 
         $query = Order::query()
-            ->with(['client', 'technician', 'location', 'serviceCategory']);
+            ->with(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
         // Filter by role
         if ($user->role === 'client') {
@@ -81,7 +81,7 @@ class OrderController extends Controller
             ->orderBy($sortBy, $sortOrder)
             ->forPage($page, $perPage)
             ->get()
-            ->map(fn($order) => $this->formatOrder($order));
+            ->map(fn($order) => $this->formatOrder($order, $request));
 
         return response()->json([
             'data' => $orders,
@@ -114,9 +114,9 @@ class OrderController extends Controller
         }
         // Admin can view all
 
-        $order->load(['client', 'technician', 'location', 'serviceCategory']);
+        $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
         return response()->json([
-            'data' => $this->formatOrder($order),
+            'data' => $this->formatOrder($order, $request),
         ]);
     }
 
@@ -162,11 +162,11 @@ class OrderController extends Controller
             'order_date' => now(),
         ]);
 
-        $order->load(['client', 'technician', 'location', 'serviceCategory']);
+        $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
         return response()->json([
             'message' => 'Order created successfully',
-            'data' => $this->formatOrder($order),
+            'data' => $this->formatOrder($order, $request),
         ], 201);
     }
 
@@ -216,11 +216,11 @@ class OrderController extends Controller
         // Admin can update all fields
 
         $order->update($updateData);
-        $order->load(['client', 'technician', 'location', 'serviceCategory']);
+        $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
         return response()->json([
             'message' => 'Order updated successfully',
-            'data' => $this->formatOrder($order),
+            'data' => $this->formatOrder($order, $request),
         ]);
     }
 
@@ -302,11 +302,11 @@ class OrderController extends Controller
         $order->status = $status;
         $order->save();
 
-        $order->load(['client', 'technician', 'location', 'serviceCategory']);
+        $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
         return response()->json([
             'message' => 'Order status changed successfully',
-            'data' => $this->formatOrder($order),
+            'data' => $this->formatOrder($order, $request),
         ]);
     }
 
@@ -334,19 +334,21 @@ class OrderController extends Controller
         }
         $order->save();
 
-        $order->load(['client', 'technician', 'location', 'serviceCategory']);
+        $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
         return response()->json([
             'message' => 'Technician assigned successfully',
-            'data' => $this->formatOrder($order),
+            'data' => $this->formatOrder($order, $request),
         ]);
     }
 
     /**
      * Format order data for response
      */
-    private function formatOrder(Order $order): array
+    private function formatOrder(Order $order, $request = null): array
     {
+        $baseUrl = $request ? $request->getSchemeAndHttpHost() : config('app.url');
+
         return [
             'id' => $order->id,
             'order_number' => $order->order_number,
@@ -387,6 +389,11 @@ class OrderController extends Controller
             'invoice_no' => $order->invoice_no,
             'price_total' => $order->price_total,
             'work_report' => $order->work_report,
+            'photos' => $order->photos->map(fn($photo) => [
+                'id' => $photo->id,
+                'url' => $baseUrl . $photo->url,
+                'created_at' => $photo->created_at,
+            ]) ?? [],
             'order_date' => $order->order_date,
             'start_at' => $order->start_at,
             'end_at' => $order->end_at,
@@ -395,6 +402,126 @@ class OrderController extends Controller
         ];
     }
 
+
+    /**
+     * Upload photos for an order
+     */
+    public function uploadPhotos(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check access
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client || $order->client_id !== $client->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        } elseif ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
+
+        try {
+            $validated = $request->validate([
+                'photos.*' => 'required|image|max:2048',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
+
+        $uploadedPhotos = [];
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $file) {
+                $path = $file->store('orders/' . $order->id, 'public');
+
+                $photo = $order->photos()->create([
+                    'url' => '/storage/' . $path,
+                ]);
+
+                $uploadedPhotos[] = [
+                    'id' => $photo->id,
+                    'url' => config('app.url') . $photo->url,
+                    'created_at' => $photo->created_at,
+                ];
+            }
+        }
+
+        $baseUrl = $request->getSchemeAndHttpHost();
+        $allPhotos = $order->photos->map(fn($p) => [
+            'id' => $p->id,
+            'url' => $baseUrl . $p->url,
+            'created_at' => $p->created_at,
+        ]);
+
+        return response()->json([
+            'message' => 'Photos uploaded successfully',
+            'data' => $allPhotos,
+        ], 201);
+    }
+
+    /**
+     * Delete a photo from an order
+     */
+    public function deletePhoto(Request $request, Order $order, $photoId): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check access
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client || $order->client_id !== $client->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        } elseif ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
+
+        $photo = $order->photos()->find($photoId);
+
+        if (!$photo) {
+            return response()->json(['message' => 'Photo not found'], 404);
+        }
+
+        $photo->delete();
+
+        return response()->json(['message' => 'Photo deleted successfully']);
+    }
+
+    /**
+     * Get photos for an order
+     */
+    public function getPhotos(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check access
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client || $order->client_id !== $client->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        } elseif ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
+
+        $baseUrl = $request->getSchemeAndHttpHost();
+        $photos = $order->photos->map(fn($p) => [
+            'id' => $p->id,
+            'url' => $baseUrl . $p->url,
+            'created_at' => $p->created_at,
+        ]);
+
+        return response()->json(['data' => $photos]);
+    }
 
     /**
      * Generate unique order number
