@@ -64,6 +64,59 @@ self.addEventListener('fetch', event => {
   );
 });
 
+// Handle push notifications
+self.addEventListener('push', event => {
+  console.log('Push notification received:', event);
+
+  let notificationData = {
+    title: 'Emergency Desk',
+    body: 'New notification',
+    icon: '/images/favicon.png',
+    badge: '/images/favicon.png',
+    tag: 'emergency-desk-notification',
+    requireInteraction: false,
+  };
+
+  // Parse incoming message if available
+  if (event.data) {
+    try {
+      notificationData = event.data.json();
+    } catch (e) {
+      notificationData.body = event.data.text();
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, {
+      body: notificationData.body,
+      icon: notificationData.icon,
+      badge: notificationData.badge,
+      tag: notificationData.tag,
+      requireInteraction: notificationData.requireInteraction,
+      data: notificationData,
+    })
+  );
+});
+
+// Handle notification click
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(clientList => {
+      // Check if app is already open
+      for (let i = 0; i < clientList.length; i++) {
+        if (clientList[i].url === '/' && 'focus' in clientList[i]) {
+          return clientList[i].focus();
+        }
+      }
+      // If not open, open it
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
+});
+
 // Handle messages from clients
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {

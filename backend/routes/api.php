@@ -9,6 +9,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PushNotificationController;
 use App\Mail\VerifyEmailMail;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
@@ -56,6 +57,11 @@ Route::get('/test-email', function () {
             'message' => 'Failed to queue test email: ' . $e->getMessage(),
         ], 500);
     }
+});
+
+Route::prefix('push')->group(function () {
+    Route::post('/test', [PushNotificationController::class, 'sendTestNotification']);
+    Route::post('/subscribe', [PushNotificationController::class, 'registerSubscription'])->middleware('auth:sanctum');
 });
 
 Route::prefix('auth')->group(function () {
