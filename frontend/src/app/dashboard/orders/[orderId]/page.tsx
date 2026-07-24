@@ -39,6 +39,8 @@ export default function OrderDetailPage() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [workReport, setWorkReport] = useState('');
+  const [isSavingWorkReport, setIsSavingWorkReport] = useState(false);
 
   const isAdmin = (role == 'admin' ? true : false);
   const isClient = (role == 'client' ? true : false);
@@ -59,6 +61,7 @@ export default function OrderDetailPage() {
         setIsLoadingData(true);
         const data = await getOrder(Number(orderId), token);
         setOrder(data.data);
+        setWorkReport(data.data.work_report || '');
       } catch (error) {
         console.error('Error fetching order:', error);
         router.push('/dashboard/orders');
@@ -255,6 +258,48 @@ export default function OrderDetailPage() {
         icon: 'error',
         confirmButtonColor: '#3b82f6',
       });
+    }
+  };
+
+  const handleSaveWorkReport = async () => {
+    if (!token || !order) return;
+
+    setIsSavingWorkReport(true);
+    try {
+      const response = await fetch(`/api/orders/${order.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ work_report: workReport }),
+      });
+
+      if (!response.ok) {
+        throw new Error(t('workReportSaveError'));
+      }
+
+      const data = await response.json();
+      setOrder(data.data);
+
+      await Swal.fire({
+        title: t('workReportSaved'),
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Error saving work report:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : t('workReportSaveError'),
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    } finally {
+      setIsSavingWorkReport(false);
     }
   };
 
@@ -495,11 +540,38 @@ export default function OrderDetailPage() {
             )}
           </div>
 
-          
-        
+
+
       </div>
 
-      
+      {isTechnician && (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-sm font-semibold text-gray-900 mb-4">{t('workReport')}</h3>
+        <textarea
+          value={workReport}
+          onChange={(e) => {
+            setWorkReport(e.target.value);
+            e.target.style.height = 'auto';
+            e.target.style.height = Math.min(e.target.scrollHeight, 400) + 'px';
+          }}
+          onInput={(e) => {
+            e.currentTarget.style.height = 'auto';
+            e.currentTarget.style.height = Math.min(e.currentTarget.scrollHeight, 400) + 'px';
+          }}
+          placeholder={t('workReportPlaceholder')}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          rows={5}
+          style={{ minHeight: '120px' }}
+        />
+        <button
+          onClick={handleSaveWorkReport}
+          disabled={isSavingWorkReport}
+          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSavingWorkReport ? tCommon('saving') : t('saveWorkReport')}
+        </button>
+      </div>
+      )}
 
       { !isTechnician && (
       <div className="bg-white rounded-lg grid gap-1.5 shadow-md p-6">

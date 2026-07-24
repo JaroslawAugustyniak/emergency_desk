@@ -374,6 +374,11 @@
     "resumeRepairMessage": "Status zmieni się z powrotem na 'W trakcie'",
     "repairStarted": "Naprawa rozpoczęta!",
     "repairFinished": "Naprawa zakończona!",
-    "repairResumed": "Naprawa wznowiona!"
+    "repairResumed": "Naprawa wznowiona!",
+    "workReport": "Opis naprawy",
+    "workReportPlaceholder": "Opisz wykonaną pracę, zastosowane rozwiązania, wymienione części...",
+    "saveWorkReport": "Zapisz opis",
+    "workReportSaved": "Opis naprawy zapisany!",
+    "workReportSaveError": "Błąd podczas zapisywania opisu naprawy"
   }
 }
