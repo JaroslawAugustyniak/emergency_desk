@@ -64,11 +64,11 @@ export default function OrderDetailPage() {
     onSuccess: () => router.push('/dashboard/orders'),
   });
 
-  // Load lightbox CSS
+  // Load lightbox CSS from local file
   useEffect(() => {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/yet-another-react-lightbox/3.17.6/styles.min.css';
+    link.href = '/lightbox.css';
     document.head.appendChild(link);
 
     return () => {
