@@ -273,8 +273,14 @@ class OrderController extends Controller
 
         // Handle status transitions for technician
         if ($user->role === 'technician') {
-            if ($status === 'in_progress' && !in_array($order->status, ['assigned', 'paused'])) {
+            if ($status === 'in_progress' && !in_array($order->status, ['assigned', 'paused', 'completed'])) {
                 return response()->json(['message' => 'Invalid status transition'], 422);
+            }
+            if ($status === 'in_progress') {
+                if (!$order->start_at) {
+                    $order->start_at = now();
+                }
+                $order->end_at = null;
             }
             if ($status === 'paused') {
                 $order->stop_reason = $validated['stop_reason'] ?? null;

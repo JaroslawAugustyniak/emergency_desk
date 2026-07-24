@@ -1366,5 +1366,35 @@
       "type": "Reverse Proxy",
       "purpose": "SSL/TLS termination and routing"
     }
-  ]
+  ],
+  "frontendApiRoutes": {
+    "description": "Next.js API routes that proxy requests to Laravel backend. Located in frontend/src/app/api/",
+    "routes": [
+      {
+        "path": "/api/orders/[orderId]",
+        "methods": ["GET", "PUT", "DELETE", "PATCH"],
+        "file": "frontend/src/app/api/orders/[orderId]/route.ts",
+        "purpose": "Proxy general order operations to backend"
+      },
+      {
+        "path": "/api/orders/[orderId]/status",
+        "methods": ["PATCH"],
+        "file": "frontend/src/app/api/orders/[orderId]/status/route.ts",
+        "purpose": "Dedicated route for order status changes - proxies to /api/orders/{id}/status on backend",
+        "note": "Must create dedicated route file for each nested endpoint to avoid routing conflicts"
+      },
+      {
+        "path": "/api/orders/[orderId]/assign-technician",
+        "methods": ["PATCH"],
+        "file": "frontend/src/app/api/orders/[orderId]/assign-technician/route.ts",
+        "purpose": "Assign technician to order - proxies to /api/orders/{id}/assign-technician on backend"
+      }
+    ],
+    "importantNotes": [
+      "Each route file must handle authorization header forwarding from client",
+      "All responses must validate that backend returned JSON before parsing",
+      "Nested routes (like /status) require dedicated route.ts files, not just pathname checking",
+      "Environment variable NEXT_PUBLIC_API_URL must be set correctly for environment (dev: http://localhost:8000, prod: https://api.domain.com)"
+    ]
+  }
 }

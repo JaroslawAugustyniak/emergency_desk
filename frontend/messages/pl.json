@@ -362,6 +362,18 @@
     "deletedMessage": "Zamówienie zostało usunięte.",
     "deletedError": "Błąd podczas usuwania zamówienia",
     "savingError": "Błąd podczas zapisywania",
-    "generatePDF": "Generuj PDF"
+    "generatePDF": "Generuj PDF",
+    "startRepair": "Rozpocznij naprawę",
+    "finishRepair": "Zakończ naprawę",
+    "resumeRepair": "Wznów naprawę",
+    "startRepairConfirm": "Potwierdzić rozpoczęcie naprawy?",
+    "startRepairMessage": "Status zmieni się na 'W trakcie' a data rozpoczęcia zostanie ustawiona na bieżący czas",
+    "finishRepairConfirm": "Potwierdzić zakończenie naprawy?",
+    "finishRepairMessage": "Status zmieni się na 'Zakończone' a data zakończenia zostanie ustawiona na bieżący czas",
+    "resumeRepairConfirm": "Potwierdzić wznowienie naprawy?",
+    "resumeRepairMessage": "Status zmieni się z powrotem na 'W trakcie'",
+    "repairStarted": "Naprawa rozpoczęta!",
+    "repairFinished": "Naprawa zakończona!",
+    "repairResumed": "Naprawa wznowiona!"
   }
 }

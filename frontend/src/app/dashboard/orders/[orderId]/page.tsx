@@ -129,6 +129,135 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handleStartRepair = async () => {
+    if (!token || !order) return;
+
+    const result = await Swal.fire({
+      title: t('startRepairConfirm'),
+      text: t('startRepairMessage'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: tCommon('confirm'),
+      cancelButtonText: tCommon('cancel'),
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const updatedOrder = await changeOrderStatus(
+        order.id,
+        { status: 'in_progress' },
+        token
+      );
+      setOrder(updatedOrder);
+
+      await Swal.fire({
+        title: t('repairStarted'),
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Error starting repair:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : t('statusChangeError'),
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    }
+  };
+
+  const handleFinishRepair = async () => {
+    if (!token || !order) return;
+
+    const result = await Swal.fire({
+      title: t('finishRepairConfirm'),
+      text: t('finishRepairMessage'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: tCommon('confirm'),
+      cancelButtonText: tCommon('cancel'),
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const updatedOrder = await changeOrderStatus(
+        order.id,
+        { status: 'completed' },
+        token
+      );
+      setOrder(updatedOrder);
+
+      await Swal.fire({
+        title: t('repairFinished'),
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Error finishing repair:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : t('statusChangeError'),
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    }
+  };
+
+  const handleResumeRepair = async () => {
+    if (!token || !order) return;
+
+    const result = await Swal.fire({
+      title: t('resumeRepairConfirm'),
+      text: t('resumeRepairMessage'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#f59e0b',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: tCommon('confirm'),
+      cancelButtonText: tCommon('cancel'),
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const updatedOrder = await changeOrderStatus(
+        order.id,
+        { status: 'in_progress' },
+        token
+      );
+      setOrder(updatedOrder);
+
+      await Swal.fire({
+        title: t('repairResumed'),
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Error resuming repair:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : t('statusChangeError'),
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pl-PL', {
       year: 'numeric',
@@ -176,7 +305,7 @@ export default function OrderDetailPage() {
       <div className="flex items-center justify-between mt-1">
       <div className="flex items-center justify-end mb-6 gap-1">
         {/* Action Buttons */}
-          
+
             {(order.status === 'new' || order.status === 'assigned') && isAdmin && (
               <button
                 onClick={handleAssignTechnician}
@@ -207,6 +336,40 @@ export default function OrderDetailPage() {
             </button>
              </>
             )}
+
+            {isTechnician && order.status === 'assigned' && (
+              <button
+                onClick={handleStartRepair}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                title={t('startRepair')}
+              >
+                <BookCheck className="w-5 h-5" />
+                {t('startRepair')}
+              </button>
+            )}
+
+            {isTechnician && order.status === 'in_progress' && (
+              <button
+                onClick={handleFinishRepair}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                title={t('finishRepair')}
+              >
+                <BookCheck className="w-5 h-5" />
+                {t('finishRepair')}
+              </button>
+            )}
+
+            {isTechnician && order.status === 'completed' && (
+              <button
+                onClick={handleResumeRepair}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition-colors"
+                title={t('resumeRepair')}
+              >
+                <BookCheck className="w-5 h-5" />
+                {t('resumeRepair')}
+              </button>
+            )}
+
             <button
               className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
               title={t('generatePDF')}
@@ -214,7 +377,7 @@ export default function OrderDetailPage() {
               <FileText className="w-5 h-5" />
               {t('generatePDF')}
             </button>
-          
+
       </div>
 
 
@@ -305,6 +468,14 @@ export default function OrderDetailPage() {
                 <p className="text-sm text-gray-500 mb-1">{t('startAt')}</p>
                 <p className="text-sm font-medium text-gray-900">
                   {formatDate(order.start_at)}
+                </p>
+              </div>
+            )}
+            {order.end_at && (
+              <div>
+                <p className="text-sm text-gray-500 mb-1">{t('endAt')}</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {formatDate(order.end_at)}
                 </p>
               </div>
             )}

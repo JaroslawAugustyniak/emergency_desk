@@ -216,15 +216,9 @@ export async function PATCH(
     const { orderId } = await params;
     const body = await request.json();
 
-    // Determine which PATCH endpoint to call based on request path
-    const pathname = request.nextUrl.pathname;
+    // For assign-technician, use dedicated route
+    // For other PATCH operations use general endpoint
     let endpoint = `${API_URL}/api/orders/${orderId}`;
-
-    if (pathname.includes('/status')) {
-      endpoint = `${API_URL}/api/orders/${orderId}/status`;
-    } else if (pathname.includes('/assign-technician')) {
-      endpoint = `${API_URL}/api/orders/${orderId}/assign-technician`;
-    }
 
     const res = await fetch(endpoint, {
       method: 'PATCH',
