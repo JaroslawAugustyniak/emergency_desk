@@ -61,12 +61,20 @@ export const usePushNotifications = () => {
 
       // Register subscription with backend
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
+      const subscriptionOptions: PushSubscriptionOptionsInit = {
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
-        ),
-      });
+      };
+
+      // Add VAPID key if available (for production)
+      if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+        subscriptionOptions.applicationServerKey = urlBase64ToUint8Array(
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        );
+      }
+
+      const subscription = await registration.pushManager.subscribe(
+        subscriptionOptions
+      );
 
       // Send subscription to backend
       const response = await fetch('/api/push/subscribe', {

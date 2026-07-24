@@ -156,6 +156,7 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
 
   deploy:
     name: Deploy to Production
@@ -192,6 +193,10 @@ jobs:
 
             # Copy .env to backend container
             docker compose -f docker-compose.prod.yml cp backend/.env backend:/app/.env 2>/dev/null || true
+
+            # Add VAPID keys to .env
+            docker compose -f docker-compose.prod.yml exec -T backend sh -c 'echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}" >> /app/.env' || true
+            docker compose -f docker-compose.prod.yml exec -T backend sh -c 'echo "VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" >> /app/.env' || true
 
             # Run migrations
             docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
