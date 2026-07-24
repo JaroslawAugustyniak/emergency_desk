@@ -94,6 +94,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{order}/photos', [OrderController::class, 'uploadPhotos']);
         Route::get('/{order}/photos', [OrderController::class, 'getPhotos']);
         Route::delete('/{order}/photos/{photoId}', [OrderController::class, 'deletePhoto']);
+
+        // Materials routes
+        Route::post('/{order}/materials', [OrderController::class, 'saveMaterials']);
+        Route::get('/{order}/materials', [OrderController::class, 'getMaterials']);
+        Route::delete('/{order}/materials/{materialId}', [OrderController::class, 'deleteMaterial']);
     });
 
     Route::prefix('clients')->group(function () {

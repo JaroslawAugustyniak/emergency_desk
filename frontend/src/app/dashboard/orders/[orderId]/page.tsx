@@ -48,6 +48,10 @@ export default function OrderDetailPage() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [materials, setMaterials] = useState<Array<{ id?: number; name: string; price: string }>>([
+    { name: '', price: '' },
+  ]);
+  const [isSavingMaterials, setIsSavingMaterials] = useState(false);
 
   const isAdmin = (role == 'admin' ? true : false);
   const isClient = (role == 'client' ? true : false);
@@ -70,6 +74,30 @@ export default function OrderDetailPage() {
         setOrder(data.data);
         setWorkReport(data.data.work_report || '');
         setPhotos(data.data.photos || []);
+
+        // Fetch materials
+        try {
+          console.log('Fetching materials for order:', orderId);
+          const materialsResponse = await fetch(`/api/orders/${orderId}/materials`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          console.log('Materials response status:', materialsResponse.status);
+          if (materialsResponse.ok) {
+            const materialsData = await materialsResponse.json();
+            console.log('Materials data:', materialsData);
+            if (materialsData.data && materialsData.data.length > 0) {
+              setMaterials(materialsData.data.map((m: any) => ({
+                id: m.id,
+                name: m.name,
+                price: String(m.price),
+              })));
+            }
+          } else {
+            console.log('Materials response not ok:', materialsResponse.status);
+          }
+        } catch (error) {
+          console.error('Error fetching materials:', error);
+        }
       } catch (error) {
         console.error('Error fetching order:', error);
         router.push('/dashboard/orders');
@@ -446,6 +474,70 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handleMaterialChange = (index: number, field: 'name' | 'price', value: string) => {
+    const newMaterials = [...materials];
+    newMaterials[index] = { ...newMaterials[index], [field]: value };
+    setMaterials(newMaterials);
+  };
+
+  const handleAddMaterial = () => {
+    setMaterials([...materials, { name: '', price: '' }]);
+  };
+
+  const handleRemoveMaterial = (index: number) => {
+    setMaterials(materials.filter((_, i) => i !== index));
+  };
+
+  const handleSaveMaterials = async () => {
+    if (!token || !order) return;
+
+    setIsSavingMaterials(true);
+    console.log('Saving materials with token:', token.substring(0, 20) + '...');
+    try {
+      const response = await fetch(`/api/orders/${order.id}/materials`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ materials }),
+      });
+      console.log('Materials save response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        throw new Error(t('materialsError'));
+      }
+
+      const data = await response.json();
+      if (data.data) {
+        setMaterials(data.data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          price: String(m.price),
+        })));
+      }
+
+      await Swal.fire({
+        title: t('materialsSaved'),
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Error saving materials:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : t('materialsError'),
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    } finally {
+      setIsSavingMaterials(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pl-PL', {
       year: 'numeric',
@@ -712,6 +804,65 @@ export default function OrderDetailPage() {
           className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSavingWorkReport ? tCommon('saving') : t('saveWorkReport')}
+        </button>
+      </div>
+      )}
+
+      {isTechnician && (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-900">
+            {t('materials')}
+          </h3>
+          <div className="text-sm font-semibold text-gray-900">
+            {t('totalMaterialsPrice')}: {materials
+              .reduce((sum, m) => sum + (parseFloat(m.price) || 0), 0)
+              .toFixed(2)} PLN
+          </div>
+        </div>
+
+        <div className="space-y-3 mb-4">
+          {materials.map((material, index) => (
+            <div key={index} className="flex gap-3 items-start">
+              <input
+                type="text"
+                placeholder={t('materialNamePlaceholder')}
+                value={material.name}
+                onChange={(e) => handleMaterialChange(index, 'name', e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="number"
+                placeholder="0.00"
+                value={material.price}
+                onChange={(e) => handleMaterialChange(index, 'price', e.target.value)}
+                className="w-24 px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                step="0.01"
+                min="0"
+              />
+              <button
+                onClick={() => handleRemoveMaterial(index)}
+                className="px-3 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-sm font-medium"
+              >
+                {t('materialRemove')}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={handleAddMaterial}
+          className="block mb-4 text-blue-600 hover:text-blue-700 text-sm font-medium"
+        >
+          {t('addNextMaterial')}
+        </button>
+
+        <button
+          onClick={handleSaveMaterials}
+          disabled={isSavingMaterials}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSavingMaterials ? tCommon('saving') : tCommon('save')}
         </button>
       </div>
       )}

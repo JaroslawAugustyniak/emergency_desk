@@ -63,4 +63,9 @@ class Order extends Model
     {
         return $this->hasMany(Photo::class);
     }
+
+    public function materials()
+    {
+        return $this->hasMany(Material::class);
+    }
 }

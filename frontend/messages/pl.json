@@ -389,6 +389,17 @@
     "deletePhoto": "Usuń zdjęcie",
     "photoDeletedSuccess": "Zdjęcie usunięte!",
     "photoDeleteError": "Błąd podczas usuwania zdjęcia",
-    "noPhotos": "Brak zdjęć z naprawy"
+    "noPhotos": "Brak zdjęć z naprawy",
+    "materials": "Materiały użyte w naprawie",
+    "addMaterial": "Dodaj materiał",
+    "materialName": "Nazwa materiału",
+    "materialPrice": "Cena",
+    "materialRemove": "Usuń",
+    "addNextMaterial": "+ Dodaj kolejny materiał",
+    "totalMaterialsPrice": "Razem materiały",
+    "materialNamePlaceholder": "np. Wkład filtra",
+    "materialsEmpty": "Brak zarejestrowanych materiałów",
+    "materialsError": "Błąd podczas zapisywania materiałów",
+    "materialsSaved": "Materiały zapisane pomyślnie!"
   }
 }

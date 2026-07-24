@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "yet-another-react-lightbox/styles.css";
 
 /* Prevent scaling and ensure 100vw fits */
 html, body {

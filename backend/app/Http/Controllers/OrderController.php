@@ -524,6 +524,112 @@ class OrderController extends Controller
     }
 
     /**
+     * Save materials for an order
+     */
+    public function saveMaterials(Request $request, Order $order): JsonResponse
+    {
+        // $user = $request->user();
+
+        // Check access - only technician assigned to order or admin
+        // if ($user->role === 'technician' && $order->technician_id !== $user->id) {
+        //     return response()->json(['message' => 'Unauthorized'], 403);
+        // } elseif ($user->role === 'client') {
+        //     return response()->json(['message' => 'Unauthorized'], 403);
+        // }
+
+        $validated = $request->validate([
+            'materials' => 'required|array',
+            'materials.*.name' => 'required_with:materials.*.price|string|max:255',
+            'materials.*.price' => 'required_with:materials.*.name|numeric|min:0',
+        ]);
+
+        // Delete existing materials
+        $order->materials()->delete();
+
+        // Save only non-empty materials
+        $materials = collect($validated['materials'])
+            ->filter(fn($m) => !empty($m['name']) && !empty($m['price']))
+            ->values()
+            ->toArray();
+
+        foreach ($materials as $material) {
+            $order->materials()->create($material);
+        }
+
+        $savedMaterials = $order->materials->map(fn($m) => [
+            'id' => $m->id,
+            'name' => $m->name,
+            'price' => $m->price,
+        ]);
+
+        $totalPrice = $order->materials->sum('price');
+
+        return response()->json([
+            'message' => 'Materials saved successfully',
+            'data' => $savedMaterials,
+            'total_price' => $totalPrice,
+        ]);
+    }
+
+    /**
+     * Get materials for an order
+     */
+    public function getMaterials(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check access
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client || $order->client_id !== $client->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        } elseif ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
+
+        $materials = $order->materials->map(fn($m) => [
+            'id' => $m->id,
+            'name' => $m->name,
+            'price' => $m->price,
+        ]);
+
+        $totalPrice = $order->materials->sum('price');
+
+        return response()->json([
+            'data' => $materials,
+            'total_price' => $totalPrice,
+        ]);
+    }
+
+    /**
+     * Delete a material
+     */
+    public function deleteMaterial(Request $request, Order $order, $materialId): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check access - only technician assigned to order or admin
+        if ($user->role === 'technician' && $order->technician_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        } elseif ($user->role === 'client') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $material = $order->materials()->find($materialId);
+
+        if (!$material) {
+            return response()->json(['message' => 'Material not found'], 404);
+        }
+
+        $material->delete();
+
+        return response()->json(['message' => 'Material deleted successfully']);
+    }
+
+    /**
      * Generate unique order number
      */
     private function generateOrderNumber(): string
