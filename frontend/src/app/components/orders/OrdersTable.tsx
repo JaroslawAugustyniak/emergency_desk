@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, ArrowUpDown, Plus, Loader, UserPlus } from 'lucide-react';
+import { Edit, Trash2, ArrowUpDown, Plus, Loader, UserPlus, SquareArrowRight } from 'lucide-react';
 import OrderFormModal from '@/app/components/orders/OrderFormModal';
 import AssignTechnicianModal from '@/app/components/orders/AssignTechnicianModal';
 import FormattedOrderNumber from '@/app/components/orders/FormattedOrderNumber';
@@ -14,6 +14,8 @@ import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 import { getLocationsByClient } from '@/lib/actions/locations';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import type { Order } from '@/lib/types/orders';
+import Link from 'next/link';
+
 
 type Pagination = {
   currentPage: number;
@@ -88,6 +90,8 @@ export default function OrdersTable({
     const clientId = searchParams.get('client_id');
     const locationId = searchParams.get('location_id');
 
+    
+
     if (clientId) {
       setSelectedClient(Number(clientId));
     }
@@ -125,6 +129,8 @@ export default function OrdersTable({
     setSelectedLocation(null);
     setLocations([]);
 
+    
+
     const params = new URLSearchParams(window.location.search);
     if (id) {
       params.set('client_id', String(id));
@@ -150,9 +156,15 @@ export default function OrdersTable({
     router.push(`?${params.toString()}`);
   };
 
+  const { role }  = useSessionContext();
+
   const showFilters = true; //!searchParams.get('location_id');
-  const showClientFilter = true; //!searchParams.get('client_id') && !searchParams.get('location_id');
-  const showLocationFilter = true; //searchParams.get('client_id') || selectedClient;
+
+  const displayAdminOptions = (role == 'admin' ? true : false);
+  const displayClientOptions = (role == 'client' ? true : false);
+
+  const showClientFilter = (role == 'admin' ? true : false); //!searchParams.get('client_id') && !searchParams.get('location_id');
+  const showLocationFilter = (role == 'admin' || role == 'client' ? true : false); //searchParams.get('client_id') || selectedClient;
 
   const handleSort = (field: SortField) => {
     const params = new URLSearchParams(window.location.search);
@@ -378,6 +390,7 @@ export default function OrdersTable({
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
                       {getStatusLabel(order.status)}
                       {order.is_emergency && <span className="ml-1">🚨</span>}
+                      {order.technician?.first_name} {order.technician?.last_name}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -385,7 +398,19 @@ export default function OrdersTable({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-2">
-                      {order.status === 'new' || order.status === 'assigned' && (
+                      <div className="relative group">
+                        <Link
+                          href={`/dashboard/orders/${order.id}`}
+                          className="hover:text-blue-600 hover:underline"
+                          title={t('gotoOrderDetails')}
+                        >
+                          <SquareArrowRight className="w-4 h-4" />
+                          <span className="tooltip tooltip-top-right">
+                            {t('gotoOrderDetails')}
+                          </span>
+                        </Link>
+                      </div>
+                      {(order.status === 'new' || order.status === 'assigned') && displayAdminOptions && (
                         <div className="relative group">
                           <button
                             onClick={() => handleAssignTechnician(order)}
@@ -399,6 +424,7 @@ export default function OrdersTable({
                           </span>
                         </div>
                       )}
+                      {order.status === 'new' && displayClientOptions && (
                       <div className="relative group">
                         <button
                           onClick={() => handleEdit(order)}
@@ -411,6 +437,8 @@ export default function OrdersTable({
                           {tCommon('edit')}
                         </span>
                       </div>
+                      )}
+                      {order.status === 'new' && displayClientOptions && (
                       <div className="relative group">
                         <button
                           onClick={() => handleDelete(order.id)}
@@ -423,6 +451,7 @@ export default function OrdersTable({
                           {tCommon('delete')}
                         </span>
                       </div>
+                      )}
                     </div>
                   </td>
                 </tr>

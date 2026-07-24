@@ -18,7 +18,7 @@ export default function DashboardPage() {
     const fetchProfile = async () => {
       try {
         const data = await getProfile(token);
-        console.log(data);
+        // console.log("progile", data);
         setProfile(data);
       } catch (error) {
         console.error('Failed to fetch profile:', error);
@@ -31,7 +31,7 @@ export default function DashboardPage() {
   return (
     <div className="">
       <h1 className="text-2xl font-bold md:mb-8">
-        {t('welcome', {name: profile?.name || 'Gościu'})}
+        {t('welcome', {name: profile?.first_name+' '+profile?.last_name || 'Gościu'})}
       </h1>
 
       <p className="text-slate-600 mb-6">

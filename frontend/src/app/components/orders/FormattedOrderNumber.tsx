@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSessionContext } from '@/app/components/providers/SessionProvider';
 
 type FormattedOrderNumberProps = {
   clientId: number | null;
@@ -16,12 +17,15 @@ export default function FormattedOrderNumber({
   showLink = true,
 }: FormattedOrderNumberProps) {
   const padNumber = (num: number, length: number) => String(num).padStart(length, '0');
+  const { role }  = useSessionContext();
 
+  const showClientLink = (role == 'admin' || role == 'client' ? true : false);
+  const showLocationLink = (role == 'admin' || role == 'client' ? true : false);
   return (
     <span className="flex items-center gap-1 font-mono">
       {clientId && (
         <>
-          {showLink ? (
+          {showLink && showClientLink ? (
             <Link
               href={`/dashboard/clients/${clientId}`}
               className="hover:text-blue-600 hover:underline"
@@ -38,7 +42,7 @@ export default function FormattedOrderNumber({
 
       {locationId && (
         <>
-          {showLink ? (
+          {showLink && showLocationLink  ? (
             <Link
               href={`/dashboard/locations/${locationId}`}
               className="hover:text-blue-600 hover:underline"

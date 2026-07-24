@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import Swal from 'sweetalert2';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from "@/app/components/providers/SessionProvider";
+import { apiClient } from "@/lib/api";
 import { login } from "./actions";
 
 export default function LoginPage() {
@@ -16,7 +17,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
-  const { token, isLoading: isSessionLoading, setToken } = useSessionContext();
+  const { token, isLoading: isSessionLoading, setToken, setRole } = useSessionContext();
 
   useEffect(() => {
     if (!isSessionLoading && token) {
@@ -68,9 +69,15 @@ export default function LoginPage() {
     }
 
     
-    // Store token and update session
+    // Store token and role
     if (result.data?.access_token) {
       setToken(result.data.access_token, rememberMe);
+
+      if (result.data.user?.role) {
+        const role = result.data.user.role as 'admin' | 'client' | 'technician';
+        setRole(role);
+        apiClient.setCredentials(result.data.access_token, role);
+      }
     }
 
     // TODO: 2FA verification temporarily disabled - redirect directly to dashboard

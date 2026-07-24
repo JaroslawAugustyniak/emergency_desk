@@ -8,6 +8,16 @@ import { Logs, LayoutDashboard, Mountain, MapPin, Users, BanknoteArrowUp, FileTe
 import { useTranslations } from 'next-intl';
 import Image from "next/image";
 import { useSidebar } from "@/app/components/context/SidebarContext";
+import { useSessionContext } from "@/app/components/providers/SessionProvider";
+import { is_admin, is_client, is_technician } from "@/lib/auth";
+
+interface MenuItem {
+  href: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  exact?: boolean;
+  roles: ('admin' | 'client' | 'technician')[];
+}
 
 export default function Sidebar() {
   const t = useTranslations('dashboard');
@@ -15,14 +25,15 @@ export default function Sidebar() {
   const router = useRouter();
   const [loadingHref, setLoadingHref] = useState<string | null>(null);
   const { isCollapsed } = useSidebar();
+  const { role } = useSessionContext();
 
-  const menuItems = [
-    { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard'), exact: true },
-    { href: '/dashboard/clients', icon: Mountain, label: t('clients') },
-    { href: '/dashboard/locations', icon: MapPin, label: t('locations') },
-    { href: '/dashboard/orders', icon: Logs, label: t('orders') },
-    { href: '/dashboard/users', icon: Users, label: t('users') },
-    { href: '/dashboard/reports', icon: FileText, label: t('reports') },
+  const menuItems: MenuItem[] = [
+    { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard'), exact: true, roles: ['admin', 'client', 'technician'] },
+    { href: '/dashboard/clients', icon: Mountain, label: t('clients'), roles: ['admin'] },
+    { href: '/dashboard/locations', icon: MapPin, label: t('locations'), roles: ['admin'] },
+    { href: '/dashboard/orders', icon: Logs, label: t('orders'), roles: ['admin', 'client', 'technician'] },
+    { href: '/dashboard/users', icon: Users, label: t('users'), roles: ['admin'] },
+    { href: '/dashboard/reports', icon: FileText, label: t('reports'), roles: ['admin'] },
   ];
 
   const isActive = (href: string, exact?: boolean) => {
@@ -80,28 +91,30 @@ export default function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.href, item.exact);
-          const isLoading = loadingHref === item.href;
+        {menuItems
+          .filter(item => role && item.roles.includes(role))
+          .map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.href, item.exact);
+            const isLoading = loadingHref === item.href;
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={(e) => handleClick(e, item.href)}
-              className={getLinkClassName(active, isLoading)}
-              title={isCollapsed ? item.label : ''}
-            >
-              {isLoading ? (
-                <Loader2 className="text-blue-400 animate-spin" size={20} />
-              ) : (
-                <Icon className={active ? 'text-blue-400' : ''} size={20} />
-              )}
-              {!isCollapsed && item.label}
-            </Link>
-          );
-        })}
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={(e) => handleClick(e, item.href)}
+                className={getLinkClassName(active, isLoading)}
+                title={isCollapsed ? item.label : ''}
+              >
+                {isLoading ? (
+                  <Loader2 className="text-blue-400 animate-spin" size={20} />
+                ) : (
+                  <Icon className={active ? 'text-blue-400' : ''} size={20} />
+                )}
+                {!isCollapsed && item.label}
+              </Link>
+            );
+          })}
       </nav>
     </aside>
   );

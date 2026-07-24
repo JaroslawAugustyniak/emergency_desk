@@ -3,13 +3,14 @@
 import Image from 'next/image';
 import LanguageSwitcher from "@/app/components/ui/LanguageSwitcher";
 import UserMenu from "@/app/components/dashboard/UserMenu";
+import { useTranslations } from 'next-intl';
 import { useSidebar } from "@/app/components/context/SidebarContext";
 import { usePageTitle } from "@/app/components/context/PageTitleContext";
 import { PanelLeftClose, PanelLeftOpen  } from 'lucide-react';
 
 export default function Topbar() {
   const { toggleCollapsed, isCollapsed } = useSidebar();
-  
+  const t = useTranslations('dashboard');
   const { title, subtitle } = usePageTitle();
 
   return (
@@ -40,6 +41,7 @@ export default function Topbar() {
 
       <div className="flex items-center gap-2 md:gap-4 shrink-0">
         {/* <LanguageSwitcher /> */}
+       
         <UserMenu isPortalUser={false} />
       </div>
     </header>

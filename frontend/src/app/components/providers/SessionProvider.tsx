@@ -4,14 +4,18 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 
 interface SessionContextType {
   token: string | null;
+  role: 'admin' | 'client' | 'technician' | null;
   isLoading: boolean;
   setToken: (token: string | null, rememberMe?: boolean) => void;
+  setRole: (role: 'admin' | 'client' | 'technician' | null) => void;
 }
 
 const SessionContext = createContext<SessionContextType>({
   token: null,
+  role: null,
   isLoading: true,
   setToken: () => {},
+  setRole: () => {},
 });
 
 export function useSessionContext() {
@@ -37,6 +41,7 @@ export default function SessionProvider({
   children: ReactNode;
 }) {
   const [token, setTokenState] = useState<string | null>(null);
+  const [role, setRoleState] = useState<'admin' | 'client' | 'technician' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const setToken = (newToken: string | null, rememberMe: boolean = false) => {
@@ -57,6 +62,15 @@ export default function SessionProvider({
     }
   };
 
+  const setRole = (newRole: 'admin' | 'client' | 'technician' | null) => {
+    setRoleState(newRole);
+    if (newRole) {
+      localStorage.setItem('user_role', newRole);
+    } else {
+      localStorage.removeItem('user_role');
+    }
+  };
+
   useEffect(() => {
     // Try to get token from localStorage first (session login)
     let storedToken = localStorage.getItem('access_token');
@@ -69,11 +83,18 @@ export default function SessionProvider({
     if (storedToken) {
       setTokenState(storedToken);
     }
+
+    // Get stored role
+    const storedRole = localStorage.getItem('user_role') as 'admin' | 'client' | 'technician' | null;
+    if (storedRole) {
+      setRoleState(storedRole);
+    }
+
     setIsLoading(false);
   }, []);
 
   return (
-    <SessionContext.Provider value={{ token, isLoading, setToken }}>
+    <SessionContext.Provider value={{ token, role, isLoading, setToken, setRole }}>
       {children}
     </SessionContext.Provider>
   );

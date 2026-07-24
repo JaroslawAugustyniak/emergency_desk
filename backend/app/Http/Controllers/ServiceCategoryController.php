@@ -11,9 +11,11 @@ class ServiceCategoryController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         try {
             $validated = $request->validate([
-                'client_id' => 'required|integer|exists:clients,id',
+                'client_id' => 'integer|exists:clients,id',
                 'page' => 'integer|min:1',
                 'per_page' => 'integer|min:1|max:100',
             ]);
@@ -23,13 +25,27 @@ class ServiceCategoryController extends Controller
                 'details' => $e->errors(),
             ], 422);
         }
-        //tu damy coś żeby się deployment uruchomił. 
+
         $page = $validated['page'] ?? 1;
         $perPage = $validated['per_page'] ?? 50;
-        $clientId = $validated['client_id'];
+        $clientId = $validated['client_id'] ?? null;
 
-        $paginated = ServiceCategory::where('client_id', $clientId)
-            ->orderBy('name', 'asc')
+        $query = ServiceCategory::query();
+
+        // Filter by client for non-admin users
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client) {
+                return response()->json(['message' => 'Client profile not found'], 404);
+            }
+            $query->where('client_id', $client->id);
+        } elseif ($clientId && $user->role === 'admin') {
+            $query->where('client_id', $clientId);
+        } elseif (!$clientId && $user->role === 'admin') {
+            // Admin without client_id filter - return all
+        }
+
+        $paginated = $query->orderBy('name', 'asc')
             ->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
@@ -143,4 +159,5 @@ class ServiceCategoryController extends Controller
             'message' => 'Service category deleted successfully',
         ]);
     }
+
 }

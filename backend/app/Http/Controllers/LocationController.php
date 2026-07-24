@@ -11,6 +11,8 @@ class LocationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         try {
             $validated = $request->validate([
                 'page' => 'integer|min:1',
@@ -36,6 +38,17 @@ class LocationController extends Controller
 
         $query = Location::query();
 
+        // Filter by client for non-admin users
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client) {
+                return response()->json(['message' => 'Client profile not found'], 404);
+            }
+            $query->where('client_id', $client->id);
+        } elseif ($clientId && $user->role === 'admin') {
+            $query->where('client_id', $clientId);
+        }
+
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -44,10 +57,6 @@ class LocationController extends Controller
                     ->orWhere('zip', 'like', "%{$search}%")
                     ->orWhere('number', 'like', "%{$search}%");
             });
-        }
-
-        if ($clientId) {
-            $query->where('client_id', $clientId);
         }
 
         $query->orderBy($sortBy, $sortOrder);
@@ -140,4 +149,5 @@ class LocationController extends Controller
             'message' => 'Location deleted successfully',
         ]);
     }
+
 }

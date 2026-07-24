@@ -9,7 +9,7 @@ use Illuminate\Http\JsonResponse;
 class OrderController extends Controller
 {
     /**
-     * Get paginated list of orders
+     * Get paginated list of orders (filtered by role)
      */
     public function index(Request $request): JsonResponse
     {
@@ -31,6 +31,7 @@ class OrderController extends Controller
             ], 422);
         }
 
+        $user = $request->user();
         $page = $validated['page'] ?? 1;
         $perPage = $validated['per_page'] ?? 15;
         $search = $validated['search'] ?? null;
@@ -43,6 +44,18 @@ class OrderController extends Controller
         $query = Order::query()
             ->with(['client', 'technician', 'location', 'serviceCategory']);
 
+        // Filter by role
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client) {
+                return response()->json(['message' => 'Client profile not found'], 404);
+            }
+            $query->where('client_id', $client->id);
+        } elseif ($user->role === 'technician') {
+            $query->where('technician_id', $user->id);
+        }
+        // Admin sees all orders
+
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
@@ -51,7 +64,7 @@ class OrderController extends Controller
             });
         }
 
-        if ($clientId) {
+        if ($clientId && $user->role === 'admin') {
             $query->where('client_id', $clientId);
         }
 
@@ -82,10 +95,25 @@ class OrderController extends Controller
     }
 
     /**
-     * Get single order
+     * Get single order (check access by role)
      */
-    public function show(Order $order): JsonResponse
+    public function show(Request $request, Order $order): JsonResponse
     {
+        $user = $request->user();
+
+        // Check access based on role
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client || $order->client_id !== $client->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        } elseif ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
+        // Admin can view all
+
         $order->load(['client', 'technician', 'location', 'serviceCategory']);
         return response()->json([
             'data' => $this->formatOrder($order),
@@ -93,16 +121,20 @@ class OrderController extends Controller
     }
 
     /**
-     * Create new order
+     * Create new order (client creates for own ID, admin creates for any client)
      */
     public function store(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         try {
             $validated = $request->validate([
                 'client_id' => 'required|integer|exists:clients,id',
                 'location_id' => 'required|integer|exists:locations,id',
                 'service_category_id' => 'required|integer|exists:service_categories,id',
                 'description' => 'nullable|string',
+                'is_emergency' => 'nullable|boolean',
+                'client_ref_no' => 'nullable|string|max:100',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -111,12 +143,23 @@ class OrderController extends Controller
             ], 422);
         }
 
+        // Client can only create for their own client_id
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client || $validated['client_id'] !== $client->id) {
+                return response()->json(['message' => 'You can only create orders for your own client'], 403);
+            }
+        }
+
         $order = Order::create([
             'client_id' => $validated['client_id'],
             'location_id' => $validated['location_id'],
             'service_category_id' => $validated['service_category_id'],
             'description' => $validated['description'] ?? null,
+            'is_emergency' => $validated['is_emergency'] ?? false,
+            'client_ref_no' => $validated['client_ref_no'] ?? null,
             'status' => 'new',
+            'order_date' => now(),
         ]);
 
         $order->load(['client', 'technician', 'location', 'serviceCategory']);
@@ -128,17 +171,31 @@ class OrderController extends Controller
     }
 
     /**
-     * Update order
+     * Update order (role-based field restrictions)
      */
     public function update(Request $request, Order $order): JsonResponse
     {
+        $user = $request->user();
+
+        // Check access
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client || $order->client_id !== $client->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        } elseif ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
+
         try {
             $validated = $request->validate([
                 'description' => 'string',
                 'client_ref_no' => 'nullable|string|max:100',
+                'work_report' => 'nullable|string',
                 'vat_rate' => 'numeric|min:0|max:100',
                 'is_emergency' => 'boolean',
-                'work_report' => 'nullable|string',
                 'price_total' => 'nullable|numeric|min:0',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -149,6 +206,15 @@ class OrderController extends Controller
         }
 
         $updateData = array_filter($validated, fn($value) => $value !== null);
+
+        // Restrict fields by role
+        if ($user->role === 'client') {
+            $updateData = array_intersect_key($updateData, array_flip(['description', 'client_ref_no']));
+        } elseif ($user->role === 'technician') {
+            $updateData = array_intersect_key($updateData, array_flip(['work_report']));
+        }
+        // Admin can update all fields
+
         $order->update($updateData);
         $order->load(['client', 'technician', 'location', 'serviceCategory']);
 
@@ -171,13 +237,29 @@ class OrderController extends Controller
     }
 
     /**
-     * Change order status
+     * Change order status (role-based restrictions)
      */
     public function changeStatus(Request $request, Order $order): JsonResponse
     {
+        $user = $request->user();
+
+        // Technician can only change status of assigned orders
+        if ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+            // Technician can only use these statuses
+            $allowedStatuses = ['in_progress', 'paused', 'completed'];
+        } elseif ($user->role === 'client') {
+            return response()->json(['message' => 'Clients cannot change order status'], 403);
+        } else {
+            // Admin can use all statuses
+            $allowedStatuses = ['new', 'assigned', 'in_progress', 'paused', 'completed', 'invoiced'];
+        }
+
         try {
             $validated = $request->validate([
-                'status' => 'required|string|in:new,assigned,in_progress,paused,completed,invoiced',
+                'status' => 'required|string|in:' . implode(',', $allowedStatuses),
                 'stop_reason' => 'nullable|string',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -187,10 +269,31 @@ class OrderController extends Controller
             ], 422);
         }
 
-        $order->status = $validated['status'];
-        if ($validated['status'] === 'paused') {
-            $order->stop_reason = $validated['stop_reason'] ?? null;
+        $status = $validated['status'];
+
+        // Handle status transitions for technician
+        if ($user->role === 'technician') {
+            if ($status === 'in_progress' && !in_array($order->status, ['assigned', 'paused'])) {
+                return response()->json(['message' => 'Invalid status transition'], 422);
+            }
+            if ($status === 'paused') {
+                $order->stop_reason = $validated['stop_reason'] ?? null;
+                $order->start_at = $order->start_at ?? now();
+            }
+            if ($status === 'completed') {
+                if (!$order->start_at) {
+                    $order->start_at = now();
+                }
+                $order->end_at = now();
+            }
+        } else {
+            // Admin
+            if ($status === 'paused') {
+                $order->stop_reason = $validated['stop_reason'] ?? null;
+            }
         }
+
+        $order->status = $status;
         $order->save();
 
         $order->load(['client', 'technician', 'location', 'serviceCategory']);
@@ -285,6 +388,7 @@ class OrderController extends Controller
             'updated_at' => $order->updated_at,
         ];
     }
+
 
     /**
      * Generate unique order number
