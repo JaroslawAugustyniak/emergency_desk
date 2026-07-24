@@ -65,12 +65,15 @@ export const usePushNotifications = () => {
         userVisibleOnly: true,
       };
 
-      // Add VAPID key if available (for production)
-      if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
-        subscriptionOptions.applicationServerKey = urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      // Add VAPID key from Firebase (required for push notifications)
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!vapidKey) {
+        throw new Error(
+          'VAPID key is not configured. Please set NEXT_PUBLIC_VAPID_PUBLIC_KEY environment variable with Firebase public key.'
         );
       }
+
+      subscriptionOptions.applicationServerKey = urlBase64ToUint8Array(vapidKey);
 
       const subscription = await registration.pushManager.subscribe(
         subscriptionOptions
