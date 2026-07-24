@@ -31,6 +31,10 @@ php artisan cache:clear
 if [ "$CONTAINER_TYPE" != "queue-worker" ]; then
   echo "Running migrations..."
   php artisan migrate --force
+
+  # Create storage link for file uploads
+  echo "Creating storage link..."
+  php artisan storage:link
 fi
 
 # Execute based on container type

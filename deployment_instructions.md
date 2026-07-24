@@ -300,7 +300,13 @@ jobs:
             docker compose -f docker-compose.prod.yml up -d --build backend
 ```
 
-> `entrypoint.sh` automatycznie uruchamia `composer install`, `php artisan migrate --force` i czyści cache przy każdym starcie kontenera.
+> `entrypoint.sh` automatycznie uruchamia:
+> - `composer install` — instalacja zależności PHP
+> - `php artisan migrate --force` — uruchomienie migracji bazy danych
+> - `php artisan storage:link` — tworzenie symbolic link dla przechowywania plików
+> - `php artisan config:clear` i `php artisan route:clear` — czyszczenie cache
+> 
+> przy każdym starcie kontenera.
 
 ---
 
