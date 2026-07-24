@@ -2,20 +2,32 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
+export interface UserData {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: 'admin' | 'client' | 'technician';
+}
+
 interface SessionContextType {
   token: string | null;
   role: 'admin' | 'client' | 'technician' | null;
+  user: UserData | null;
   isLoading: boolean;
   setToken: (token: string | null, rememberMe?: boolean) => void;
   setRole: (role: 'admin' | 'client' | 'technician' | null) => void;
+  setUser: (user: UserData | null) => void;
 }
 
 const SessionContext = createContext<SessionContextType>({
   token: null,
   role: null,
+  user: null,
   isLoading: true,
   setToken: () => {},
   setRole: () => {},
+  setUser: () => {},
 });
 
 export function useSessionContext() {
@@ -42,6 +54,7 @@ export default function SessionProvider({
 }) {
   const [token, setTokenState] = useState<string | null>(null);
   const [role, setRoleState] = useState<'admin' | 'client' | 'technician' | null>(null);
+  const [user, setUserState] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const setToken = (newToken: string | null, rememberMe: boolean = false) => {
@@ -57,6 +70,7 @@ export default function SessionProvider({
       }
     } else {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('user_data');
       // Clear cookie
       document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     }
@@ -68,6 +82,15 @@ export default function SessionProvider({
       localStorage.setItem('user_role', newRole);
     } else {
       localStorage.removeItem('user_role');
+    }
+  };
+
+  const setUser = (newUser: UserData | null) => {
+    setUserState(newUser);
+    if (newUser) {
+      localStorage.setItem('user_data', JSON.stringify(newUser));
+    } else {
+      localStorage.removeItem('user_data');
     }
   };
 
@@ -90,11 +113,21 @@ export default function SessionProvider({
       setRoleState(storedRole);
     }
 
+    // Get stored user data
+    const storedUser = localStorage.getItem('user_data');
+    if (storedUser) {
+      try {
+        setUserState(JSON.parse(storedUser));
+      } catch {
+        localStorage.removeItem('user_data');
+      }
+    }
+
     setIsLoading(false);
   }, []);
 
   return (
-    <SessionContext.Provider value={{ token, role, isLoading, setToken, setRole }}>
+    <SessionContext.Provider value={{ token, role, user, isLoading, setToken, setRole, setUser }}>
       {children}
     </SessionContext.Provider>
   );

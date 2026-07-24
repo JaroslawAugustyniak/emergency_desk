@@ -3,7 +3,8 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://api.starter.localhost";
 
 export type UpdateProfileData = {
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   password?: string;
   currentPassword?: string;
@@ -44,7 +45,11 @@ export async function updateProfile(token: string, profileData: UpdateProfileDat
     }
 
     // Validate required fields
-    if (!profileData.name || profileData.name.trim().length === 0) {
+    if (!profileData.first_name || profileData.first_name.trim().length === 0) {
+      throw new Error('NAME_REQUIRED');
+    }
+
+    if (!profileData.last_name || profileData.last_name.trim().length === 0) {
       throw new Error('NAME_REQUIRED');
     }
 
@@ -54,7 +59,8 @@ export async function updateProfile(token: string, profileData: UpdateProfileDat
 
     // Prepare request data
     const requestData: any = {
-      name: profileData.name.trim(),
+      first_name: profileData.first_name.trim(),
+      last_name: profileData.last_name.trim(),
       email: profileData.email.trim(),
     };
 

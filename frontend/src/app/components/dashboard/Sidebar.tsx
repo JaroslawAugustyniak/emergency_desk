@@ -30,7 +30,7 @@ export default function Sidebar() {
   const menuItems: MenuItem[] = [
     { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard'), exact: true, roles: ['admin', 'client', 'technician'] },
     { href: '/dashboard/clients', icon: Mountain, label: t('clients'), roles: ['admin'] },
-    { href: '/dashboard/locations', icon: MapPin, label: t('locations'), roles: ['admin'] },
+    { href: '/dashboard/locations', icon: MapPin, label: t('locations'), roles: ['admin', 'client'] },
     { href: '/dashboard/orders', icon: Logs, label: t('orders'), roles: ['admin', 'client', 'technician'] },
     { href: '/dashboard/users', icon: Users, label: t('users'), roles: ['admin'] },
     { href: '/dashboard/reports', icon: FileText, label: t('reports'), roles: ['admin'] },

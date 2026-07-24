@@ -250,7 +250,8 @@ class AuthController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email,' . $request->user()->id,
                 'password' => 'nullable|string|min:8',
                 'currentPassword' => 'nullable|string',
@@ -281,7 +282,8 @@ class AuthController extends Controller
 
             // Update name and email
             $user->update([
-                'name' => $validated['name'],
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
                 'email' => $validated['email'],
             ]);
 
@@ -290,7 +292,8 @@ class AuthController extends Controller
                 'message' => 'Profile updated successfully',
                 'data' => [
                     'id' => $user->id,
-                    'name' => $user->name,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
                     'email' => $user->email,
                 ],
             ]);

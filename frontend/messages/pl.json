@@ -96,7 +96,8 @@
   },
   "profile": {
     "editProfile": "Edytuj profil",
-    "name": "Imię",
+    "firstName": "Imię",
+    "lastName": "Nazwisko",
     "email": "Email",
     "currency": "Waluta",
     "currentPassword": "Aktualne hasło",
@@ -121,7 +122,7 @@
     "adminPanel": "Panel administracyjny",
     "dashboard": "Tablica",
     "clients": "Klienci",
-    "locations": "Punkty klientów",
+    "locations": "Adresy lokalizacji",
     "users": "Użytkownicy",
     "orders": "Zlecenia",
     "hours": "Godziny",

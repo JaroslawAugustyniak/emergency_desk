@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Modal from '@/app/components/ui/Modal';
-import { updateProfile, getProfile } from '@/lib/actions/profile';
+import { updateProfile } from '@/lib/actions/profile';
 import { useTranslations } from 'next-intl';
 import Swal from 'sweetalert2';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
@@ -20,50 +20,33 @@ export default function ProfileEditModal({
   const router = useRouter();
   const t = useTranslations('profile');
   const tCommon = useTranslations('common');
-  const { setToken } = useSessionContext();
+  const { user, setUser, setToken } = useSessionContext();
 
   const [formData, setFormData] = useState({
-    name: '',
+    first_name: '',
+    last_name: '',
     email: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      loadProfile();
+    if (isOpen && user) {
+      setFormData({
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+      setError(null);
     }
-  }, [isOpen]);
-
-  const loadProfile = async () => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        setError(t('savingError'));
-        return;
-      }
-
-      const profile = await getProfile(token);
-      if (profile) {
-        setFormData({
-          name: profile.name,
-          email: profile.email,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: '',
-        });
-      }
-    } catch {
-      setError(t('savingError'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [isOpen, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,11 +69,22 @@ export default function ProfileEditModal({
       }
 
       await updateProfile(token, {
-        name: formData.name,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         email: formData.email,
         password: formData.newPassword || undefined,
         currentPassword: formData.currentPassword || undefined,
       });
+
+      // Update user data in context
+      if (user) {
+        setUser({
+          ...user,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email: formData.email,
+        });
+      }
 
       // Show success message and logout
       await Swal.fire({
@@ -149,30 +143,44 @@ export default function ProfileEditModal({
       title={t('editProfile')}
       size="md"
     >
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* First Name */}
+        <div>
+          <label
+            htmlFor="first_name"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            {t('firstName')}
+          </label>
+          <input
+            type="text"
+            id="first_name"
+            name="first_name"
+            value={formData.first_name}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {t('name')}
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+
+        {/* Last Name */}
+        <div>
+          <label
+            htmlFor="last_name"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            {t('lastName')}
+          </label>
+          <input
+            type="text"
+            id="last_name"
+            name="last_name"
+            value={formData.last_name}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
           {/* Email */}
           <div>
@@ -262,26 +270,25 @@ export default function ProfileEditModal({
             </div>
           )}
 
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {tCommon('cancel')}
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? t('saving') : t('saveChanges')}
-            </button>
-          </div>
-        </form>
-      )}
+        {/* Buttons */}
+        <div className="flex gap-3 pt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {tCommon('cancel')}
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? t('saving') : t('saveChanges')}
+          </button>
+        </div>
+      </form>
     </Modal>
   );
 }

@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
-  const { token, isLoading: isSessionLoading, setToken, setRole } = useSessionContext();
+  const { token, isLoading: isSessionLoading, setToken, setRole, setUser } = useSessionContext();
 
   useEffect(() => {
     if (!isSessionLoading && token) {
@@ -68,14 +68,20 @@ export default function LoginPage() {
       return;
     }
 
-    
-    // Store token and role
+    // Store token, role and user data
     if (result.data?.access_token) {
       setToken(result.data.access_token, rememberMe);
 
-      if (result.data.user?.role) {
+      if (result.data.user) {
         const role = result.data.user.role as 'admin' | 'client' | 'technician';
         setRole(role);
+        setUser({
+          id: result.data.user.id,
+          first_name: result.data.user.first_name,
+          last_name: result.data.user.last_name,
+          email: result.data.user.email,
+          role,
+        });
         apiClient.setCredentials(result.data.access_token, role);
       }
     }

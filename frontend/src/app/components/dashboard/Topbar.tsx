@@ -7,11 +7,14 @@ import { useTranslations } from 'next-intl';
 import { useSidebar } from "@/app/components/context/SidebarContext";
 import { usePageTitle } from "@/app/components/context/PageTitleContext";
 import { PanelLeftClose, PanelLeftOpen  } from 'lucide-react';
+import { useSessionContext } from '@/app/components/providers/SessionProvider';
 
 export default function Topbar() {
   const { toggleCollapsed, isCollapsed } = useSidebar();
   const t = useTranslations('dashboard');
   const { title, subtitle } = usePageTitle();
+
+  const { user } = useSessionContext();
 
   return (
     <header className={`topbar ${isCollapsed ? 'topbar-collapsed' : ''}`}>
@@ -41,7 +44,8 @@ export default function Topbar() {
 
       <div className="flex items-center gap-2 md:gap-4 shrink-0">
         {/* <LanguageSwitcher /> */}
-       
+
+        {t('welcome', {name: user?.first_name || 'Gościu'})} 
         <UserMenu isPortalUser={false} />
       </div>
     </header>
