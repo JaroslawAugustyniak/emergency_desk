@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, ArrowUpDown, Plus, Loader, UserPlus, SquareArrowRight } from 'lucide-react';
+import { Edit, Trash2, ArrowUpDown, Plus, Loader, UserPlus, SquareArrowRight, Pause } from 'lucide-react';
 import OrderFormModal from '@/app/components/orders/OrderFormModal';
 import AssignTechnicianModal from '@/app/components/orders/AssignTechnicianModal';
+import PauseOrderModal from '@/app/components/orders/PauseOrderModal';
 import FormattedOrderNumber from '@/app/components/orders/FormattedOrderNumber';
 import Pagination from '@/app/components/ui/Pagination';
 import { deleteOrder } from '@/lib/actions/orders';
@@ -80,6 +81,8 @@ export default function OrdersTable({
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<Order | null>(null);
+  const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  const [orderToPause, setOrderToPause] = useState<Order | null>(null);
   const [selectedClient, setSelectedClient] = useState<number | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -199,6 +202,16 @@ export default function OrdersTable({
     setOrderToAssign(null);
   };
 
+  const handlePauseOrder = (order: Order) => {
+    setOrderToPause(order);
+    setIsPauseModalOpen(true);
+  };
+
+  const handleClosePauseModal = () => {
+    setIsPauseModalOpen(false);
+    setOrderToPause(null);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pl-PL');
   };
@@ -307,6 +320,8 @@ export default function OrdersTable({
         
 
         <div className="flex flex-wrap items-center justify-end gap-3 float-end w-full ">
+          {displayClientOptions && (
+          
           <button
             onClick={handleAddNew}
             className="flex items-center gap-2 px-4 py-2 bg-black text-white hover:bg-gray-700 transition-colors whitespace-nowrap"
@@ -314,6 +329,8 @@ export default function OrdersTable({
             <Plus className="w-5 h-5" />
             {t('addNew')}
           </button>
+
+          )}
         </div>
       </div>
 
@@ -424,6 +441,20 @@ export default function OrdersTable({
                           </span>
                         </div>
                       )}
+                      {(order.status === 'assigned' || order.status === 'in_progress') && displayAdminOptions && (
+                        <div className="relative group">
+                          <button
+                            onClick={() => handlePauseOrder(order)}
+                            className="p-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition-colors"
+                            title={t('pauseOrder')}
+                          >
+                            <Pause className="w-4 h-4" />
+                          </button>
+                          <span className="tooltip tooltip-top-right">
+                            {t('pauseOrder')}
+                          </span>
+                        </div>
+                      )}
                       {order.status === 'new' && displayClientOptions && (
                       <div className="relative group">
                         <button
@@ -513,7 +544,7 @@ export default function OrdersTable({
 
                 <div className="space-y-2">
                   <div className="flex gap-2">
-                    {order.status === 'new' && (
+                    {(order.status === 'new' || order.status === 'assigned') && displayAdminOptions && (
                       <button
                         onClick={() => handleAssignTechnician(order)}
                         className="flex-1 p-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors flex items-center justify-center"
@@ -522,6 +553,16 @@ export default function OrdersTable({
                         <UserPlus className="w-4 h-4" />
                       </button>
                     )}
+                    {(order.status === 'assigned' || order.status === 'in_progress') && displayAdminOptions && (
+                      <button
+                        onClick={() => handlePauseOrder(order)}
+                        className="flex-1 p-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition-colors flex items-center justify-center"
+                        title={t('pauseOrder')}
+                      >
+                        <Pause className="w-4 h-4" />
+                      </button>
+                    )}
+                    {order.status === 'new' && displayClientOptions && (
                     <button
                       onClick={() => handleEdit(order)}
                       className="flex-1 p-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center justify-center"
@@ -529,6 +570,8 @@ export default function OrdersTable({
                     >
                       <Edit className="w-4 h-4" />
                     </button>
+                    )}
+                    {order.status === 'new' && displayClientOptions && (
                     <button
                       onClick={() => handleDelete(order.id)}
                       className="flex-1 p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex items-center justify-center"
@@ -536,6 +579,7 @@ export default function OrdersTable({
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -569,6 +613,11 @@ export default function OrdersTable({
         isOpen={isAssignModalOpen}
         onClose={handleCloseAssignModal}
         order={orderToAssign}
+      />
+      <PauseOrderModal
+        isOpen={isPauseModalOpen}
+        onClose={handleClosePauseModal}
+        order={orderToPause}
       />
     </div>
   );

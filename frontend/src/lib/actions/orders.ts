@@ -151,3 +151,26 @@ export async function assignTechnician(
   const response = await res.json();
   return response.data;
 }
+
+export async function pauseOrder(
+  orderId: number,
+  reason: string,
+  token: string
+): Promise<Order> {
+  const res = await fetch(`/api/orders/${orderId}/pause`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ stop_reason: reason }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.validationError || error.error || error.message || 'Failed to pause order');
+  }
+
+  const response = await res.json();
+  return response.data;
+}

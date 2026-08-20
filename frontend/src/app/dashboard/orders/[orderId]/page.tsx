@@ -591,11 +591,11 @@ export default function OrderDetailPage() {
   }
 
   return (
-    <div className="px-2">
+    <div className="px-0 md:px-2">
       <BackButton />
 
-      <div className="flex items-center justify-between mt-1">
-      <div className="flex items-center justify-end mb-6 gap-1">
+      <div className="flex flex-wrap items-center justify-between mt-1">
+      <div className="flex flex-wrap items-center md:justify-end md:mb-6 gap-1">
         {/* Action Buttons */}
 
             {(order.status === 'new' || order.status === 'assigned') && isAdmin && (
@@ -673,7 +673,7 @@ export default function OrderDetailPage() {
       </div>
 
 
-      <div className="flex items-center justify-end mb-6 gap-1">
+      <div className="flex flex-wrap items-center md:justify-end mb-6 gap-1">
           <div className="flex items-center gap-3">
 
             {order.is_emergency && (
@@ -693,7 +693,7 @@ export default function OrderDetailPage() {
       
       </div>
       
-      <div className="grid gap-2 grid-cols-2">
+      <div className="grid gap-2 md:grid-cols-2">
       
 
       <div className=" bg-white rounded-lg shadow-md p-6">
@@ -794,6 +794,7 @@ export default function OrderDetailPage() {
       {isTechnician && (
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-sm font-semibold text-gray-900 mb-4">{t('workReport')}</h3>
+        {order.status == 'in_progress' ? (
         <textarea
           value={workReport}
           onChange={(e) => {
@@ -810,13 +811,18 @@ export default function OrderDetailPage() {
           rows={5}
           style={{ minHeight: '120px' }}
         />
-        <button
-          onClick={handleSaveWorkReport}
-          disabled={isSavingWorkReport}
-          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSavingWorkReport ? tCommon('saving') : t('saveWorkReport')}
-        </button>
+        ) : (
+          <>{workReport}</>
+        )}
+        {order.status == 'in_progress' && (
+          <button
+            onClick={handleSaveWorkReport}
+            disabled={isSavingWorkReport}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingWorkReport ? tCommon('saving') : t('saveWorkReport')}
+          </button>
+        )}
       </div>
       )}
 
@@ -832,10 +838,12 @@ export default function OrderDetailPage() {
               .toFixed(2)} PLN
           </div>
         </div>
-
+        {order.status == 'in_progress' ? (
         <div className="space-y-3 mb-4">
           {materials.map((material, index) => (
             <div key={index} className="flex gap-3 items-start">
+
+                <>
               <input
                 type="text"
                 placeholder={t('materialNamePlaceholder')}
@@ -852,23 +860,48 @@ export default function OrderDetailPage() {
                 step="0.01"
                 min="0"
               />
+              </>
               <button
                 onClick={() => handleRemoveMaterial(index)}
                 className="px-3 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-sm font-medium"
               >
                 {t('materialRemove')}
               </button>
+
             </div>
           ))}
         </div>
+        ) : (
+          <div className="space-y-3 mb-4">
+            {materials.length > 0 ? (
+              materials.map((material, index) => (
+                <div key={index} className="flex gap-3 items-center p-3 bg-gray-50 rounded-md">
+                  <div className="flex-0">
+                    <p className="text-sm font-medium text-gray-900">{index + 1}.</p>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{material.name}</p>
+                  </div>
+                  <div className="w-24">
+                    <p className="text-sm text-gray-900 text-right">{material.price} PLN</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500">{t('materialsEmpty')}</p>
+            )}
+          </div>
+        )}
 
+        {order.status == 'in_progress' && (
         <button
           onClick={handleAddMaterial}
           className="block mb-4 text-blue-600 hover:text-blue-700 text-sm font-medium"
         >
           {t('addNextMaterial')}
         </button>
-
+        )}
+        {order.status == 'in_progress' && (
         <button
           onClick={handleSaveMaterials}
           disabled={isSavingMaterials}
@@ -876,6 +909,7 @@ export default function OrderDetailPage() {
         >
           {isSavingMaterials ? tCommon('saving') : tCommon('save')}
         </button>
+        )}
       </div>
       )}
 
@@ -886,6 +920,7 @@ export default function OrderDetailPage() {
 
         {isTechnician && (
           <div className="mb-6">
+            {order.status == 'in_progress' && (
             <div className="border-2 border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 rounded-lg p-6 text-center cursor-pointer transition-colors">
               <input
                 type="file"
@@ -906,6 +941,7 @@ export default function OrderDetailPage() {
                 </div>
               </label>
             </div>
+            )}
 
             {isUploading && (
               <div className="mt-4">
@@ -941,7 +977,7 @@ export default function OrderDetailPage() {
                     setLightboxOpen(true);
                   }}
                 />
-                {isTechnician && (
+                {isTechnician && order.status == 'in_progress' &&  (
                   <button
                     onClick={() => handlePhotoDelete(photo.id)}
                     className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold"

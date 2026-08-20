@@ -400,6 +400,10 @@
     "materialNamePlaceholder": "np. Wkład filtra",
     "materialsEmpty": "Brak zarejestrowanych materiałów",
     "materialsError": "Błąd podczas zapisywania materiałów",
-    "materialsSaved": "Materiały zapisane pomyślnie!"
+    "materialsSaved": "Materiały zapisane pomyślnie!",
+    "pauseOrder": "Wstrzymaj zlecenie",
+    "stopReason": "Powód wstrzymania",
+    "stopReasonPlaceholder": "Wpisz powód wstrzymania zlecenia...",
+    "characters": "znaków"
   }
 }

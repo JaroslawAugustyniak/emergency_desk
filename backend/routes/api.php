@@ -95,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{order}', [OrderController::class, 'destroy']);
         Route::patch('/{order}/status', [OrderController::class, 'changeStatus']);
         Route::patch('/{order}/assign-technician', [OrderController::class, 'assignTechnician']);
+        Route::patch('/{order}/pause', [OrderController::class, 'pause']);
 
         // Photo routes
         Route::post('/{order}/photos', [OrderController::class, 'uploadPhotos']);

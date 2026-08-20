@@ -630,6 +630,49 @@ class OrderController extends Controller
     }
 
     /**
+     * Pause an order with a reason
+     */
+    public function pause(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        // Only admin can pause orders
+        if ($user->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Can only pause assigned or in_progress orders
+        if (!in_array($order->status, ['assigned', 'in_progress'])) {
+            return response()->json([
+                'message' => 'Cannot pause order with status: ' . $order->status,
+                'error' => 'Invalid status transition'
+            ], 422);
+        }
+
+        try {
+            $validated = $request->validate([
+                'stop_reason' => 'required|string|max:500',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
+
+        $order->status = 'paused';
+        $order->stop_reason = $validated['stop_reason'];
+        $order->save();
+
+        $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
+
+        return response()->json([
+            'message' => 'Order paused successfully',
+            'data' => $this->formatOrder($order, $request),
+        ]);
+    }
+
+    /**
      * Generate unique order number
      */
     private function generateOrderNumber(): string

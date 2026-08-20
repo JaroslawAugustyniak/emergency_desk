@@ -45,7 +45,7 @@ export default function Topbar() {
       <div className="flex items-center gap-2 md:gap-4 shrink-0">
         {/* <LanguageSwitcher /> */}
 
-        {t('welcome', {name: user?.first_name || 'Gościu'})} 
+        <span className="hidden md:inline-block ">{t('welcome', {name: user?.first_name || 'Gościu'})}</span> 
         <UserMenu isPortalUser={false} />
       </div>
     </header>

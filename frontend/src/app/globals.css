@@ -318,7 +318,7 @@ html, body {
   }
 
   .mobile-nav-container {
-    @apply flex items-center justify-around
+    @apply flex items-center justify-start gap-2
            h-16 px-2 w-full;
     box-sizing: border-box;
   }
