@@ -251,9 +251,10 @@ export default function UserFormModal({
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="admin">Admin</option>
-              <option value="technician">Technician</option>
-              <option value="client">Client</option>
+              <option value="admin">{t('roleAdmin')}</option>
+              <option value="technician">{t('roleTechnician')}</option>
+              <option value="tech_manager">{t('roleTechManager')}</option>
+              <option value="client">{t('roleClient')}</option>
             </select>
           </div>
         )}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import UsersTable from '@/app/components/users/UsersTable';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
+import { is_tech_manager } from '@/lib/auth';
 
 type User = {
   id: number;
@@ -27,7 +28,8 @@ export default function UsersPage({
   searchParams: Promise<{ page?: string; search?: string; limit?: string; clientId?: string; role?: string; sort_by?: string; sort_order?: string }>;
 }) {
   const t = useTranslations('users');
-  const { token, isLoading } = useSessionContext();
+  const { token, isLoading, role } = useSessionContext();
+  const isTechManager = is_tech_manager(role);
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState<PaginationData>({
     currentPage: 1,
@@ -46,12 +48,12 @@ export default function UsersPage({
         search: p.search || '',
         limit: Number(p.limit) || 10,
         clientId: p.clientId || '',
-        role: p.role || '',
+        role: isTechManager ? 'technician' : (p.role || ''),
         sort_by: p.sort_by || 'first_name',
         sort_order: p.sort_order || 'asc',
       });
     })();
-  }, [searchParams]);
+  }, [searchParams, isTechManager]);
 
   useEffect(() => {
     if (!token || isLoading || !params) return;
@@ -133,6 +135,7 @@ export default function UsersPage({
         selectedRole={params?.role}
         sortBy={params?.sort_by}
         sortOrder={params?.sort_order}
+        isTechManager={isTechManager}
       />
     </div>
   );

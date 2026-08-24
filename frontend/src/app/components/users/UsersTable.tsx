@@ -40,6 +40,7 @@ export default function UsersTable({
   selectedRole = '',
   sortBy = 'first_name',
   sortOrder = 'asc',
+  isTechManager = false,
 }: {
   users: User[];
   pagination: Pagination;
@@ -47,6 +48,7 @@ export default function UsersTable({
   selectedRole?: string;
   sortBy?: string;
   sortOrder?: string;
+  isTechManager?: boolean;
 }) {
   const router = useRouter();
   const t = useTranslations('users');
@@ -85,6 +87,16 @@ export default function UsersTable({
     setSelectedUser(null);
   };
 
+  const getRoleLabel = (status: string): string => {
+    const labels: Record<string, string> = {
+      client: t('roleClient'),
+      technician: t('roleTechnician'),
+      admin: t('roleAdmin'),
+      tech_manager: t('roleTechManager')
+    };
+    return labels[status] || status;
+  };
+
 
   return (
     <div className="w-full">
@@ -107,7 +119,7 @@ export default function UsersTable({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {!clientId && (
+          {!clientId && !isTechManager && (
             <div className="flex items-center gap-2">
               <label htmlFor="role" className="text-sm text-gray-600">
                 {t('role')}
@@ -225,7 +237,7 @@ export default function UsersTable({
                   {!clientId && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium">
-                        {user.role}
+                        {getRoleLabel(user.role)}                        
                       </span>
                     </td>
                   )}
@@ -338,7 +350,7 @@ export default function UsersTable({
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         user={selectedUser}
-        presetRole={shouldUsePresets ? 'client' : undefined}
+        presetRole={shouldUsePresets ? 'client' : (isTechManager ? 'technician' : undefined)}
         presetClientId={shouldUsePresets ? clientId : undefined}
       />
     </div>
