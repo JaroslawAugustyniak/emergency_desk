@@ -96,6 +96,7 @@ export type OrdersListResponse = {
 export type ChangeStatusData = {
   status: 'new' | 'assigned' | 'in_progress' | 'paused' | 'finished' | 'completed' | 'invoiced';
   stop_reason?: string | null;
+  price_total?: number | null;
 };
 
 export type AssignTechnicianData = {

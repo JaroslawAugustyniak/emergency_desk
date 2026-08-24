@@ -260,6 +260,7 @@ class OrderController extends Controller
             $validated = $request->validate([
                 'status' => 'required|string|in:' . implode(',', $allowedStatuses),
                 'stop_reason' => 'nullable|string',
+                'price_total' => 'nullable|numeric|min:0',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -269,6 +270,14 @@ class OrderController extends Controller
         }
 
         $status = $validated['status'];
+
+        // Auto-determine status for finish repair flow
+        if ($status === 'completed' && isset($validated['price_total'])) {
+            $priceTotal = $validated['price_total'];
+            if ($priceTotal === null || $priceTotal <= 0) {
+                $status = 'finished';
+            }
+        }
 
         // Handle status transitions for technician
         if ($user->role === 'technician') {
@@ -292,12 +301,24 @@ class OrderController extends Controller
                 }
                 $order->end_at = now();
             }
+            if ($status === 'finished') {
+                if (!$order->start_at) {
+                    $order->start_at = now();
+                }
+                $order->end_at = now();
+            }
         } else {
             // Admin
             if ($status === 'paused') {
                 $order->stop_reason = $validated['stop_reason'] ?? null;
                 $order->prepaused_status = $order->status;
             }
+        }
+
+        // Handle price_total for completed/finished transition
+        if (($status === 'completed' || $status === 'finished') && array_key_exists('price_total', $validated)) {
+            $priceValue = $validated['price_total'];
+            $order->price_total = ($priceValue && $priceValue > 0) ? $priceValue : null;
         }
 
         $order->status = $status;

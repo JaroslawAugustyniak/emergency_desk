@@ -328,7 +328,7 @@
     "statusAssigned": "Przydzielone",
     "statusInProgress": "W trakcie",
     "statusPaused": "Wstrzymane",
-    "statusFinished": "Ukończone",
+    "statusFinished": "Praca ukończona",
     "statusCompleted": "Zakończone",
     "statusInvoiced": "Zafakturowane",
     "orderDate": "Data zamówienia",
@@ -408,6 +408,14 @@
     "confirmResumeOrder": "Czy na pewno chcesz przywrócić poprzedni status zlecenia?",
     "stopReason": "Powód wstrzymania",
     "stopReasonPlaceholder": "Wpisz powód wstrzymania zlecenia...",
-    "characters": "znaków"
+    "characters": "znaków",
+    "addPrice": "Dodaj wycenę",
+    "optional": "Pole nie jest obowiązkowe",
+    "confirm": "Zapisz",
+    "finishRepairPriceDescription": "Podaj koszt wykonanej naprawy. Jeśli koszt zostanie określony, status zmieni się na {completedStatus}. W przeciwnym razie status zmieni się na {finishedStatus}.",
+    "statusWillBeCompleted": "Status zmieni się na: {status}",
+    "statusWillBeFinished": "Status zmieni się na: {status}",
+    "repairCompletedWithPrice": "Naprawa zakończona z wyceną!",
+    "repairFinishedWithoutPrice": "Naprawa zakończona bez wyceny!"
   }
 }

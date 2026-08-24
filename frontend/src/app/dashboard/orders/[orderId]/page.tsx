@@ -12,6 +12,7 @@ import FormattedOrderNumber from '@/app/components/orders/FormattedOrderNumber';
 import OrderFormModal from '@/app/components/orders/OrderFormModal';
 import AssignTechnicianModal from '@/app/components/orders/AssignTechnicianModal';
 import PauseOrderModal from '@/app/components/orders/PauseOrderModal';
+import FinishRepairModal from '@/app/components/orders/FinishRepairModal';
 import PhotoUploadSection from '@/app/components/orders/PhotoUploadSection';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 import Swal from 'sweetalert2';
@@ -44,6 +45,7 @@ export default function OrderDetailPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  const [isFinishRepairModalOpen, setIsFinishRepairModalOpen] = useState(false);
   const [workReport, setWorkReport] = useState('');
   const [isSavingWorkReport, setIsSavingWorkReport] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -226,47 +228,8 @@ export default function OrderDetailPage() {
     }
   };
 
-  const handleFinishRepair = async () => {
-    if (!token || !order) return;
-
-    const result = await Swal.fire({
-      title: t('finishRepairConfirm'),
-      text: t('finishRepairMessage'),
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3b82f6',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: tCommon('confirm'),
-      cancelButtonText: tCommon('cancel'),
-    });
-
-    if (!result.isConfirmed) return;
-
-    try {
-      const updatedOrder = await changeOrderStatus(
-        order.id,
-        { status: 'completed' },
-        token
-      );
-      setOrder(updatedOrder);
-
-      await Swal.fire({
-        title: t('repairFinished'),
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false,
-        position: 'top-end',
-        toast: true,
-      });
-    } catch (error) {
-      console.error('Error finishing repair:', error);
-      await Swal.fire({
-        title: 'Error',
-        text: error instanceof Error ? error.message : t('statusChangeError'),
-        icon: 'error',
-        confirmButtonColor: '#3b82f6',
-      });
-    }
+  const handleFinishRepair = () => {
+    setIsFinishRepairModalOpen(true);
   };
 
   const handleResumeRepair = async () => {
@@ -714,6 +677,17 @@ export default function OrderDetailPage() {
               </button>
             )}
 
+            {isTechnician && order.status === 'finished' && (
+              <button
+                onClick={handleFinishRepair}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-teal-100 text-teal-700 rounded hover:bg-teal-200 transition-colors"
+                title={t('addPrice')}
+              >
+                <BookCheck className="w-5 h-5" />
+                {t('addPrice')}
+              </button>
+            )}
+
             {isAdmin && (order.status === 'paused' || order.status === 'new' || order.status === 'assigned' || order.status === 'in_progress') && (
               <button
                 onClick={handlePauseOrder}
@@ -1115,6 +1089,21 @@ export default function OrderDetailPage() {
         }}
         order={order}
       />
+      {token && order && (
+        <FinishRepairModal
+          isOpen={isFinishRepairModalOpen}
+          onClose={() => {
+            setIsFinishRepairModalOpen(false);
+          }}
+          order={order}
+          token={token}
+          onSuccess={() => {
+            if (token) {
+              getOrder(Number(orderId), token).then((data) => setOrder(data.data));
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
