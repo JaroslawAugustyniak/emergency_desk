@@ -32,8 +32,7 @@ export default function Sidebar() {
     { href: '/dashboard/clients', icon: Mountain, label: t('clients'), roles: ['admin'] },
     { href: '/dashboard/locations', icon: MapPin, label: t('locations'), roles: ['admin', 'client'] },
     { href: '/dashboard/orders', icon: Logs, label: t('orders'), roles: ['admin', 'client', 'technician', 'tech_manager'] },
-    { href: '/dashboard/users', icon: Users, label: t('users'), roles: ['admin'] },
-    { href: '/dashboard/technicians', icon: Users, label: t('technicians'), roles: ['tech_manager'] },
+    { href: '/dashboard/users', icon: Users, label: t('users'), roles: ['admin','tech_manager'] },
     { href: '/dashboard/reports', icon: FileText, label: t('reports'), roles: ['admin'] },
   ];
 

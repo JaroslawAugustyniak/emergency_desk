@@ -132,10 +132,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{location}', [LocationController::class, 'update']);
         Route::delete('/{location}', [LocationController::class, 'destroy']);
     });
-});
 
-// Admin-only routes
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::prefix('users')->group(function () {
         Route::get('/', [UserController::class, 'index']);
         Route::post('/', [UserController::class, 'store']);
@@ -145,33 +142,11 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/{user}', [UserController::class, 'update']);
         Route::delete('/{user}', [UserController::class, 'destroy']);
     });
+});
 
-    // Route::prefix('clients')->group(function () {
-    //     Route::get('/', [ClientController::class, 'index']);
-    //     Route::post('/', [ClientController::class, 'store']);
-    //     Route::get('/{client}', [ClientController::class, 'show']);
-    //     Route::put('/{client}', [ClientController::class, 'update']);
-    //     Route::delete('/{client}', [ClientController::class, 'destroy']);
-    //     Route::post('/{client}/regenerate-hash', [ClientController::class, 'regenerateHash']);
-    // });
+// Admin-only routes
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    
 
-    // Route::prefix('locations')->group(function () {
-    //     Route::get('/', [LocationController::class, 'index']);
-    //     Route::post('/', [LocationController::class, 'store']);
-    //     Route::get('/{location}', [LocationController::class, 'show']);
-    //     Route::put('/{location}', [LocationController::class, 'update']);
-    //     Route::delete('/{location}', [LocationController::class, 'destroy']);
-    // });
-/*
-
-
-     Route::prefix('orders')->group(function () {
-        Route::get('/', [OrderController::class, 'index']);
-        Route::post('/', [OrderController::class, 'store']);
-        Route::get('/{order}', [OrderController::class, 'show']);
-        Route::put('/{order}', [OrderController::class, 'update']);
-        Route::delete('/{order}', [OrderController::class, 'destroy']);
-        Route::patch('/{order}/status', [OrderController::class, 'changeStatus']);
-        Route::patch('/{order}/assign-technician', [OrderController::class, 'assignTechnician']);
-    }); */
+   
 });
