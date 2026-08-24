@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
-import { Edit, Trash2, FileText, UserPlus, FingerprintPattern, MapPin, Mountain, UserRound, BookCheck } from 'lucide-react';
+import { Edit, Trash2, FileText, UserPlus, FingerprintPattern, MapPin, Mountain, UserRound, BookCheck, Pause, Play } from 'lucide-react';
 import Link from 'next/link';
-import { getOrder, deleteOrder, changeOrderStatus } from '@/lib/actions/orders';
+import { getOrder, deleteOrder, changeOrderStatus, pauseOrder } from '@/lib/actions/orders';
 import BackButton from '@/app/components/ui/BackButton';
 import FormattedOrderNumber from '@/app/components/orders/FormattedOrderNumber';
 import OrderFormModal from '@/app/components/orders/OrderFormModal';
 import AssignTechnicianModal from '@/app/components/orders/AssignTechnicianModal';
+import PauseOrderModal from '@/app/components/orders/PauseOrderModal';
 import PhotoUploadSection from '@/app/components/orders/PhotoUploadSection';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 import Swal from 'sweetalert2';
@@ -23,6 +24,7 @@ const statusColors: Record<string, string> = {
   assigned: 'bg-blue-100 text-blue-800',
   in_progress: 'bg-yellow-100 text-yellow-800',
   paused: 'bg-orange-100 text-orange-800',
+  finished: 'bg-teal-100 text-teal-800',
   completed: 'bg-green-100 text-green-800',
   invoiced: 'bg-purple-100 text-purple-800',
 };
@@ -41,6 +43,7 @@ export default function OrderDetailPage() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [workReport, setWorkReport] = useState('');
   const [isSavingWorkReport, setIsSavingWorkReport] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -309,6 +312,54 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handlePauseOrder = async () => {
+    if (!token || !order) return;
+
+    if (order.status === 'paused') {
+      // Resume the order with confirmation
+      const result = await Swal.fire({
+        title: t('resumeOrder') || 'Wznów zlecenie',
+        text: t('confirmResumeOrder') || 'Czy na pewno chcesz przywrócić poprzedni status zlecenia?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: tCommon('confirm'),
+        cancelButtonText: tCommon('cancel'),
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      try {
+        await pauseOrder(order.id, null, token);
+        const updatedOrder = await getOrder(order.id, token);
+        setOrder(updatedOrder.data);
+
+        await Swal.fire({
+          title: t('resumeOrder'),
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true,
+        });
+      } catch (error) {
+        console.error('Error resuming order:', error);
+        await Swal.fire({
+          title: 'Error',
+          text: error instanceof Error ? error.message : t('statusChangeError'),
+          icon: 'error',
+          confirmButtonColor: '#3b82f6',
+        });
+      }
+    } else {
+      // Pause the order - open modal
+      setIsPauseModalOpen(true);
+    }
+  };
+
   const handleSaveWorkReport = async () => {
     if (!token || !order) return;
 
@@ -566,6 +617,7 @@ export default function OrderDetailPage() {
       assigned: t('statusAssigned'),
       in_progress: t('statusInProgress'),
       paused: t('statusPaused'),
+      finished: t('statusFinished'),
       completed: t('statusCompleted'),
       invoiced: t('statusInvoiced'),
     };
@@ -662,6 +714,25 @@ export default function OrderDetailPage() {
               </button>
             )}
 
+            {isAdmin && (order.status === 'paused' || order.status === 'new' || order.status === 'assigned' || order.status === 'in_progress') && (
+              <button
+                onClick={handlePauseOrder}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded transition-colors ${
+                  order.status === 'paused'
+                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                }`}
+                title={order.status === 'paused' ? t('resumeOrder') : t('pauseOrder')}
+              >
+                {order.status === 'paused' ? (
+                  <Play className="w-5 h-5" />
+                ) : (
+                  <Pause className="w-5 h-5" />
+                )}
+                {order.status === 'paused' ? t('resumeOrder') : t('pauseOrder')}
+              </button>
+            )}
+
             <button
               className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
               title={t('generatePDF')}
@@ -687,6 +758,7 @@ export default function OrderDetailPage() {
           <div>
             <span className={`px-4 py-2 rounded-md text-sm font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
               {getStatusLabel(order.status)}
+              {order.status == 'paused' && <span className="ml-1">: {order.stop_reason} </span>}
             </span>
           </div>
         </div>
@@ -1030,6 +1102,17 @@ export default function OrderDetailPage() {
       <AssignTechnicianModal
         isOpen={isAssignModalOpen}
         onClose={handleCloseAssignModal}
+        order={order}
+      />
+      <PauseOrderModal
+        isOpen={isPauseModalOpen}
+        onClose={() => {
+          setIsPauseModalOpen(false);
+          // Reload order after modal closes
+          if (token) {
+            getOrder(Number(orderId), token).then((data) => setOrder(data.data));
+          }
+        }}
         order={order}
       />
     </div>
