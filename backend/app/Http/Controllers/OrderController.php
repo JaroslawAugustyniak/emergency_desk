@@ -54,7 +54,7 @@ class OrderController extends Controller
         } elseif ($user->role === 'technician') {
             $query->where('technician_id', $user->id);
         }
-        // Admin sees all orders
+        // Admin and tech_manager see all orders
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -111,7 +111,7 @@ class OrderController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
         }
-        // Admin can view all
+        // Admin and tech_manager can view all
 
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
         return response()->json([
@@ -337,6 +337,13 @@ class OrderController extends Controller
      */
     public function assignTechnician(Request $request, Order $order): JsonResponse
     {
+        $user = $request->user();
+
+        // Only admin and tech_manager can assign technicians
+        if (!in_array($user->role, ['admin', 'tech_manager'])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         try {
             $validated = $request->validate([
                 'technician_id' => 'required|integer|exists:users,id',
@@ -657,8 +664,8 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        // Only admin can pause/resume orders
-        if ($user->role !== 'admin') {
+        // Only admin and tech_manager can pause/resume orders
+        if (!in_array($user->role, ['admin', 'tech_manager'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

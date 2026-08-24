@@ -14,12 +14,14 @@ class UserController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         try {
             $validated = $request->validate([
                 'page' => 'integer|min:1',
                 'per_page' => 'integer|min:1|max:100',
                 'client_id' => 'integer',
-                'role' => 'string|in:admin,client,technician',
+                'role' => 'string|in:admin,client,technician,tech_manager',
                 'search' => 'string|max:255',
                 'sort_by' => 'string|in:id,email,first_name,last_name,role,created_at',
                 'sort_order' => 'string|in:asc,desc',
@@ -41,7 +43,10 @@ class UserController extends Controller
 
         $query = User::query();
 
-        if ($role) {
+        // Tech manager can only view technicians
+        if ($user->role === 'tech_manager') {
+            $query->where('role', 'technician');
+        } elseif ($role) {
             $query->where('role', $role);
         }
         if ($client_id) {
@@ -90,12 +95,13 @@ class UserController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $authUser = $request->user();
 
         try {
             $validated = $request->validate([
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|min:8',
-                'role' => 'required|in:admin,client,technician',
+                'role' => 'required|in:admin,client,technician,tech_manager',
                 'first_name' => 'required|string|max:100',
                 'last_name' => 'required|string|max:100',
                 'phone' => 'nullable|string|max:20',
@@ -108,6 +114,10 @@ class UserController extends Controller
             ], 422);
         }
 
+        // Tech manager can only create technicians
+        if ($authUser->role === 'tech_manager' && $validated['role'] !== 'technician') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         $user = User::create([
             'email' => $validated['email'],
@@ -131,6 +141,13 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): JsonResponse
     {
+        $authUser = $request->user();
+
+        // Tech manager can only edit technicians
+        if ($authUser->role === 'tech_manager' && $user->role !== 'technician') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         try {
             $validated = $request->validate([
                 'email' => ['email', Rule::unique('users')->ignore($user->id)],

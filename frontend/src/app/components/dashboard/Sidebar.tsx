@@ -16,7 +16,7 @@ interface MenuItem {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
   exact?: boolean;
-  roles: ('admin' | 'client' | 'technician')[];
+  roles: ('admin' | 'client' | 'technician' | 'tech_manager')[];
 }
 
 export default function Sidebar() {
@@ -28,11 +28,12 @@ export default function Sidebar() {
   const { role } = useSessionContext();
 
   const menuItems: MenuItem[] = [
-    { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard'), exact: true, roles: ['admin', 'client', 'technician'] },
+    { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard'), exact: true, roles: ['admin', 'client', 'technician', 'tech_manager'] },
     { href: '/dashboard/clients', icon: Mountain, label: t('clients'), roles: ['admin'] },
     { href: '/dashboard/locations', icon: MapPin, label: t('locations'), roles: ['admin', 'client'] },
-    { href: '/dashboard/orders', icon: Logs, label: t('orders'), roles: ['admin', 'client', 'technician'] },
+    { href: '/dashboard/orders', icon: Logs, label: t('orders'), roles: ['admin', 'client', 'technician', 'tech_manager'] },
     { href: '/dashboard/users', icon: Users, label: t('users'), roles: ['admin'] },
+    { href: '/dashboard/technicians', icon: Users, label: t('technicians'), roles: ['tech_manager'] },
     { href: '/dashboard/reports', icon: FileText, label: t('reports'), roles: ['admin'] },
   ];
 
