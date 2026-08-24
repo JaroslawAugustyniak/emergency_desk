@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, ArrowUpDown, Plus, Loader, UserPlus, SquareArrowRight, Pause } from 'lucide-react';
+import { Edit, Trash2, ArrowUpDown, Plus, Loader, UserPlus, SquareArrowRight, Pause, Play } from 'lucide-react';
+import Swal from 'sweetalert2';
 import OrderFormModal from '@/app/components/orders/OrderFormModal';
 import AssignTechnicianModal from '@/app/components/orders/AssignTechnicianModal';
 import PauseOrderModal from '@/app/components/orders/PauseOrderModal';
 import FormattedOrderNumber from '@/app/components/orders/FormattedOrderNumber';
 import Pagination from '@/app/components/ui/Pagination';
-import { deleteOrder } from '@/lib/actions/orders';
+import { deleteOrder, pauseOrder } from '@/lib/actions/orders';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useTableSearch } from '@/hooks/useTableSearch';
@@ -48,6 +49,7 @@ const statusColors: Record<string, string> = {
   assigned: 'bg-blue-100 text-blue-800',
   in_progress: 'bg-yellow-100 text-yellow-800',
   paused: 'bg-orange-100 text-orange-800',
+  finished: 'bg-teal-100 text-teal-800',
   completed: 'bg-green-100 text-green-800',
   invoiced: 'bg-purple-100 text-purple-800',
 };
@@ -202,9 +204,40 @@ export default function OrdersTable({
     setOrderToAssign(null);
   };
 
-  const handlePauseOrder = (order: Order) => {
-    setOrderToPause(order);
-    setIsPauseModalOpen(true);
+  const handlePauseOrder = async (order: Order) => {
+    if (order.status === 'paused') {
+      // Resume the order with confirmation
+      const result = await Swal.fire({
+        title: t('resumeOrder') || 'Wznów zlecenie',
+        text: t('confirmResumeOrder') || 'Czy na pewno chcesz przywrócić poprzedni status zlecenia?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: tCommon('confirm'),
+        cancelButtonText: tCommon('cancel'),
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      if (!token) {
+        console.error('No token available');
+        return;
+      }
+
+      try {
+        await pauseOrder(order.id, null, token);
+        router.refresh();
+      } catch (error) {
+        console.error('Error resuming order:', error);
+      }
+    } else {
+      // Pause the order - open modal
+      setOrderToPause(order);
+      setIsPauseModalOpen(true);
+    }
   };
 
   const handleClosePauseModal = () => {
@@ -223,6 +256,7 @@ export default function OrdersTable({
       assigned: t('statusAssigned'),
       in_progress: t('statusInProgress'),
       paused: t('statusPaused'),
+      finished: t('statusFinished'),
       completed: t('statusCompleted'),
       invoiced: t('statusInvoiced'),
     };
@@ -406,6 +440,7 @@ export default function OrdersTable({
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
                       {getStatusLabel(order.status)}
+                      {order.status == 'paused' && <span className="ml-1">: {order.stop_reason} </span>}
                       {order.is_emergency && <span className="ml-1">🚨</span>}
                       {order.technician?.first_name} {order.technician?.last_name}
                     </span>
@@ -415,10 +450,10 @@ export default function OrdersTable({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-2">
-                      <div className="relative group">
+                      <div className="relative group flex items-center">
                         <Link
                           href={`/dashboard/orders/${order.id}`}
-                          className="hover:text-blue-600 hover:underline"
+                          className="p-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
                           title={t('gotoOrderDetails')}
                         >
                           <SquareArrowRight className="w-4 h-4" />
@@ -427,7 +462,7 @@ export default function OrdersTable({
                           </span>
                         </Link>
                       </div>
-                      {(order.status === 'new' || order.status === 'assigned') && displayAdminOptions && (
+                      {(order.status === 'new' || order.status === 'paused' || order.status === 'assigned') && displayAdminOptions && (
                         <div className="relative group">
                           <button
                             onClick={() => handleAssignTechnician(order)}
@@ -441,17 +476,25 @@ export default function OrdersTable({
                           </span>
                         </div>
                       )}
-                      {(order.status === 'assigned' || order.status === 'in_progress') && displayAdminOptions && (
+                      {(order.status === 'paused' || order.status === 'new' || order.status === 'assigned' || order.status === 'in_progress') && displayAdminOptions && (
                         <div className="relative group">
                           <button
                             onClick={() => handlePauseOrder(order)}
-                            className="p-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition-colors"
-                            title={t('pauseOrder')}
+                            className={`p-2 rounded transition-colors ${
+                              order.status === 'paused'
+                                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                            }`}
+                            title={order.status === 'paused' ? t('resumeOrder') : t('pauseOrder')}
                           >
-                            <Pause className="w-4 h-4" />
+                            {order.status === 'paused' ? (
+                              <Play className="w-4 h-4" />
+                            ) : (
+                              <Pause className="w-4 h-4" />
+                            )}
                           </button>
                           <span className="tooltip tooltip-top-right">
-                            {t('pauseOrder')}
+                            {order.status === 'paused' ? t('resumeOrder') : t('pauseOrder')}
                           </span>
                         </div>
                       )}
@@ -553,13 +596,21 @@ export default function OrdersTable({
                         <UserPlus className="w-4 h-4" />
                       </button>
                     )}
-                    {(order.status === 'assigned' || order.status === 'in_progress') && displayAdminOptions && (
+                    {(order.status === 'paused' || order.status === 'assigned' || order.status === 'in_progress') && displayAdminOptions && (
                       <button
                         onClick={() => handlePauseOrder(order)}
-                        className="flex-1 p-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition-colors flex items-center justify-center"
-                        title={t('pauseOrder')}
+                        className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
+                          order.status === 'paused'
+                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                        }`}
+                        title={order.status === 'paused' ? t('resumeOrder') : t('pauseOrder')}
                       >
-                        <Pause className="w-4 h-4" />
+                        {order.status === 'paused' ? (
+                          <Play className="w-4 h-4" />
+                        ) : (
+                          <Pause className="w-4 h-4" />
+                        )}
                       </button>
                     )}
                     {order.status === 'new' && displayClientOptions && (

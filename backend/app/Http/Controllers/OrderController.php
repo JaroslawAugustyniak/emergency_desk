@@ -20,8 +20,8 @@ class OrderController extends Controller
                 'search' => 'string|max:255',
                 'client_id' => 'integer',
                 'location_id' => 'integer',
-                'status' => 'string|in:new,assigned,in_progress,paused,completed,invoiced',
-                'sort_by' => 'string|in:id,order_number,status,order_date,created_at',
+                'status' => 'string|in:new,assigned,in_progress,paused,finished,completed,invoiced',
+                'sort_by' => 'string|in:id,status,order_date,created_at',
                 'sort_order' => 'string|in:asc,desc',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -58,8 +58,7 @@ class OrderController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
+                $q->where('description', 'like', "%{$search}%")
                     ->orWhere('client_ref_no', 'like', "%{$search}%");
             });
         }
@@ -249,12 +248,12 @@ class OrderController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
             // Technician can only use these statuses
-            $allowedStatuses = ['in_progress', 'paused', 'completed'];
+            $allowedStatuses = ['in_progress', 'paused', 'finished', 'completed'];
         } elseif ($user->role === 'client') {
             return response()->json(['message' => 'Clients cannot change order status'], 403);
         } else {
             // Admin can use all statuses
-            $allowedStatuses = ['new', 'assigned', 'in_progress', 'paused', 'completed', 'invoiced'];
+            $allowedStatuses = ['new', 'assigned', 'in_progress', 'paused', 'finished', 'completed', 'invoiced'];
         }
 
         try {
@@ -284,6 +283,7 @@ class OrderController extends Controller
             }
             if ($status === 'paused') {
                 $order->stop_reason = $validated['stop_reason'] ?? null;
+                $order->prepaused_status = $order->status;
                 $order->start_at = $order->start_at ?? now();
             }
             if ($status === 'completed') {
@@ -296,6 +296,7 @@ class OrderController extends Controller
             // Admin
             if ($status === 'paused') {
                 $order->stop_reason = $validated['stop_reason'] ?? null;
+                $order->prepaused_status = $order->status;
             }
         }
 
@@ -351,7 +352,6 @@ class OrderController extends Controller
 
         return [
             'id' => $order->id,
-            'order_number' => $order->order_number,
             'client_id' => $order->client_id,
             'client' => $order->client ? [
                 'id' => $order->client->id,
@@ -630,19 +630,42 @@ class OrderController extends Controller
     }
 
     /**
-     * Pause an order with a reason
+     * Pause an order with a reason, or resume a paused order
      */
     public function pause(Request $request, Order $order): JsonResponse
     {
         $user = $request->user();
 
-        // Only admin can pause orders
+        // Only admin can pause/resume orders
         if ($user->role !== 'admin') {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Can only pause assigned or in_progress orders
-        if (!in_array($order->status, ['assigned', 'in_progress'])) {
+        // Handle resume (order is already paused)
+        if ($order->status === 'paused') {
+            // Can only resume if prepaused_status exists
+            if (!$order->prepaused_status) {
+                return response()->json([
+                    'message' => 'Cannot restore previous status: prepaused status not found',
+                    'error' => 'Missing prepaused status'
+                ], 422);
+            }
+
+            $order->status = $order->prepaused_status;
+            $order->prepaused_status = null;
+            // Note: stop_reason is intentionally kept
+            $order->save();
+
+            $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
+
+            return response()->json([
+                'message' => 'Order resumed successfully',
+                'data' => $this->formatOrder($order, $request),
+            ]);
+        }
+
+        // Handle pause
+        if (!in_array($order->status, ['new', 'assigned', 'in_progress'])) {
             return response()->json([
                 'message' => 'Cannot pause order with status: ' . $order->status,
                 'error' => 'Invalid status transition'
@@ -660,6 +683,7 @@ class OrderController extends Controller
             ], 422);
         }
 
+        $order->prepaused_status = $order->status;
         $order->status = 'paused';
         $order->stop_reason = $validated['stop_reason'];
         $order->save();
@@ -672,13 +696,4 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Generate unique order number
-     */
-    private function generateOrderNumber(): string
-    {
-        $timestamp = time();
-        $random = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
-        return 'ORD-' . date('Ymd') . '-' . $random;
-    }
 }

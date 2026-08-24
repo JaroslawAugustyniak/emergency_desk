@@ -35,7 +35,7 @@ export type Order = {
     name: string;
     color: string;
   } | null;
-  status: 'new' | 'assigned' | 'in_progress' | 'paused' | 'completed' | 'invoiced';
+  status: 'new' | 'assigned' | 'in_progress' | 'paused' | 'finished' | 'completed' | 'invoiced';
   description: string | null;
   stop_reason: string | null;
   vat_rate: number;
@@ -78,7 +78,7 @@ export type OrderFilters = {
   search?: string;
   client_id?: number;
   location_id?: number;
-  status?: 'new' | 'assigned' | 'in_progress' | 'paused' | 'completed' | 'invoiced';
+  status?: 'new' | 'assigned' | 'in_progress' | 'paused' | 'finished' | 'completed' | 'invoiced';
   sort_by?: 'id' | 'order_number' | 'status' | 'order_date' | 'created_at';
   sort_order?: 'asc' | 'desc';
 };
@@ -94,7 +94,7 @@ export type OrdersListResponse = {
 };
 
 export type ChangeStatusData = {
-  status: 'new' | 'assigned' | 'in_progress' | 'paused' | 'completed' | 'invoiced';
+  status: 'new' | 'assigned' | 'in_progress' | 'paused' | 'finished' | 'completed' | 'invoiced';
   stop_reason?: string | null;
 };
 

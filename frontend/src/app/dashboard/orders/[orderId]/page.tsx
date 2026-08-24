@@ -156,7 +156,7 @@ export default function OrderDetailPage() {
     try {
       const updatedOrder = await changeOrderStatus(
         order.id,
-        { status: newStatus as 'new' | 'assigned' | 'in_progress' | 'paused' | 'completed' | 'invoiced' },
+        { status: newStatus as 'new' | 'assigned' | 'in_progress' | 'paused' | 'finished' | 'completed' | 'invoiced' },
         token
       );
       setOrder(updatedOrder);

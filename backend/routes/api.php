@@ -117,20 +117,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{client}/regenerate-hash', [ClientController::class, 'regenerateHash']);
     });
 
-    Route::prefix('locations')->group(function () {
-        Route::get('/', [LocationController::class, 'index']);
-        Route::post('/', [LocationController::class, 'store']);
-        Route::get('/{location}', [LocationController::class, 'show']);
-        Route::put('/{location}', [LocationController::class, 'update']);
-        Route::delete('/{location}', [LocationController::class, 'destroy']);
-    });
-
     Route::prefix('service-categories')->group(function () {
         Route::get('/', [ServiceCategoryController::class, 'index']);
         Route::post('/', [ServiceCategoryController::class, 'store']);
         Route::get('/{categoryId}', [ServiceCategoryController::class, 'show']);
         Route::put('/{categoryId}', [ServiceCategoryController::class, 'update']);
         Route::delete('/{categoryId}', [ServiceCategoryController::class, 'destroy']);
+    });
+
+    Route::prefix('locations')->group(function () {
+        Route::get('/', [LocationController::class, 'index']);
+        Route::post('/', [LocationController::class, 'store']);
+        Route::get('/{location}', [LocationController::class, 'show']);
+        Route::put('/{location}', [LocationController::class, 'update']);
+        Route::delete('/{location}', [LocationController::class, 'destroy']);
     });
 });
 
@@ -162,16 +162,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     //     Route::put('/{location}', [LocationController::class, 'update']);
     //     Route::delete('/{location}', [LocationController::class, 'destroy']);
     // });
+/*
 
-    Route::prefix('service-categories')->group(function () {
-        Route::get('/', [ServiceCategoryController::class, 'index']);
-        Route::post('/', [ServiceCategoryController::class, 'store']);
-        Route::get('/{categoryId}', [ServiceCategoryController::class, 'show']);
-        Route::put('/{categoryId}', [ServiceCategoryController::class, 'update']);
-        Route::delete('/{categoryId}', [ServiceCategoryController::class, 'destroy']);
-    });
 
-/*     Route::prefix('orders')->group(function () {
+     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'index']);
         Route::post('/', [OrderController::class, 'store']);
         Route::get('/{order}', [OrderController::class, 'show']);

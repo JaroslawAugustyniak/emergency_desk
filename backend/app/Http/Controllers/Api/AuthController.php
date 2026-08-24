@@ -235,6 +235,8 @@ class AuthController extends Controller
                     'first_name' => $user->first_name,
                     'last_name' => $user->last_name,
                     'email' => $user->email,
+                    'role' => $user->role,
+                    'client_id' => $user->client_id,
                     'email_verified_at' => $user->email_verified_at,
                 ],
             ]);

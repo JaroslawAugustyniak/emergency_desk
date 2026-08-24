@@ -8,6 +8,7 @@ export interface UserData {
   last_name: string;
   email: string;
   role: 'admin' | 'client' | 'technician';
+  client_id?: number | null;
 }
 
 interface SessionContextType {

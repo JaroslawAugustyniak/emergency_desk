@@ -40,9 +40,12 @@ export default function OrderFormModal({
   locationId,
 }: OrderFormModalProps) {
   const router = useRouter();
-  const { token } = useSessionContext();
+  const { token, user, role } = useSessionContext();
+  const isClientUser = role === 'client' && user?.client_id;
+  const effectiveClientId = clientId || (isClientUser ? user.client_id : null);
+
   const [formData, setFormData] = useState({
-    client_id: clientId || '',
+    client_id: effectiveClientId || '',
     location_id: locationId || '',
     service_category_id: '',
     description: '',
@@ -60,12 +63,12 @@ export default function OrderFormModal({
   const tCommon = useTranslations('common');
 
   const isEditMode = !!order;
-  const showClientSelect = !clientId && !locationId;
+  const showClientSelect = !clientId && !locationId && !isClientUser;
   const showLocationSelect = (clientId || formData.client_id) && !locationId;
 
-  // Fetch clients on mount
+  // Fetch clients on mount (only for non-client users)
   useEffect(() => {
-    if (!token || isEditMode) return;
+    if (!token || isEditMode || isClientUser) return;
 
     const fetchClients = async () => {
       try {
@@ -77,7 +80,7 @@ export default function OrderFormModal({
     };
 
     fetchClients();
-  }, [token, isEditMode]);
+  }, [token, isEditMode, isClientUser]);
 
   // Fetch locations when client is selected
   useEffect(() => {
@@ -157,7 +160,7 @@ export default function OrderFormModal({
       } else {
         // Initialize with empty form for create mode
         setFormData({
-          client_id: clientId || '',
+          client_id: effectiveClientId || '',
           location_id: locationId || '',
           service_category_id: '',
           description: '',
@@ -165,7 +168,7 @@ export default function OrderFormModal({
       }
     }
     setError(null);
-  }, [isOpen, isEditMode, order, clientId, locationId, token]);
+  }, [isOpen, isEditMode, order, clientId, locationId, token, effectiveClientId]);
 
   const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFormData({
@@ -383,7 +386,7 @@ export default function OrderFormModal({
           </button>
           <button
             type="submit"
-            disabled={isSubmitting || (!showClientSelect && !formData.client_id && !clientId)}
+            disabled={isSubmitting || !formData.client_id}
             className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? tCommon('saving') : isEditMode ? tCommon('save') : t('addOrder')}

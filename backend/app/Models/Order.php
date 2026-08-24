@@ -11,12 +11,12 @@ class Order extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'order_number',
         'client_id',
         'technician_id',
         'location_id',
         'service_category_id',
         'status',
+        'prepaused_status',
         'description',
         'stop_reason',
         'vat_rate',

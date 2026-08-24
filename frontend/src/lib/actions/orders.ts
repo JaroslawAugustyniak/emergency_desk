@@ -154,16 +154,21 @@ export async function assignTechnician(
 
 export async function pauseOrder(
   orderId: number,
-  reason: string,
+  reason: string | null,
   token: string
 ): Promise<Order> {
+  const body: { stop_reason?: string } = {};
+  if (reason) {
+    body.stop_reason = reason;
+  }
+
   const res = await fetch(`/api/orders/${orderId}/pause`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ stop_reason: reason }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {

@@ -34,11 +34,11 @@ class ServiceCategoryController extends Controller
 
         // Filter by client for non-admin users
         if ($user->role === 'client') {
-            $client = $user->client;
-            if (!$client) {
-                return response()->json(['message' => 'Client profile not found'], 404);
+            if (!$user->client_id) {
+                \Log::warning('Client user has no client_id', ['user_id' => $user->id, 'user_email' => $user->email]);
+                return response()->json(['message' => 'Your account is not associated with a client'], 403);
             }
-            $query->where('client_id', $client->id);
+            $query->where('client_id', $user->client_id);
         } elseif ($clientId && $user->role === 'admin') {
             $query->where('client_id', $clientId);
         } elseif (!$clientId && $user->role === 'admin') {

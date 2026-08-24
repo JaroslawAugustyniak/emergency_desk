@@ -81,6 +81,7 @@ export default function LoginPage() {
           last_name: result.data.user.last_name,
           email: result.data.user.email,
           role,
+          client_id: result.data.user.client_id,
         });
         apiClient.setCredentials(result.data.access_token, role);
       }

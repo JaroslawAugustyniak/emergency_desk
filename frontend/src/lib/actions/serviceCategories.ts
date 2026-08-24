@@ -19,7 +19,10 @@ export async function getServiceCategories(
   );
 
   if (!res.ok) {
-    throw new Error('Failed to fetch service categories');
+    const errorData = await res.json().catch(() => ({}));
+    const errorMessage = errorData.message || errorData.error || 'Failed to fetch service categories';
+    console.error('Service categories error:', { status: res.status, error: errorMessage, details: errorData });
+    throw new Error(errorMessage);
   }
 
   return res.json();
