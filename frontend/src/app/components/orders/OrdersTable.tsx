@@ -441,8 +441,7 @@ export default function OrdersTable({
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
                       {getStatusLabel(order.status)}
                       {order.status == 'paused' && <span className="ml-1">: {order.stop_reason} </span>}
-                      {order.is_emergency && <span className="ml-1">🚨</span>}
-                      {order.technician?.first_name} {order.technician?.last_name}
+                      {(order.status == 'assigned' || order.status === 'in_progress') && (<>: {order.technician?.first_name} {order.technician?.last_name}</>)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
