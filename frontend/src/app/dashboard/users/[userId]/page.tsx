@@ -32,6 +32,16 @@ export default function UserDetailPage() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const getRoleLabel = (status: string): string => {
+    const labels: Record<string, string> = {
+      client: t('roleClient'),
+      technician: t('roleTechnician'),
+      admin: t('roleAdmin'),
+      tech_manager: t('roleTechManager')
+    };
+    return labels[status] || status;
+  };
+
   useEffect(() => {
     if (!token || isLoading || !userId) return;
 
@@ -103,7 +113,7 @@ export default function UserDetailPage() {
             <label className="block text-sm font-medium text-gray-600 mb-1">
               {t('roleColumn')}
             </label>
-            <p className="text-base text-gray-900 uppercase">{user.role}</p>
+            <p className="text-base text-gray-900 uppercase">{getRoleLabel(user.role)}</p>
           </div>
 
           <div>
