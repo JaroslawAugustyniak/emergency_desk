@@ -2,6 +2,7 @@ export type User = {
   id: number;
   email: string;
   role: 'admin' | 'client' | 'technician' | 'tech_manager';
+  status: 'active' | 'blocked';
   first_name: string;
   last_name: string;
   phone?: string | null;

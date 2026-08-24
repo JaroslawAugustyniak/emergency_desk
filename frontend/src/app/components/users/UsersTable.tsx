@@ -1,17 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Edit, Trash2, ArrowUpDown, Plus, Loader } from 'lucide-react';
+import { Edit, Trash2, ArrowUpDown, Plus, Loader, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import UserFormModal from '@/app/components/users/UserFormModal';
 import Pagination from '@/app/components/ui/Pagination';
-import { deleteUser } from '@/lib/actions/users';
+import { deleteUser, changeUserStatus } from '@/lib/actions/users';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useTableSearch } from '@/hooks/useTableSearch';  
+import { useTableSearch } from '@/hooks/useTableSearch';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
+import { useSessionContext } from '@/app/components/providers/SessionProvider';
+import Swal from 'sweetalert2';
 
-import BackButton  from '@/app/components/ui/BackButton'; 
+import BackButton  from '@/app/components/ui/BackButton';
 import FormattedUserNumber from '@/app/components/users/FormattedUserNumber';
 
 type User = {
@@ -20,6 +22,7 @@ type User = {
   first_name: string;
   last_name: string;
   role: string;
+  status: 'active' | 'blocked';
   phone?: string;
   client_id?: number | null;
 };
@@ -51,6 +54,7 @@ export default function UsersTable({
   isTechManager?: boolean;
 }) {
   const router = useRouter();
+  const { token } = useSessionContext();
   const t = useTranslations('users');
   const tCommon = useTranslations('common');
   const { searchTerm, isLoadingSearch, buildUrl, handleSearchChange } = useTableSearch();
@@ -61,6 +65,7 @@ export default function UsersTable({
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isChangingStatus, setIsChangingStatus] = useState<number | null>(null);
 
   const handleSort = (field: SortField) => {
     const params = new URLSearchParams(window.location.search);
@@ -78,6 +83,39 @@ export default function UsersTable({
   const handleAddNew = () => {
     setSelectedUser(null);
     setIsModalOpen(true);
+  };
+
+  const handleChangeStatus = async (user: User) => {
+    const newStatus = user.status === 'active' ? 'blocked' : 'active';
+    const actionText = newStatus === 'blocked' ? t('blockUser') : t('unblockUser');
+
+    const result = await Swal.fire({
+      title: t('confirmAction'),
+      text: `${t('confirmChangeStatus')} ${user.first_name} ${user.last_name} ${t('to')} ${newStatus === 'blocked' ? t('statusBlocked') : t('statusActive')}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#000000',
+      cancelButtonColor: '#d33',
+      confirmButtonText: actionText,
+      cancelButtonText: tCommon('cancel'),
+    });
+
+    if (!result.isConfirmed || !token) return;
+
+    try {
+      setIsChangingStatus(user.id);
+      await changeUserStatus(user.id, newStatus, token);
+      router.refresh();
+    } catch (error) {
+      console.error('Error changing status:', error);
+      Swal.fire({
+        title: t('error'),
+        text: t('errorChangingStatus'),
+        icon: 'error',
+      });
+    } finally {
+      setIsChangingStatus(null);
+    }
   };
 
   const shouldUsePresets = clientId && selectedRole === 'client';
@@ -245,6 +283,23 @@ export default function UsersTable({
                     <div className="flex justify-end gap-2">
                       <div className="relative group">
                         <button
+                          onClick={() => handleChangeStatus(user)}
+                          disabled={isChangingStatus === user.id}
+                          className="p-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={user.status === 'active' ? t('blockUser') : t('unblockUser')}
+                        >
+                          {user.status === 'active' ? (
+                            <CheckCircle className="w-4 h-4" />
+                          ) : (
+                            <XCircle className="w-4 h-4" />
+                          )}
+                        </button>
+                        <span className="tooltip tooltip-top-right">
+                          {user.status === 'active' ? t('blockUser') : t('unblockUser')}
+                        </span>
+                      </div>
+                      <div className="relative group">
+                        <button
                           onClick={() => handleEdit(user)}
                           className="p-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
                           title={tCommon('edit')}
@@ -310,6 +365,18 @@ export default function UsersTable({
 
                 <div className="space-y-2">
                   <div className="flex gap-2">
+                    <button
+                      onClick={() => handleChangeStatus(user)}
+                      disabled={isChangingStatus === user.id}
+                      className="flex-1 p-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={user.status === 'active' ? t('blockUser') : t('unblockUser')}
+                    >
+                      {user.status === 'active' ? (
+                        <CheckCircle className="w-4 h-4" />
+                      ) : (
+                        <XCircle className="w-4 h-4" />
+                      )}
+                    </button>
                     <button
                       onClick={() => handleEdit(user)}
                       className="flex-1 p-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center justify-center"

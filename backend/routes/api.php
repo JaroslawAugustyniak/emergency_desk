@@ -140,6 +140,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/clients', [UserController::class, 'clients']);
         Route::get('/{user}', [UserController::class, 'show']);
         Route::put('/{user}', [UserController::class, 'update']);
+        Route::patch('/{user}/status', [UserController::class, 'changeStatus']);
         Route::delete('/{user}', [UserController::class, 'destroy']);
     });
 });

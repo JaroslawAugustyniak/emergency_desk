@@ -259,6 +259,41 @@ class UserController extends Controller
     }
 
     /**
+     * Change user status
+     */
+    public function changeStatus(Request $request, User $user): JsonResponse
+    {
+        $authUser = $request->user();
+
+        // Only admin can change status for all roles, tech_manager only for technicians
+        if ($authUser->role === 'tech_manager' && $user->role !== 'technician') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($authUser->role !== 'admin' && $authUser->role !== 'tech_manager') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            $validated = $request->validate([
+                'status' => 'required|in:active,blocked',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
+        }
+
+        $user->update(['status' => $validated['status']]);
+
+        return response()->json([
+            'message' => 'User status updated successfully',
+            'data' => $this->formatUser($user),
+        ]);
+    }
+
+    /**
      * Format user data for response
      */
     private function formatUser(User $user): array
@@ -267,6 +302,7 @@ class UserController extends Controller
             'id' => $user->id,
             'email' => $user->email,
             'role' => $user->role,
+            'status' => $user->status,
             'first_name' => $user->first_name,
             'last_name' => $user->last_name,
             'phone' => $user->phone,

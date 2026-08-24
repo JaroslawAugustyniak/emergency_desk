@@ -53,7 +53,11 @@ export default function LoginPage() {
       let errorMessage = t('invalidCredentials');
 
       if (result.statusCode === 403) {
-        errorMessage = t('emailNotVerified');
+        if (result.error && result.error.includes('blocked')) {
+          errorMessage = t('userAccountBlocked');
+        } else {
+          errorMessage = t('emailNotVerified');
+        }
       } else if (result.error) {
         errorMessage = result.error;
       }

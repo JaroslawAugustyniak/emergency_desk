@@ -123,6 +123,13 @@ class AuthController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'User account is blocked')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User account is blocked',
+                ], 403);
+            }
+
             if (str_contains($e->getMessage(), 'Email not verified')) {
                 return response()->json([
                     'success' => false,

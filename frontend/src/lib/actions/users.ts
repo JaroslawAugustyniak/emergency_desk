@@ -38,3 +38,12 @@ export async function deleteUser(userId: number, token: string) {
   apiClient.setToken(token);
   return apiClient.delete(`/users/${userId}`);
 }
+
+export async function changeUserStatus(
+  userId: number,
+  status: 'active' | 'blocked',
+  token: string
+) {
+  apiClient.setToken(token);
+  return apiClient.patch(`/users/${userId}/status`, { status });
+}

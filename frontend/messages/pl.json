@@ -92,7 +92,8 @@
     "backToRegister": "Powrót do rejestracji",
     "emailNotVerified": "Twój adres email nie został zweryfikowany. Sprawdź swoją skrzynkę pocztową.",
     "rememberMe": "Zapamiętaj mnie na tym urządzeniu",
-    "currency": "Waluta"
+    "currency": "Waluta",
+    "userAccountBlocked": "Twoje konto zostało zablokowane. Skontaktuj się z administratorem."
   },
   "profile": {
     "editProfile": "Edytuj profil",
@@ -314,7 +315,16 @@
     "passwordTooWeak": "Hasło jest za słabe",
     "savingError": "Błąd podczas zapisywania",
     "newPassword": "Nowe hasło",
-    "newPasswordPlaceholder": "Pozostaw puste, aby zachować aktualne hasło"
+    "newPasswordPlaceholder": "Pozostaw puste, aby zachować aktualne hasło",
+    "blockUser": "Blokuj użytkownika",
+    "unblockUser": "Odblokuj użytkownika",
+    "statusActive": "Aktywny",
+    "statusBlocked": "Zablokowany",
+    "confirmChangeStatus": "Czy na pewno chcesz zmienić status użytkownika",
+    "to": "na",
+    "confirmAction": "Potwierdź akcję",
+    "error": "Błąd",
+    "errorChangingStatus": "Błąd podczas zmiany statusu użytkownika"
   },
   "orders": {
     "title": "Zamówienia",

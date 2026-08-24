@@ -68,6 +68,10 @@ class AuthService
             return null;
         }
 
+        if ($user->status === 'blocked') {
+            throw new \Exception('User account is blocked');
+        }
+
         if (!$user->isEmailVerified()) {
             $this->sendVerificationCode($user);
             throw new \Exception('Email not verified');
