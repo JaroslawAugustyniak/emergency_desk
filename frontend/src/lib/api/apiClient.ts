@@ -113,7 +113,7 @@ class ApiClient {
       headers,
     };
 
-    if (body && (method === 'POST' || method === 'PUT')) {
+    if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
       config.body = JSON.stringify(body);
     }
 
@@ -177,6 +177,10 @@ class ApiClient {
 
   put<T = any>(endpoint: string, body?: any, options?: any) {
     return this.request<T>(endpoint, { method: 'PUT', body, ...options });
+  }
+
+  patch<T = any>(endpoint: string, body?: any, options?: any) {
+    return this.request<T>(endpoint, { method: 'PATCH', body, ...options });
   }
 
   delete<T = any>(endpoint: string, options?: any) {
