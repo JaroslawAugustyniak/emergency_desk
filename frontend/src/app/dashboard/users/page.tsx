@@ -12,7 +12,9 @@ type User = {
   first_name: string;
   last_name: string;
   role: string;
+  status: 'active' | 'blocked';
   phone?: string;
+  client_id?: number | null;
 };
 
 type PaginationData = {
