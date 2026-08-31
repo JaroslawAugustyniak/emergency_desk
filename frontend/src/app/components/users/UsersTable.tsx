@@ -285,7 +285,7 @@ export default function UsersTable({
                         <button
                           onClick={() => handleChangeStatus(user)}
                           disabled={isChangingStatus === user.id}
-                          className="p-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className={`p-2 ${user.status === 'active' ? 'text-green-700 bg-green-100 hover:bg-green-200' : 'text-yellow-700 bg-yellow-100 hover:bg-yellow-200'} rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                           title={user.status === 'active' ? t('blockUser') : t('unblockUser')}
                         >
                           {user.status === 'active' ? (
