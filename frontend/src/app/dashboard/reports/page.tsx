@@ -10,7 +10,7 @@ export default function ReportsPage() {
   const reports = [
     {
       title: t('technicianRevenueReport'),
-      description: 'Przychody i koszty materiałów dla każdego technika w wybranym okresie',
+      description: t('technicianRevenueReportDescription'),
       href: '/dashboard/reports/technician-revenue',
       icon: TrendingUp,
       color: 'from-blue-500 to-cyan-500',
@@ -19,14 +19,6 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-          {t('title')}
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">
-          Wybierz raport do wyświetlenia
-        </p>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {reports.map((report) => {
@@ -47,7 +39,7 @@ export default function ReportsPage() {
                 {report.description}
               </p>
               <div className="mt-4 flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium">
-                Otwórz
+                {t('openReport')}
                 <span className="ml-2 transform group-hover:translate-x-1 transition-transform">→</span>
               </div>
             </Link>

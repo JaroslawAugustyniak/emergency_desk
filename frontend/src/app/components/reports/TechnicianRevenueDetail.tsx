@@ -9,6 +9,9 @@ import {
   Legend,
   Tooltip,
 } from 'recharts';
+
+import { TrendingUp, TrendingDown, BarChart3, Percent } from 'lucide-react';
+
 import { TechnicianRevenueDetailResponse } from '@/lib/actions/technicianReports';
 
 type TechnicianRevenueDetailProps = {
@@ -47,48 +50,57 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
   return (
     <div className="space-y-6">
       {/* Technician Info */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-l-4 border-blue-500">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">
           {data.technician.name}
         </h2>
-        <p className="text-slate-600 dark:text-slate-400">{data.technician.email}</p>
+        <p className="text-slate-600">{data.technician.email}</p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-          <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-2">Przychód</p>
-          <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
-            {formatCurrency(data.summary.total_revenue)}
-          </p>
+        
+
+        <div className="bg-slate-50 rounded-lg shadow-sm p-6 relative">
+          <div className="flex justify-between items-start mb-6">
+            <p className="text-slate-600 text-sm">Przychód</p>
+            <TrendingUp className="w-12 h-12 text-green-500 absolute right-3" />
+          </div>
+          <div className="text-4xl font-bold text-slate-900 text-center">{formatCurrency(data.summary.total_revenue)}</div>
         </div>
 
-        <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
-          <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-2">Koszty materiałów</p>
-          <p className="text-xl font-bold text-red-900 dark:text-red-100">
-            {formatCurrency(data.summary.total_materials_cost)}
-          </p>
+        <div className="bg-slate-50 rounded-lg shadow-sm p-6 relative">
+          <div className="flex justify-between items-start mb-6">
+            <p className="text-slate-600 text-sm">Koszty materiałów</p>
+            <TrendingDown className="w-12 h-12 text-red-500 absolute right-3" />
+          </div>
+          <div className="text-4xl font-bold text-slate-900 text-center">{formatCurrency(data.summary.total_materials_cost)}</div>
         </div>
 
-        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
-          <p className="text-sm text-green-600 dark:text-green-400 font-medium mb-2">Dochód netto</p>
-          <p className="text-xl font-bold text-green-900 dark:text-green-100">
-            {formatCurrency(data.summary.total_income)}
-          </p>
+        <div className="bg-slate-50 rounded-lg shadow-sm p-6 relative">
+          <div className="flex justify-between items-start mb-6">
+            <p className="text-slate-600 text-sm">Dochód netto</p>
+            <BarChart3 className="w-12 h-12 text-blue-500 absolute right-3" />
+          </div>
+          <div className="text-4xl font-bold text-slate-900 text-center">{formatCurrency(data.summary.total_income)}</div>
         </div>
 
-        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-          <p className="text-sm text-purple-600 dark:text-purple-400 font-medium mb-2">Marża</p>
-          <p className="text-xl font-bold text-purple-900 dark:text-purple-100">
-            {marginPercentage}%
-          </p>
+        <div className="bg-slate-50 rounded-lg shadow-sm p-6 relative">
+          <div className="flex justify-between items-start mb-6">
+            <p className="text-slate-600 text-sm">Marża</p>
+            <Percent className="w-12 h-12 text-purple-500 absolute right-3" />
+          </div>
+          <div className="text-4xl font-bold text-slate-900 text-center">{marginPercentage}%</div>
         </div>
+
+      
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie Chart */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">
             Podział przychodu i kosztów
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -121,21 +133,21 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
         </div>
 
         {/* Statistics */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">
             Statystyki
           </h3>
           <div className="space-y-4">
-            <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
-              <span className="text-slate-600 dark:text-slate-400">Liczba zleceń</span>
-              <span className="font-bold text-slate-900 dark:text-slate-100">
+            <div className="flex justify-between items-center py-3 border-b border-slate-200 ">
+              <span className="text-slate-600 ">Liczba zleceń</span>
+              <span className="font-bold text-slate-900 ">
                 {data.summary.orders_count}
               </span>
             </div>
 
-            <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
-              <span className="text-slate-600 dark:text-slate-400">Średni przychód na zlecenie</span>
-              <span className="font-bold text-slate-900 dark:text-slate-100">
+            <div className="flex justify-between items-center py-3 border-b border-slate-200 ">
+              <span className="text-slate-600 ">Średni przychód na zlecenie</span>
+              <span className="font-bold text-slate-900 ">
                 {formatCurrency(
                   data.summary.orders_count > 0
                     ? data.summary.total_revenue / data.summary.orders_count
@@ -144,9 +156,9 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
               </span>
             </div>
 
-            <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
-              <span className="text-slate-600 dark:text-slate-400">Średni koszt materiałów</span>
-              <span className="font-bold text-slate-900 dark:text-slate-100">
+            <div className="flex justify-between items-center py-3 border-b border-slate-200 ">
+              <span className="text-slate-600 ">Średni koszt materiałów</span>
+              <span className="font-bold text-slate-900 ">
                 {formatCurrency(
                   data.summary.orders_count > 0
                     ? data.summary.total_materials_cost / data.summary.orders_count
@@ -156,8 +168,8 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
             </div>
 
             <div className="flex justify-between items-center py-3">
-              <span className="text-slate-600 dark:text-slate-400">Średni dochód na zlecenie</span>
-              <span className="font-bold text-green-600 dark:text-green-400">
+              <span className="text-slate-600 ">Średni dochód na zlecenie</span>
+              <span className="font-bold text-green-600 ">
                 {formatCurrency(
                   data.summary.orders_count > 0
                     ? data.summary.total_income / data.summary.orders_count
@@ -170,9 +182,9 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
-        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+      <div className="bg-white  rounded-lg shadow overflow-hidden">
+        <div className="p-6 border-b border-slate-200 ">
+          <h3 className="text-lg font-semibold text-slate-900 ">
             Szczegóły zleceń ({data.orders.length})
           </h3>
         </div>
@@ -180,26 +192,26 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <tr className="bg-slate-50 border-b border-slate-200 ">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 ">
                   Nr zlecenia
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 ">
                   Klient
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 ">
                   Kategoria
                 </th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900 ">
                   Przychód
                 </th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900 ">
                   Koszty
                 </th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900 ">
                   Dochód
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 ">
                   Data
                 </th>
               </tr>
@@ -208,23 +220,23 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
               {data.orders.map((order) => (
                 <tr
                   key={order.id}
-                  className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  className="border-b border-slate-200 hover:bg-slate-50 transition-colors"
                 >
-                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
+                  <td className="px-6 py-4 font-medium text-slate-900 ">
                     {order.order_number}
                   </td>
-                  <td className="px-6 py-4 text-slate-900 dark:text-slate-100">{order.client}</td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{order.service_category}</td>
-                  <td className="px-6 py-4 text-right text-slate-900 dark:text-slate-100">
+                  <td className="px-6 py-4 text-slate-900 ">{order.client}</td>
+                  <td className="px-6 py-4 text-slate-600 ">{order.service_category}</td>
+                  <td className="px-6 py-4 text-right text-slate-900 ">
                     {formatCurrency(order.revenue)}
                   </td>
-                  <td className="px-6 py-4 text-right text-slate-900 dark:text-slate-100">
+                  <td className="px-6 py-4 text-right text-slate-900 ">
                     {formatCurrency(order.materials_cost)}
                   </td>
-                  <td className="px-6 py-4 text-right font-semibold text-green-600 dark:text-green-400">
+                  <td className="px-6 py-4 text-right font-semibold text-green-600 ">
                     {formatCurrency(order.income)}
                   </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{order.end_at}</td>
+                  <td className="px-6 py-4 text-slate-600 ">{order.end_at}</td>
                 </tr>
               ))}
             </tbody>
@@ -233,7 +245,7 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
 
         {data.orders.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-slate-600 dark:text-slate-400">Brak zleceń dla wybranego okresu</p>
+            <p className="text-slate-600 ">Brak zleceń dla wybranego okresu</p>
           </div>
         )}
       </div>

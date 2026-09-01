@@ -8,6 +8,7 @@ import DateRangeSelector from '@/app/components/reports/DateRangeSelector';
 import TechnicianRevenueList from '@/app/components/reports/TechnicianRevenueList';
 import { getTechnicianRevenueSummary } from '@/lib/actions/technicianReports';
 import type { TechnicianRevenueSummary } from '@/lib/actions/technicianReports';
+import BackButton  from '@/app/components/ui/BackButton';
 
 export default function TechnicianRevenueReportPage() {
   const t = useTranslations('reports');
@@ -38,6 +39,7 @@ export default function TechnicianRevenueReportPage() {
         try {
           setIsLoadingData(true);
           const data = await getTechnicianRevenueSummary(fromDate, toDate, token);
+          console.log('Fetched data:', data);
           setTechnicians(data.data || []);
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : 'Błąd podczas pobierania danych';
@@ -68,7 +70,8 @@ export default function TechnicianRevenueReportPage() {
       <h1 className="text-2xl font-bold mb-8">{t('technicianRevenueReport')}</h1>
 
       {/* Date Range Selector */}
-      <div className="mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <BackButton />
         <DateRangeSelector onDateRangeChange={handleDateRangeChange} />
       </div>
 

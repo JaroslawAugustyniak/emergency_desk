@@ -435,10 +435,12 @@
   },
   "reports": {
     "title": "Raporty",
-    "technicianRevenueReport": "Raport przychodów techników",
+    "technicianRevenueReport": "Raport pracy techników",
+    "technicianRevenueReportDescription": "Przychody i koszty materiałów dla każdego technika w wybranym okresie",
     "technicianDetail": "Szczegóły technika",
     "dateRange": "Zakres dat",
     "fromDate": "Od daty",
+    "openReport": "Otwórz",
     "toDate": "Do daty",
     "technician": "Technik",
     "revenue": "Przychód",
