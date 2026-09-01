@@ -44,18 +44,25 @@ export default function DateRangeSelector({ onDateRangeChange }: DateRangeSelect
     if (urlString === prevUrlRef.current) return;
     prevUrlRef.current = urlString;
 
+    let from: string;
+    let to: string;
+
     if (urlFromDate && urlToDate) {
-      setFromDate(urlFromDate);
-      setToDate(urlToDate);
+      from = urlFromDate;
+      to = urlToDate;
+      setFromDate(from);
+      setToDate(to);
     } else {
       const defaults = getDefaultDates();
-      setFromDate(defaults.from);
-      setToDate(defaults.to);
-
-      setTimeout(() => {
-        callbackRef.current(defaults.from, defaults.to);
-      }, 0);
+      from = defaults.from;
+      to = defaults.to;
+      setFromDate(from);
+      setToDate(to);
     }
+
+    setTimeout(() => {
+      callbackRef.current(from, to);
+    }, 0);
   }, [searchParams]);
 
   const handleFromDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,12 +97,8 @@ export default function DateRangeSelector({ onDateRangeChange }: DateRangeSelect
 
   const handleNextMonth = () => {
     const { year, month } = getMonthYear(fromDate);
-    const nextDate = new Date(year, month - 1 + 1, 1);
+    const nextDate = new Date(year, month, 1);
 
-    const today = new Date();
-    const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    if (nextDate < currentMonthStart) {
       const firstDay = nextDate;
       const lastDay = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0);
 
@@ -103,12 +106,13 @@ export default function DateRangeSelector({ onDateRangeChange }: DateRangeSelect
       const to = formatDate(lastDay);
 
       onDateRangeChange(from, to);
-    }
+    
   };
 
   const canNavigateToNext = () => {
     const { year, month } = getMonthYear(fromDate);
-    const nextDate = new Date(year, month - 1 + 1, 1);
+    const nextDate = new Date(year, month - 1, 1);
+    // console.log(nextDate);
     const today = new Date();
     const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     return nextDate < currentMonthStart;
@@ -125,7 +129,7 @@ export default function DateRangeSelector({ onDateRangeChange }: DateRangeSelect
       </button>
 
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Od daty</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-600">Od daty</label>
         <div className="flex items-center border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800">
           <Calendar className="w-4 h-4 text-slate-400 mr-2" />
           <input
@@ -138,7 +142,7 @@ export default function DateRangeSelector({ onDateRangeChange }: DateRangeSelect
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Do daty</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-600">Do daty</label>
         <div className="flex items-center border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800">
           <Calendar className="w-4 h-4 text-slate-400 mr-2" />
           <input
