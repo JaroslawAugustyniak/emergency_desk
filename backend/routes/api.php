@@ -9,6 +9,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\TechnicianRevenueReportController;
 use App\Http\Controllers\PushNotificationController;
 use App\Mail\VerifyEmailMail;
 use App\Mail\ResetPasswordMail;
@@ -142,6 +143,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{user}', [UserController::class, 'update']);
         Route::delete('/{user}', [UserController::class, 'destroy']);
         Route::patch('/{user}/status', [UserController::class, 'changeStatus']);
+    });
+
+    Route::prefix('technician-reports')->group(function () {
+        Route::get('/revenue-summary', [TechnicianRevenueReportController::class, 'revenueSummary']);
+        Route::get('/revenue/{technician}', [TechnicianRevenueReportController::class, 'technicianDetail']);
     });
 });
 

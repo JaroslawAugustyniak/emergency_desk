@@ -52,13 +52,6 @@ export async function GET(request: NextRequest) {
     const isJson = contentType?.includes('application/json');
     const text = await res.text();
 
-    console.log('GET /api/users response:', {
-      status: res.status,
-      contentType,
-      bodyLength: text.length,
-      bodyPreview: text.substring(0, 500),
-    });
-
     if (!isJson) {
       console.error('Backend error - not JSON:', { status: res.status, text: text.substring(0, 500) });
       return NextResponse.json(
