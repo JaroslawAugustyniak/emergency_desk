@@ -35,15 +35,23 @@ class TechnicianRevenueReportController extends Controller
             ->get();
 
         $data = $technicians->map(function ($technician) use ($fromDate, $toDate) {
-            $orders = Order::where('technician_id', $technician->id)
+        // Pobieramy WSZYSTKIE zamówienia (zarówno is_emergency = 0 jak i 1)
+            $allOrders = Order::where('technician_id', $technician->id)
                 ->whereIn('status', ['completed', 'invoiced'])
                 ->whereBetween('end_at', [$fromDate, $toDate])
                 ->with('materials')
                 ->get();
 
+            // Zliczamy awaryjne
+            $emergencyCount = $allOrders->where('is_emergency', 1)->count();
+
+            // Przefiltrowana kolekcja tylko ze zwykłymi zamówieniami
+            $orders = $allOrders->where('is_emergency', 0);
+
             $totalRevenue = $orders->sum('price_total') ?? 0;
 
-            $totalMaterialsCost = 0;
+            $totalMaterialsCost = 0; 
+
             foreach ($orders as $order) {
                 if ($order->materials) {
                     $totalMaterialsCost += $order->materials->sum('price');
@@ -57,6 +65,7 @@ class TechnicianRevenueReportController extends Controller
                 'revenue' => (float) $totalRevenue,
                 'materials_cost' => (float) $totalMaterialsCost,
                 'income' => (float) ($totalRevenue - $totalMaterialsCost),
+                'emergency' => (int) $emergencyCount,
                 'orders_count' => $orders->count(),
             ];
         });
@@ -97,11 +106,22 @@ class TechnicianRevenueReportController extends Controller
         $fromDate = Carbon::parse($validated['from_date'])->startOfDay();
         $toDate = Carbon::parse($validated['to_date'])->endOfDay();
 
-        $orders = Order::where('technician_id', $technician->id)
+        $allOrders = Order::where('technician_id', $technician->id)
             ->whereIn('status', ['completed', 'invoiced'])
             ->whereBetween('end_at', [$fromDate, $toDate])
             ->with(['client', 'location', 'serviceCategory', 'materials'])
             ->get();
+
+            
+
+            // Zliczamy awaryjne
+            $emergencyCount = $allOrders->where('is_emergency', 1)->count();
+
+            // Przefiltrowana kolekcja tylko ze zwykłymi zamówieniami
+            $orders = $allOrders->where('is_emergency', 0);
+
+
+        $emergencyCount = $allOrders->where('is_emergency', 1)->count();
 
         $totalRevenue = $orders->sum('price_total') ?? 0;
 
@@ -136,6 +156,7 @@ class TechnicianRevenueReportController extends Controller
                 'total_materials_cost' => (float) $totalMaterialsCost,
                 'total_income' => (float) ($totalRevenue - $totalMaterialsCost),
                 'orders_count' => $orders->count(),
+                'emergency' => (int) $emergencyCount,
             ],
             'orders' => $ordersData->values(),
             'period' => [

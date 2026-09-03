@@ -10,7 +10,10 @@ import {
   Tooltip,
 } from 'recharts';
 
-import { TrendingUp, TrendingDown, BarChart3, Percent } from 'lucide-react';
+
+import { useTranslations } from 'next-intl';
+
+import { TrendingUp, TrendingDown, BarChart3, Siren } from 'lucide-react';
 
 import { TechnicianRevenueDetailResponse } from '@/lib/actions/technicianReports';
 
@@ -19,6 +22,8 @@ type TechnicianRevenueDetailProps = {
 };
 
 export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetailProps) {
+
+  const t = useTranslations('reports');
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
@@ -87,10 +92,10 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
 
         <div className="bg-slate-50 rounded-lg shadow-sm p-6 relative">
           <div className="flex justify-between items-start mb-6">
-            <p className="text-slate-600 text-sm">Marża</p>
-            <Percent className="w-12 h-12 text-purple-500 absolute right-3" />
+            <p className="text-slate-600 text-sm">{t('emergency')}</p>
+            <Siren className="w-12 h-12 text-red-500 absolute right-3" />
           </div>
-          <div className="text-4xl font-bold text-slate-900 text-center">{marginPercentage}%</div>
+          <div className="text-4xl font-bold text-slate-900 text-center">{data.summary.emergency}</div>
         </div>
 
       

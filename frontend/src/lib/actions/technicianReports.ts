@@ -5,6 +5,7 @@ export type TechnicianRevenueSummary = {
   revenue: number;
   materials_cost: number;
   income: number;
+  emergency: number;
   orders_count: number;
 };
 
@@ -26,6 +27,7 @@ export type TechnicianRevenueDetail = {
   revenue: number;
   materials_cost: number;
   income: number;
+  
   end_at: string;
   status: string;
 };
@@ -42,6 +44,7 @@ export type TechnicianRevenueDetailResponse = {
     total_materials_cost: number;
     total_income: number;
     orders_count: number;
+    emergency: number;
   };
   orders: TechnicianRevenueDetail[];
   period: {
