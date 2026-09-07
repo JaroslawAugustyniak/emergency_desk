@@ -107,6 +107,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{order}/materials', [OrderController::class, 'saveMaterials']);
         Route::get('/{order}/materials', [OrderController::class, 'getMaterials']);
         Route::delete('/{order}/materials/{materialId}', [OrderController::class, 'deleteMaterial']);
+
+        // Protocol PDF routes
+        Route::post('/{order}/protocol', [OrderController::class, 'generateProtocol']);
+        Route::get('/{order}/protocol/download', [OrderController::class, 'downloadProtocol']);
     });
 
     Route::prefix('clients')->group(function () {

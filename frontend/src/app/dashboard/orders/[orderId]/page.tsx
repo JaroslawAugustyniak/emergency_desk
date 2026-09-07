@@ -57,6 +57,8 @@ export default function OrderDetailPage() {
     { name: '', price: '' },
   ]);
   const [isSavingMaterials, setIsSavingMaterials] = useState(false);
+  const [isGeneratingProtocol, setIsGeneratingProtocol] = useState(false);
+  const [protocolFileName, setProtocolFileName] = useState<string | null>(null);
 
   const isAdmin = (role == 'admin' ? true : false);
   const isClient = (role == 'client' ? true : false);
@@ -91,6 +93,19 @@ export default function OrderDetailPage() {
         setOrder(data.data);
         setWorkReport(data.data.work_report || '');
         setPhotos(data.data.photos || []);
+
+        // Check if protocol exists
+        try {
+          const protocolCheckRes = await fetch(`/api/orders/${orderId}/protocol/download`, {
+            method: 'HEAD',
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if (protocolCheckRes.ok) {
+            setProtocolFileName(`order-${String(data.data.id).padStart(8, '0')}-${new Date().toISOString().split('T')[0].replace(/-/g, '')}.pdf`);
+          }
+        } catch (error) {
+          console.log('Protocol check: file not available yet');
+        }
 
         // Fetch materials
         try {
@@ -564,6 +579,72 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handleGenerateAndDownloadProtocol = async () => {
+    if (!token || !order) return;
+
+    try {
+      setIsGeneratingProtocol(true);
+
+      // Generate protocol
+      const generateRes = await fetch(`/api/orders/${order.id}/protocol`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!generateRes.ok) {
+        const errorData = await generateRes.json();
+        throw new Error(errorData.error || 'Failed to generate protocol');
+      }
+
+      const generateData = await generateRes.json();
+      setProtocolFileName(generateData.data.file_name);
+
+      // Download protocol
+      const downloadRes = await fetch(`/api/orders/${order.id}/protocol/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!downloadRes.ok) {
+        throw new Error('Failed to download protocol');
+      }
+
+      const blob = await downloadRes.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateData.data.file_name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      await Swal.fire({
+        title: t('protocolGenerated'),
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Error generating protocol:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : 'Failed to generate protocol',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    } finally {
+      setIsGeneratingProtocol(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pl-PL', {
       year: 'numeric',
@@ -708,12 +789,30 @@ export default function OrderDetailPage() {
             )}
 
             <button
-              className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
-              title={t('generatePDF')}
+              onClick={handleGenerateAndDownloadProtocol}
+              disabled={isGeneratingProtocol}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded transition-colors ${
+                isGeneratingProtocol
+                  ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
+              title={protocolFileName ? 'Wygeneruj ponownie' : t('generatePDF')}
             >
               <FileText className="w-5 h-5" />
-              {t('generatePDF')}
+              {isGeneratingProtocol ? 'Generowanie...' : (protocolFileName ? 'Wygeneruj ponownie' : t('generatePDF'))}
             </button>
+
+            {protocolFileName && (
+              <a
+                href={`/api/orders/${order.id}/protocol/download`}
+                download={protocolFileName}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
+                title="Pobierz protokół"
+              >
+                <FileText className="w-5 h-5" />
+                Pobierz protokół
+              </a>
+            )}
 
       </div>
 

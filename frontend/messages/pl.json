@@ -431,7 +431,8 @@
     "statusWillBeCompleted": "Status zmieni się na: {status}",
     "statusWillBeFinished": "Status zmieni się na: {status}",
     "repairCompletedWithPrice": "Naprawa zakończona z wyceną!",
-    "repairFinishedWithoutPrice": "Naprawa zakończona bez wyceny!"
+    "repairFinishedWithoutPrice": "Naprawa zakończona bez wyceny!",
+    "protocolGenerated": "Protokół wygenerowany pomyślnie!"
   },
   "reports": {
     "title": "Raporty",

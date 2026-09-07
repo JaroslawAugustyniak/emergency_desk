@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Services\OrderPdfService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class OrderController extends Controller
 {
@@ -721,6 +723,83 @@ class OrderController extends Controller
         return response()->json([
             'message' => 'Order paused successfully',
             'data' => $this->formatOrder($order, $request),
+        ]);
+    }
+
+    /**
+     * Generate protocol PDF for an order
+     */
+    public function generateProtocol(Request $request, Order $order, OrderPdfService $pdfService): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check access based on role
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client || $order->client_id !== $client->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        } elseif ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
+        // Admin and tech_manager can generate for any order
+
+        try {
+            // Delete existing protocol to regenerate
+            $pdfService->deleteExistingProtocol($order);
+
+            // Generate new protocol
+            $fileName = $pdfService->generateProtocol($order);
+
+            return response()->json([
+                'message' => 'Protocol generated successfully',
+                'data' => [
+                    'file_name' => $fileName,
+                    'download_url' => '/api/orders/' . $order->id . '/protocol/download',
+                    'generated_at' => date('Y-m-d H:i:s'),
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to generate protocol',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Download protocol PDF for an order
+     */
+    public function downloadProtocol(Request $request, Order $order, OrderPdfService $pdfService): BinaryFileResponse|JsonResponse
+    {
+        $user = $request->user();
+
+        // Check access based on role
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client || $order->client_id !== $client->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        } elseif ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
+        // Admin and tech_manager can download for any order
+
+        $filePath = $pdfService->getFilePath($order);
+
+        if (!file_exists($filePath)) {
+            return response()->json([
+                'message' => 'Protocol file not found. Please generate it first.',
+            ], 404);
+        }
+
+        return response()->download($filePath, $pdfService->getFileName($order), [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $pdfService->getFileName($order) . '"',
         ]);
     }
 
