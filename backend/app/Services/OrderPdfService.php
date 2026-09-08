@@ -88,6 +88,7 @@ class OrderPdfService
         $locationName = $location?->name ?? '—';
         $locationAddress = $location ? $this->formatAddress($location) : '—';
         $locationNip = $location?->nip ?? '';
+        $locationDescription = $location?->description ?? '';
         $clientEmail = $clientData?->email ?? '—';
         $clientPhone = $clientData?->phone ?? '';
         $technicianName = $technicianData ? $technicianData->first_name . ' ' . $technicianData->last_name : 'Nie przydzielony';
@@ -109,6 +110,7 @@ class OrderPdfService
         $materialsPriceFormatted = $this->formatPrice($totalMaterials);
 
         $locationNipHtml = $locationNip ? '<div class="row"><div class="col col-label">NIP:</div><div class="col col-value">' . htmlspecialchars($locationNip, ENT_QUOTES, 'UTF-8') . '</div></div>' : '';
+        $locationDescriptionHtml = $locationDescription ? '<div class="row"><div class="col col-label">Uwagi:</div><div class="col col-value"><div class="description-box">' . nl2br(htmlspecialchars($locationDescription, ENT_QUOTES, 'UTF-8')) . '</div></div></div>' : '';
         $clientContactHtml = $clientData ? '<div class="row"><div class="col col-label">Kontakt:</div><div class="col col-value">' . $clientEmail . ($clientPhone ? ' / ' . $clientPhone : '') . '</div></div>' : '';
         $techEmailHtml = $technicianData ? '<div class="row"><div class="col col-label">Email:</div><div class="col col-value">' . $techEmail . '</div></div>' : '';
         $techPhoneHtml = ($technicianData && $techPhone !== '—') ? '<div class="row"><div class="col col-label">Telefon:</div><div class="col col-value">' . $techPhone . '</div></div>' : '';
@@ -211,6 +213,7 @@ class OrderPdfService
                 <div class="col col-value">$locationAddress</div>
             </div>
             $locationNipHtml
+            $locationDescriptionHtml
         </div>
     </div>
 

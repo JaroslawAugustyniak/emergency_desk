@@ -404,6 +404,7 @@ class OrderController extends Controller
                 'zip' => $order->location->zip,
                 'nip' => $order->location->nip,
                 'country' => $order->location->country,
+                'description' => $order->location->description,
                 'city' => $order->location->city,
                 'user' => $order->location->user ? [
                     'id' => $order->location->user->id,

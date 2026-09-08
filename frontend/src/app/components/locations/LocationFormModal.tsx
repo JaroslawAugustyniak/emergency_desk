@@ -18,6 +18,7 @@ type Location = {
   city: string;
   country: string;
   nip?: string;
+  description?: string;
   client_id: number;
   user_id?: number | null;
   created_at?: string;
@@ -65,6 +66,7 @@ export default function LocationFormModal({
     city: '',
     country: 'pl',
     nip: '',
+    description: '',
     client_id: presetClientId || 0,
     user_id: null as number | null,
   });
@@ -79,6 +81,7 @@ export default function LocationFormModal({
         city: location.city,
         country: location.country,
         nip: location.nip || '',
+        description: location.description || '',
         client_id: location.client_id,
         user_id: location.user_id || null,
       });
@@ -91,6 +94,7 @@ export default function LocationFormModal({
         city: '',
         country: 'pl',
         nip:'',
+        description: '',
         client_id: presetClientId || 0,
         user_id: null,
       });
@@ -160,6 +164,7 @@ export default function LocationFormModal({
           city: formData.city,
           country: formData.country,
           nip: formData.nip,
+          description: formData.description,
           user_id: formData.user_id || undefined,
         }, token);
         await Swal.fire({
@@ -208,8 +213,8 @@ export default function LocationFormModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+      <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 shrink-0">
           <h2 className="text-xl font-semibold">
             {location ? t('edit') : t('addNew')}
           </h2>
@@ -221,7 +226,7 @@ export default function LocationFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {t('nameColumn')} *
@@ -324,6 +329,19 @@ export default function LocationFormModal({
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('descriptionColumn') || 'Uwagi'}
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder={t('enterDescription') || 'Dodaj uwagi...'}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black resize-none"
+              rows={3}
+            />
+          </div>
+
           {!presetClientId && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -365,7 +383,7 @@ export default function LocationFormModal({
             </div>
           )}
 
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 pt-4 border-t border-gray-200 shrink-0">
             <button
               type="button"
               onClick={onClose}

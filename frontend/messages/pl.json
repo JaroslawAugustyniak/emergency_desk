@@ -211,6 +211,8 @@
   "locations": {
     "title": "Punkty klienta",
     "addNew": "Dodaj nowy punkt",
+    "descriptionColumn": "Uwagi",
+    "enterDescription": "Wpisz uwagi do punktu",
     "edit": "Edytuj punkt",
     "search": "Szukaj punktu...",
     "nameColumn": "Nazwa",

@@ -55,7 +55,8 @@ class LocationController extends Controller
                     ->orWhere('address', 'like', "%{$search}%")
                     ->orWhere('city', 'like', "%{$search}%")
                     ->orWhere('zip', 'like', "%{$search}%")
-                    ->orWhere('number', 'like', "%{$search}%");
+                    ->orWhere('number', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -85,6 +86,7 @@ class LocationController extends Controller
                 'city' => 'required|string|max:100',
                 'country' => 'nullable|string|max:2',
                 'nip' => 'nullable|string|max:20',
+                'description' => 'nullable|string|max:1000',
                 'client_id' => 'required|integer|exists:clients,id',
                 'user_id' => 'nullable|integer|exists:users,id',
             ]);
@@ -123,6 +125,7 @@ class LocationController extends Controller
                 'city' => 'sometimes|required|string|max:100',
                 'country' => 'nullable|string|max:2',
                 'nip' => 'nullable|string|max:20',
+                'description' => 'nullable|string|max:1000',
                 'user_id' => 'nullable|integer|exists:users,id',
             ]);
         } catch (ValidationException $e) {

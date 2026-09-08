@@ -19,6 +19,7 @@ class Location extends Model
         'city',
         'country',
         'nip',
+        'description',
         'client_id',
         'user_id',
     ];

@@ -26,6 +26,7 @@ export type Order = {
     number: string | null;
     zip: string | null;
     nip: string | null;
+    description?: string | null;
     city: string;
     country: string;
     user?: {

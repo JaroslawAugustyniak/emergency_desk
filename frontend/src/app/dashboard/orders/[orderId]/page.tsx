@@ -926,15 +926,20 @@ export default function OrderDetailPage() {
             <div>
               <h3 className="text-sm font-semibold text-slate-900 mb-1 flex gap-2"><MapPin /> {t('location')}</h3>
               <p className="text-gray-900 pl-8">
-                
+
                 {order.location?.name}<br />
                 {order.location?.address} {order.location?.number}
-                
+
                 {order.location?.zip && `, ${order.location.zip}`}
                 {order.location?.city && ` ${order.location.city}`}</p>
               <h3 className="text-sm font-semibold text-slate-900 mt-3 mb-1 flex gap-2"><FingerprintPattern /> {tL('nipColumn')}</h3>
               <p className="text-grey-900 pl-8"> {order.location?.nip && `${order.location.nip}`}</p>
-              
+              {order.location?.description && (
+                <>
+                  <h3 className="text-sm font-semibold text-slate-900 mt-3 mb-1">{tL('descriptionColumn') || 'Uwagi'}</h3>
+                  <p className="text-gray-900 pl-8 whitespace-pre-wrap text-sm">{order.location.description}</p>
+                </>
+              )}
             </div>
           
         </div>

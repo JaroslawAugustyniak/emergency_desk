@@ -183,7 +183,7 @@ export default function LocationDetailPage() {
                 </p>
               </div>
             </div>
-            
+
             <div>
               <h2 className="text-lg font-semibold mb-3 flex gap-1.5"><User /> {t('userColumn')}</h2>
               <div className="bg-gray-50 p-4 rounded-lg">
@@ -192,6 +192,17 @@ export default function LocationDetailPage() {
                 </p>
               </div>
             </div>
+
+            {location.description && (
+              <div>
+                <h2 className="text-lg font-semibold mb-3">{t('descriptionColumn') || 'Uwagi'}</h2>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-900 whitespace-pre-wrap">
+                    {location.description}
+                  </p>
+                </div>
+              </div>
+            )}
 
           </div>
 
