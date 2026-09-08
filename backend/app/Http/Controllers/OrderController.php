@@ -7,6 +7,8 @@ use App\Services\OrderPdfService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ProtocolMail;
 
 class OrderController extends Controller
 {
@@ -115,7 +117,7 @@ class OrderController extends Controller
         }
         // Admin and tech_manager can view all
 
-        $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
+        $order->load(['client', 'technician', 'location.user', 'serviceCategory', 'photos']);
         return response()->json([
             'data' => $this->formatOrder($order, $request),
         ]);
@@ -403,6 +405,12 @@ class OrderController extends Controller
                 'nip' => $order->location->nip,
                 'country' => $order->location->country,
                 'city' => $order->location->city,
+                'user' => $order->location->user ? [
+                    'id' => $order->location->user->id,
+                    'first_name' => $order->location->user->first_name,
+                    'last_name' => $order->location->user->last_name,
+                    'email' => $order->location->user->email,
+                ] : null,
             ] : null,
             'service_category_id' => $order->service_category_id,
             'service_category' => $order->serviceCategory ? [
@@ -801,6 +809,52 @@ class OrderController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="' . $pdfService->getFileName($order) . '"',
         ]);
+    }
+
+    public function sendProtocol(Request $request, Order $order, OrderPdfService $pdfService): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check access based on role
+        if ($user->role === 'client') {
+            $client = $user->client;
+            if (!$client || $order->client_id !== $client->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        } elseif ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
+
+        $filePath = $pdfService->getFilePath($order);
+        if (!file_exists($filePath)) {
+            return response()->json([
+                'message' => 'Protocol file not found. Please generate it first.',
+            ], 404);
+        }
+
+        $order->load(['location.user']);
+        $manager = $order->location?->user;
+
+        if (!$manager || !$manager->email) {
+            return response()->json([
+                'message' => 'Location manager not found or has no email',
+            ], 404);
+        }
+
+        try {
+            Mail::to($manager->email)->send(new ProtocolMail($order, $filePath));
+
+            return response()->json([
+                'message' => 'Protocol sent successfully to ' . $manager->first_name . ' ' . $manager->last_name,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to send protocol',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
 }

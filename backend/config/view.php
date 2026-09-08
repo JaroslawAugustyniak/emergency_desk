@@ -33,4 +33,17 @@ return [
         realpath(storage_path('framework/views'))
     ),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Namespaced View Paths
+    |--------------------------------------------------------------------------
+    |
+    | This array of namespaces maps view directories for organized structure.
+    |
+    */
+
+    'namespaces' => [
+        'mail' => resource_path('views/vendor/mail'),
+    ],
+
 ];

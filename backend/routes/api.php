@@ -111,6 +111,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Protocol PDF routes
         Route::post('/{order}/protocol', [OrderController::class, 'generateProtocol']);
         Route::get('/{order}/protocol/download', [OrderController::class, 'downloadProtocol']);
+        Route::post('/{order}/protocol/send', [OrderController::class, 'sendProtocol']);
     });
 
     Route::prefix('clients')->group(function () {

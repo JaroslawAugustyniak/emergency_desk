@@ -28,6 +28,12 @@ export type Order = {
     nip: string | null;
     city: string;
     country: string;
+    user?: {
+      id: number;
+      first_name: string;
+      last_name: string;
+      email: string;
+    } | null;
   } | null;
   service_category_id: number;
   service_category: {

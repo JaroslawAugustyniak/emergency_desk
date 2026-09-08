@@ -88,8 +88,12 @@ export default function OrderDetailPage() {
 
     const fetchOrder = async () => {
       try {
+        
         setIsLoadingData(true);
         const data = await getOrder(Number(orderId), token);
+
+        // console.log(data.data);
+
         setOrder(data.data);
         setWorkReport(data.data.work_report || '');
         setPhotos(data.data.photos || []);
@@ -645,6 +649,61 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handleSendProtocol = async () => {
+    if (!token || !order) return;
+
+    const managerName = order.location?.user
+      ? `${order.location.user.first_name} ${order.location.user.last_name}`
+      : 'Zarządzającemu';
+
+    const confirmed = await Swal.fire({
+      title: 'Potwierdzenie',
+      text: `Czy na pewno wysłać protokół do ${managerName}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Tak, wyślij',
+      cancelButtonText: 'Anuluj',
+    });
+
+    if (!confirmed.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/api/orders/${order.id}/protocol/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to send protocol');
+      }
+
+      await Swal.fire({
+        title: 'Sukces',
+        text: data.message,
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Error sending protocol:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : 'Failed to send protocol',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pl-PL', {
       year: 'numeric',
@@ -803,15 +862,28 @@ export default function OrderDetailPage() {
             </button>
 
             {protocolFileName && (
-              <a
-                href={`/api/orders/${order.id}/protocol/download`}
-                download={protocolFileName}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
-                title="Pobierz protokół"
-              >
-                <FileText className="w-5 h-5" />
-                Pobierz protokół
-              </a>
+              <>
+                <a
+                  href={`/api/orders/${order.id}/protocol/download`}
+                  download={protocolFileName}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
+                  title="Pobierz protokół"
+                >
+                  <FileText className="w-5 h-5" />
+                  Pobierz protokół
+                </a>
+
+                {order.location?.user && (
+                  <button
+                    onClick={handleSendProtocol}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded transition-colors bg-purple-100 text-purple-700 hover:bg-purple-200"
+                    title={`Wyślij do ${order.location.user.first_name} ${order.location.user.last_name}`}
+                  >
+                    <FileText className="w-5 h-5" />
+                    Wyślij do {order.location.user.first_name} {order.location.user.last_name}
+                  </button>
+                )}
+              </>
             )}
 
       </div>
