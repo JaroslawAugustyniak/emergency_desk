@@ -50,6 +50,14 @@ class ProtocolMail extends Mailable implements ShouldQueue
 
     public function attachments(): array
     {
+        if (!file_exists($this->filePath)) {
+            \Log::warning('Protocol file not found for attachment', [
+                'filePath' => $this->filePath,
+                'orderId' => $this->order->id,
+            ]);
+            return [];
+        }
+
         return [
             Attachment::fromPath($this->filePath)
                 ->as('protokol-zlecenia.pdf')
