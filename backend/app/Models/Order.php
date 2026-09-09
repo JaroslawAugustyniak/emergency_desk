@@ -25,6 +25,7 @@ class Order extends Model
         'invoice_no',
         'price_total',
         'work_report',
+        'technician_signature',
         'order_date',
         'start_at',
         'end_at',

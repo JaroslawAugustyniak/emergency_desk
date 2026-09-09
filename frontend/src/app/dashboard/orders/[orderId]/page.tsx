@@ -14,6 +14,7 @@ import AssignTechnicianModal from '@/app/components/orders/AssignTechnicianModal
 import PauseOrderModal from '@/app/components/orders/PauseOrderModal';
 import FinishRepairModal from '@/app/components/orders/FinishRepairModal';
 import PhotoUploadSection from '@/app/components/orders/PhotoUploadSection';
+import SignaturePad from '@/app/components/orders/SignaturePad';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 import Swal from 'sweetalert2';
 import Lightbox from 'yet-another-react-lightbox';
@@ -48,6 +49,8 @@ export default function OrderDetailPage() {
   const [isFinishRepairModalOpen, setIsFinishRepairModalOpen] = useState(false);
   const [workReport, setWorkReport] = useState('');
   const [isSavingWorkReport, setIsSavingWorkReport] = useState(false);
+  const [technicianSignature, setTechnicianSignature] = useState<string | null>(null);
+  const [isSavingSignature, setIsSavingSignature] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -96,6 +99,7 @@ export default function OrderDetailPage() {
 
         setOrder(data.data);
         setWorkReport(data.data.work_report || '');
+        setTechnicianSignature(data.data.technician_signature || null);
         setPhotos(data.data.photos || []);
 
         // Check if protocol exists
@@ -381,6 +385,49 @@ export default function OrderDetailPage() {
       });
     } finally {
       setIsSavingWorkReport(false);
+    }
+  };
+
+  const handleSaveSignature = async (signatureDataUrl: string) => {
+    if (!token || !order) return;
+
+    setIsSavingSignature(true);
+    try {
+      const response = await fetch(`/api/orders/${order.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ technician_signature: signatureDataUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save signature');
+      }
+
+      const data = await response.json();
+      setOrder(data.data);
+      setTechnicianSignature(signatureDataUrl);
+
+      await Swal.fire({
+        title: 'Podpis zapisany',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Error saving signature:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : 'Failed to save signature',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    } finally {
+      setIsSavingSignature(false);
     }
   };
 
@@ -1079,6 +1126,30 @@ export default function OrderDetailPage() {
           >
             {isSavingWorkReport ? tCommon('saving') : t('saveWorkReport')}
           </button>
+        )}
+      </div>
+      )}
+
+      {isTechnician && order.status === 'completed' && (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-sm font-semibold text-gray-900 mb-4">Podpis technika</h3>
+        {technicianSignature ? (
+          <div className="space-y-3">
+            <img src={technicianSignature} alt="Podpis" className="border border-gray-300 rounded max-h-48" />
+            <button
+              onClick={() => setTechnicianSignature(null)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+            >
+              Usuń podpis
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <SignaturePad
+              onSignatureCapture={handleSaveSignature}
+              onClear={() => setTechnicianSignature(null)}
+            />
+          </div>
         )}
       </div>
       )}

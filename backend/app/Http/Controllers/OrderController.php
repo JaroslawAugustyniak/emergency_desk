@@ -197,6 +197,7 @@ class OrderController extends Controller
                 'description' => 'string',
                 'client_ref_no' => 'nullable|string|max:100',
                 'work_report' => 'nullable|string',
+                'technician_signature' => 'nullable|string',
                 'vat_rate' => 'numeric|min:0|max:100',
                 'is_emergency' => 'boolean',
                 'price_total' => 'nullable|numeric|min:0',
@@ -214,7 +215,7 @@ class OrderController extends Controller
         if ($user->role === 'client') {
             $updateData = array_intersect_key($updateData, array_flip(['description', 'client_ref_no']));
         } elseif ($user->role === 'technician') {
-            $updateData = array_intersect_key($updateData, array_flip(['work_report']));
+            $updateData = array_intersect_key($updateData, array_flip(['work_report', 'technician_signature']));
         }
         // Admin can update all fields
 
@@ -421,6 +422,7 @@ class OrderController extends Controller
             ] : null,
             'status' => $order->status,
             'description' => $order->description,
+            'technician_signature' => $order->technician_signature,
             'stop_reason' => $order->stop_reason,
             'vat_rate' => $order->vat_rate,
             'is_emergency' => $order->is_emergency,

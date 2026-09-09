@@ -51,6 +51,7 @@ export type Order = {
   invoice_no: string | null;
   price_total: number | null;
   work_report: string | null;
+  technician_signature: string | null;
   photos: Photo[];
   order_date: string;
   start_at: string | null;
@@ -76,6 +77,7 @@ export type UpdateOrderData = {
   vat_rate?: number;
   is_emergency?: boolean;
   work_report?: string | null;
+  technician_signature?: string | null;
   price_total?: number | null;
 };
 
