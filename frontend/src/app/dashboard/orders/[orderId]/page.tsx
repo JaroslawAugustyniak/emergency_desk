@@ -649,6 +649,42 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handleDownloadProtocol = async () => {
+    if (!token || !order) return;
+
+    try {
+      const downloadRes = await fetch(`/api/orders/${order.id}/protocol/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!downloadRes.ok) {
+        const errorData = await downloadRes.json();
+        throw new Error(errorData.message || 'Failed to download protocol');
+      }
+
+      const blob = await downloadRes.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = protocolFileName || `order-${order.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading protocol:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : 'Failed to download protocol',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    }
+  };
+
   const handleSendProtocol = async () => {
     if (!token || !order) return;
 
@@ -863,15 +899,14 @@ export default function OrderDetailPage() {
 
             {protocolFileName && (
               <>
-                <a
-                  href={`/api/orders/${order.id}/protocol/download`}
-                  download={protocolFileName}
+                <button
+                  onClick={handleDownloadProtocol}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
                   title="Pobierz protokół"
                 >
                   <FileText className="w-5 h-5" />
                   Pobierz protokół
-                </a>
+                </button>
 
                 {order.location?.user && (
                   <button
