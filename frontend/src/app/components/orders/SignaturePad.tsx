@@ -8,31 +8,37 @@ type SignaturePadProps = {
   onClear: () => void;
 };
 
+type Point = { x: number; y: number };
+
 export default function SignaturePad({ onSignatureCapture, onClear }: SignaturePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
+  const lastPointRef = useRef<Point>({ x: 0, y: 0 });
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Set canvas size to match container
+    // Set canvas size to match container with high DPI
     const resizeCanvas = () => {
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
 
-      // Redraw background
       const ctx = canvas.getContext('2d');
       if (ctx) {
+        ctx.scale(dpr, dpr);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, rect.width, rect.height);
         ctx.strokeStyle = '#e5e7eb';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(0, canvas.height - 1);
-        ctx.lineTo(canvas.width, canvas.height - 1);
+        ctx.moveTo(0, rect.height - 1);
+        ctx.lineTo(rect.width, rect.height - 1);
         ctx.stroke();
       }
     };
@@ -40,9 +46,9 @@ export default function SignaturePad({ onSignatureCapture, onClear }: SignatureP
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     return () => window.removeEventListener('resize', resizeCanvas);
-  }, []);
+  }, [dpr]);
 
-  const getCoordinates = (e: MouseEvent | TouchEvent) => {
+  const getCoordinates = (e: MouseEvent | TouchEvent): Point => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
@@ -57,37 +63,44 @@ export default function SignaturePad({ onSignatureCapture, onClear }: SignatureP
     };
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    setIsDrawing(true);
-    const { x, y } = getCoordinates(e.nativeEvent);
+  const drawLine = (fromPoint: Point, toPoint: Point) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-    }
+    if (!ctx) return;
+
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#1f2937';
+    ctx.globalCompositeOperation = 'source-over';
+
+    ctx.beginPath();
+    ctx.moveTo(fromPoint.x, fromPoint.y);
+    ctx.lineTo(toPoint.x, toPoint.y);
+    ctx.stroke();
+  };
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    setIsDrawing(true);
+    const point = getCoordinates(e.nativeEvent);
+    lastPointRef.current = point;
+    setHasSignature(true);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
+    e.preventDefault();
 
-    const { x, y } = getCoordinates(e.nativeEvent);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const currentPoint = getCoordinates(e.nativeEvent);
+    const lastPoint = lastPointRef.current;
 
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#1f2937';
-      ctx.lineTo(x, y);
-      ctx.stroke();
-    }
+    // Draw smooth line between points
+    drawLine(lastPoint, currentPoint);
 
-    setHasSignature(true);
+    lastPointRef.current = currentPoint;
   };
 
   const stopDrawing = () => {
@@ -98,15 +111,16 @@ export default function SignaturePad({ onSignatureCapture, onClear }: SignatureP
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const rect = canvas.getBoundingClientRect();
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, rect.width, rect.height);
       ctx.strokeStyle = '#e5e7eb';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(0, canvas.height - 1);
-      ctx.lineTo(canvas.width, canvas.height - 1);
+      ctx.moveTo(0, rect.height - 1);
+      ctx.lineTo(rect.width, rect.height - 1);
       ctx.stroke();
     }
 

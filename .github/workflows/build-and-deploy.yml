@@ -204,7 +204,8 @@ jobs:
             # Cache optimization
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:cache
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:cache
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache
+            docker compose -f docker-compose.prod.yml exec -T backend mkdir -p storage/framework/views
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan cache:clear
 
             # Cleanup
