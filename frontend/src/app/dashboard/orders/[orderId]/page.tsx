@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
-import { Edit, Trash2, FileText, UserPlus, FingerprintPattern, MapPin, Mountain, UserRound, BookCheck, Pause, Play } from 'lucide-react';
+import { Edit, Trash2, FileText, UserPlus, FingerprintPattern, MapPin, Mountain, UserRound, BookCheck, Pause, Play, Signature } from 'lucide-react';
 import Link from 'next/link';
 import { getOrder, deleteOrder, changeOrderStatus, pauseOrder } from '@/lib/actions/orders';
 import BackButton from '@/app/components/ui/BackButton';
@@ -1130,6 +1130,28 @@ export default function OrderDetailPage() {
       </div>
       )}
 
+      { !isTechnician && (
+      <div className="bg-white rounded-lg grid gap-1.5 shadow-md p-6">
+          {/* Technician */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-500 mb-1 flex gap-2"><UserRound />{t('technician')}</h3>
+            <p className="text-gray-900 pl-8">
+              {order.technician
+                ? `${order.technician.first_name} ${order.technician.last_name}`
+                : '-'}
+            </p>
+            {technicianSignature && (
+            <>
+             <h3 className="text-sm font-semibold text-gray-500 mt-3 mb-1 flex gap-2"><Signature />Podpis technika</h3>
+              <div className="space-y-3 pl-8">
+                <img src={technicianSignature} alt="Podpis" className="border border-gray-300 rounded max-h-48" />
+              </div>
+              </>
+            )}
+          </div>
+      </div>
+      )}
+
       {isTechnician && order.status === 'completed' && (
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-sm font-semibold text-gray-900 mb-4">Podpis technika</h3>
@@ -1154,6 +1176,8 @@ export default function OrderDetailPage() {
       </div>
       )}
 
+      
+
       {isTechnician && (
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
@@ -1169,7 +1193,7 @@ export default function OrderDetailPage() {
         {order.status == 'in_progress' ? (
         <div className="space-y-3 mb-4">
           {materials.map((material, index) => (
-            <div key={index} className="flex gap-3 items-start">
+            <div key={index} className="flex flex-col sm:flex-row gap-3 items-start">
 
                 <>
               <input
@@ -1177,24 +1201,26 @@ export default function OrderDetailPage() {
                 placeholder={t('materialNamePlaceholder')}
                 value={material.name}
                 onChange={(e) => handleMaterialChange(index, 'name', e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full sm:flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <input
-                type="number"
-                placeholder="0.00"
-                value={material.price}
-                onChange={(e) => handleMaterialChange(index, 'price', e.target.value)}
-                className="w-24 px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                step="0.01"
-                min="0"
-              />
+              <div className="flex gap-3 w-full sm:contents">
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  value={material.price}
+                  onChange={(e) => handleMaterialChange(index, 'price', e.target.value)}
+                  className="flex-1 sm:w-24 px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  step="0.01"
+                  min="0"
+                />
+                <button
+                  onClick={() => handleRemoveMaterial(index)}
+                  className="px-3 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-sm font-medium whitespace-nowrap"
+                >
+                  {t('materialRemove')}
+                </button>
+              </div>
               </>
-              <button
-                onClick={() => handleRemoveMaterial(index)}
-                className="px-3 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-sm font-medium"
-              >
-                {t('materialRemove')}
-              </button>
 
             </div>
           ))}
@@ -1308,7 +1334,7 @@ export default function OrderDetailPage() {
                 {isTechnician && order.status == 'in_progress' &&  (
                   <button
                     onClick={() => handlePhotoDelete(photo.id)}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold"
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-xs font-bold"
                     title={t('deletePhoto')}
                   >
                     ×
@@ -1333,20 +1359,7 @@ export default function OrderDetailPage() {
         />
       )}
 
-      { !isTechnician && (
-      <div className="bg-white rounded-lg grid gap-1.5 shadow-md p-6">
-
-          {/* Technician */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-500 mb-1 flex gap-2"><UserRound />{t('technician')}</h3>
-            <p className="text-gray-900 pl-8">
-              {order.technician
-                ? `${order.technician.first_name} ${order.technician.last_name}`
-                : '-'}
-            </p>
-          </div>
-      </div>
-      )}
+      
       </div>
 
       {/* Modals */}
