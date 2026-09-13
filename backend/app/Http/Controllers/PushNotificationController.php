@@ -4,21 +4,35 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Models\PushSubscription;
+use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Subscription;
 
 class PushNotificationController extends Controller
 {
     /**
-     * Test endpoint - send hello world push notification
+     * Send test push notification to current user's subscriptions
      */
     public function sendTestNotification(Request $request): JsonResponse
     {
         try {
-            // In a real scenario, you would:
-            // 1. Get the subscription from the database
-            // 2. Use a Web Push library to send the notification
-            // 3. Handle encryption and signing
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated',
+                ], 401);
+            }
 
-            // For now, just return a test message that will be handled by Service Worker
+            $subscriptions = PushSubscription::where('user_id', $user->id)->get();
+
+            if ($subscriptions->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No push subscriptions found for this user',
+                ], 404);
+            }
+
             $message = [
                 'title' => 'Hello from Emergency Desk',
                 'body' => 'This is a test push notification!',
@@ -28,12 +42,62 @@ class PushNotificationController extends Controller
                 'requireInteraction' => false,
             ];
 
+            $vapidPublicKey = env('VAPID_PUBLIC_KEY');
+            $vapidPrivateKey = env('VAPID_PRIVATE_KEY');
+
+            if (!$vapidPublicKey || !$vapidPrivateKey) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'VAPID keys not configured',
+                ], 500);
+            }
+
+            $webPush = new WebPush([
+                'VAPID' => [
+                    'subject' => 'mailto:' . env('MAIL_FROM_ADDRESS', 'no-reply@emergencydesk.com'),
+                    'publicKey' => $vapidPublicKey,
+                    'privateKey' => $vapidPrivateKey,
+                ],
+            ]);
+
+            $successCount = 0;
+            $failureCount = 0;
+
+            foreach ($subscriptions as $subscription) {
+                try {
+                    $pushSubscription = Subscription::create([
+                        'endpoint' => $subscription->endpoint,
+                        'publicKey' => $subscription->p256dh,
+                        'authToken' => $subscription->auth,
+                    ]);
+
+                    $webPush->queueNotification(
+                        $pushSubscription,
+                        json_encode($message)
+                    );
+
+                    $successCount++;
+                } catch (\Exception $e) {
+                    \Log::error('Failed to queue notification for subscription', [
+                        'subscription_id' => $subscription->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $failureCount++;
+                }
+            }
+
+            $webPush->flush();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Test notification sent successfully',
-                'data' => $message,
+                'message' => 'Test notifications sent',
+                'data' => [
+                    'sent' => $successCount,
+                    'failed' => $failureCount,
+                ],
             ]);
         } catch (\Exception $e) {
+            \Log::error('Test notification error', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to send notification: ' . $e->getMessage(),
@@ -54,12 +118,28 @@ class PushNotificationController extends Controller
                 'p256dh' => 'required|string',
             ]);
 
-            // In a real scenario, store this in database
-            // For now, just acknowledge receipt
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated',
+                ], 401);
+            }
+
+            PushSubscription::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'endpoint' => $validated['endpoint'],
+                ],
+                [
+                    'p256dh' => $validated['p256dh'],
+                    'auth' => $validated['auth'],
+                ]
+            );
 
             \Log::info('Push subscription registered', [
                 'endpoint' => substr($validated['endpoint'], 0, 50) . '...',
-                'user_id' => $request->user()?->id,
+                'user_id' => $user->id,
             ]);
 
             return response()->json([
@@ -67,6 +147,7 @@ class PushNotificationController extends Controller
                 'message' => 'Subscription registered successfully',
             ]);
         } catch (\Exception $e) {
+            \Log::error('Failed to register subscription', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to register subscription: ' . $e->getMessage(),

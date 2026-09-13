@@ -144,7 +144,7 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push frontend image
+      - name: Build and push frontend image (with VAPID public key injected)
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -194,9 +194,9 @@ jobs:
             # Copy .env to backend container
             docker compose -f docker-compose.prod.yml cp backend/.env backend:/app/.env 2>/dev/null || true
 
-            # Add VAPID keys to .env
-            docker compose -f docker-compose.prod.yml exec -T backend sh -c 'echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}" >> /app/.env' || true
-            docker compose -f docker-compose.prod.yml exec -T backend sh -c 'echo "VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" >> /app/.env' || true
+            # Inject VAPID keys into backend .env for Web Push notifications
+            docker compose -f docker-compose.prod.yml exec -T backend sh -c 'echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}" >> /app/.env'
+            docker compose -f docker-compose.prod.yml exec -T backend sh -c 'echo "VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" >> /app/.env'
 
             # Run migrations
             docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
