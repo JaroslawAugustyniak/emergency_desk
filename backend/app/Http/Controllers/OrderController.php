@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ProtocolMail;
+use App\Events\TechnicianAssignedToOrder;
 
 class OrderController extends Controller
 {
@@ -328,6 +329,8 @@ class OrderController extends Controller
 
         $order->status = $status;
         $order->save();
+n        / Emit event to queue push notification
+        TechnicianAssignedToOrder::dispatch($order, $order->technician);
 
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
@@ -367,6 +370,9 @@ class OrderController extends Controller
             $order->is_emergency = $validated['is_emergency'];
         }
         $order->save();
+
+        // Emit event to queue push notification
+        TechnicianAssignedToOrder::dispatch($order, $order->technician);
 
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
@@ -696,6 +702,8 @@ class OrderController extends Controller
             $order->prepaused_status = null;
             // Note: stop_reason is intentionally kept
             $order->save();
+n        / Emit event to queue push notification
+        TechnicianAssignedToOrder::dispatch($order, $order->technician);
 
             $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
@@ -728,6 +736,8 @@ class OrderController extends Controller
         $order->status = 'paused';
         $order->stop_reason = $validated['stop_reason'];
         $order->save();
+n        / Emit event to queue push notification
+        TechnicianAssignedToOrder::dispatch($order, $order->technician);
 
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 

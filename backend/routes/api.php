@@ -60,13 +60,6 @@ Route::get('/test-email', function () {
     }
 });
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::prefix('push')->group(function () {
-        Route::post('/test', [PushNotificationController::class, 'sendTestNotification']);
-        Route::post('/subscribe', [PushNotificationController::class, 'registerSubscription']);
-    });
-});
-
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
@@ -155,6 +148,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('technician-reports')->group(function () {
         Route::get('/revenue-summary', [TechnicianRevenueReportController::class, 'revenueSummary']);
         Route::get('/revenue/{technician}', [TechnicianRevenueReportController::class, 'technicianDetail']);
+    });
+
+    Route::prefix('push')->group(function () {
+        Route::post('/test', [PushNotificationController::class, 'sendTestNotification']);
+        Route::post('/subscribe', [PushNotificationController::class, 'registerSubscription']);
     });
 });
 
