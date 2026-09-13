@@ -191,6 +191,36 @@ jobs:
             # Start services
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
+            # Wait for MySQL to be healthy
+            echo "Waiting for MySQL to be healthy..."
+            for i in {1..60}; do
+              if docker compose -f docker-compose.prod.yml exec -T mysql mysqladmin ping -u root -proot &>/dev/null; then
+                echo "✓ MySQL is ready"
+                break
+              fi
+              if [ $i -eq 60 ]; then
+                echo "✗ MySQL failed to start after 60 attempts"
+                exit 1
+              fi
+              echo "Attempt $i/60: Waiting for MySQL..."
+              sleep 2
+            done
+
+            # Wait for backend container to be ready
+            echo "Waiting for backend container to be ready..."
+            for i in {1..30}; do
+              if docker compose -f docker-compose.prod.yml exec -T backend test -f /app/artisan &>/dev/null; then
+                echo "✓ Backend container is ready"
+                break
+              fi
+              if [ $i -eq 30 ]; then
+                echo "✗ Backend container failed to become ready"
+                exit 1
+              fi
+              echo "Attempt $i/30: Waiting for backend..."
+              sleep 2
+            done
+
             # Copy .env to backend container
             docker compose -f docker-compose.prod.yml cp backend/.env backend:/app/.env 2>/dev/null || true
 
@@ -198,8 +228,20 @@ jobs:
             docker compose -f docker-compose.prod.yml exec -T backend sh -c 'echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}" >> /app/.env'
             docker compose -f docker-compose.prod.yml exec -T backend sh -c 'echo "VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" >> /app/.env'
 
-            # Run migrations
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
+            # Run migrations with retry logic
+            echo "Running database migrations..."
+            for attempt in {1..5}; do
+              if docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force; then
+                echo "✓ Migrations completed successfully"
+                break
+              fi
+              if [ $attempt -eq 5 ]; then
+                echo "✗ Migrations failed after 5 attempts"
+                exit 1
+              fi
+              echo "Migration attempt $attempt/5 failed, retrying in 10 seconds..."
+              sleep 10
+            done
 
             # Cache optimization
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:cache
