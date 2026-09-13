@@ -7,16 +7,38 @@ use Illuminate\Http\JsonResponse;
 use App\Models\PushSubscription;
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class PushNotificationController extends Controller
 {
+    /**
+     * Get authenticated user from Authorization token
+     */
+    private function getAuthenticatedUser(Request $request)
+    {
+        // First try Laravel's built-in user() which respects auth middleware
+        $user = $request->user();
+        if ($user) {
+            return $user;
+        }
+
+        // Fallback: manually parse Bearer token from Authorization header
+        $token = $request->bearerToken();
+        if (!$token) {
+            return null;
+        }
+
+        $personalAccessToken = PersonalAccessToken::findToken($token);
+        return $personalAccessToken?->tokenable;
+    }
+
     /**
      * Send test push notification to current user's subscriptions
      */
     public function sendTestNotification(Request $request): JsonResponse
     {
         try {
-            $user = $request->user();
+            $user = $this->getAuthenticatedUser($request);
             if (!$user) {
                 return response()->json([
                     'success' => false,
@@ -118,7 +140,7 @@ class PushNotificationController extends Controller
                 'p256dh' => 'required|string',
             ]);
 
-            $user = $request->user();
+            $user = $this->getAuthenticatedUser($request);
             if (!$user) {
                 return response()->json([
                     'success' => false,
