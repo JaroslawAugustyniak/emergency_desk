@@ -108,7 +108,13 @@ export const usePushNotifications = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to register subscription');
+        const errorData = await response.json();
+        console.error('Subscription registration error:', {
+          status: response.status,
+          message: errorData?.message,
+          data: errorData,
+        });
+        throw new Error(`Failed to register subscription: ${errorData?.message || response.statusText}`);
       }
 
       setIsSubscribed(true);
