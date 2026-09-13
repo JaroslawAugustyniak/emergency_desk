@@ -139,11 +139,18 @@ export const usePushNotifications = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send test notification');
+        const errorData = await response.json();
+        console.error('Test notification error:', {
+          status: response.status,
+          message: errorData?.message,
+          data: errorData,
+        });
+        throw new Error(`Failed to send test notification: ${errorData?.message || response.statusText}`);
       }
 
       return await response.json();
