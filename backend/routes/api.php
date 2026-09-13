@@ -61,7 +61,7 @@ Route::get('/test-email', function () {
 });
 
 Route::prefix('push')->group(function () {
-    Route::post('/test', [PushNotificationController::class, 'sendTestNotification']);
+    Route::post('/test', [PushNotificationController::class, 'sendTestNotification'])->middleware('auth:sanctum');
     Route::post('/subscribe', [PushNotificationController::class, 'registerSubscription'])->middleware('auth:sanctum');
 });
 
