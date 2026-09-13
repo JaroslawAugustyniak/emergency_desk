@@ -61,11 +61,19 @@ export const usePushNotifications = () => {
 
       // Register subscription with backend
       const registration = await navigator.serviceWorker.ready;
+
+      // Unsubscribe from old subscription if it exists (to avoid "different applicationServerKey" error)
+      const oldSubscription = await registration.pushManager.getSubscription();
+      if (oldSubscription) {
+        console.log('Unsubscribing from old push subscription...');
+        await oldSubscription.unsubscribe();
+      }
+
       const subscriptionOptions: PushSubscriptionOptionsInit = {
         userVisibleOnly: true,
       };
 
-      // Add VAPID key from Firebase (required for push notifications)
+      // Add VAPID key (required for push notifications)
       const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidKey) {
         throw new Error(
