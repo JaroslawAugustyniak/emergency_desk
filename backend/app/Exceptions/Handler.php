@@ -36,6 +36,13 @@ class Handler extends ExceptionHandler
     public function render($request, Throwable $e)
     {
         if ($request->expectsJson() || $request->is('api/*')) {
+            if ($e instanceof AuthenticationException) {
+                return response()->json([
+                    'message' => 'Unauthorized',
+                    'error' => $e->getMessage(),
+                ], 401);
+            }
+
             if ($e instanceof ValidationException) {
                 return response()->json([
                     'message' => 'Validation failed',

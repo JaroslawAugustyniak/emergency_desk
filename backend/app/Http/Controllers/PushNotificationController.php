@@ -38,13 +38,29 @@ class PushNotificationController extends Controller
     public function sendTestNotification(Request $request): JsonResponse
     {
         try {
+            // Debug: Log authorization header
+            $authHeader = $request->header('Authorization');
+            if (!$authHeader) {
+                \Log::warning('Push test: Missing Authorization header');
+            }
+
             $user = $this->getAuthenticatedUser($request);
             if (!$user) {
+                \Log::warning('Push test: User not authenticated', [
+                    'auth_header' => $authHeader ? 'present' : 'missing',
+                    'bearer_token' => $request->bearerToken() ? 'present' : 'missing',
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'User not authenticated',
+                    'debug' => [
+                        'auth_header' => $authHeader ? 'present' : 'missing',
+                        'bearer_token' => $request->bearerToken() ? 'present' : 'missing',
+                    ]
                 ], 401);
             }
+
+            \Log::info('Push test: User authenticated', ['user_id' => $user->id]);
 
             $subscriptions = PushSubscription::where('user_id', $user->id)->get();
 
