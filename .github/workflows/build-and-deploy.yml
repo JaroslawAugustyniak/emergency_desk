@@ -221,8 +221,19 @@ jobs:
               sleep 2
             done
 
-            # Copy .env to backend container
-            docker compose -f docker-compose.prod.yml cp backend/.env backend:/app/.env 2>/dev/null || true
+            # Ensure .env exists on server for docker-compose
+            if [ ! -f ".env" ]; then
+              cp backend/.env .env
+            fi
+
+            # Inject VAPID keys to .env (before migrations and restart)
+            echo "Injecting VAPID keys to .env..."
+            if ! grep -q "VAPID_PRIVATE_KEY" .env; then
+              echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}" >> .env
+            fi
+            if ! grep -q "VAPID_PUBLIC_KEY" .env; then
+              echo "VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" >> .env
+            fi
 
             # Run migrations with retry logic
             echo "Running database migrations..."
@@ -266,12 +277,6 @@ jobs:
               echo "Attempt $i/30: Waiting for services..."
               sleep 2
             done
-
-            # Inject VAPID keys after restart (after .env is restored)
-            echo "Injecting VAPID keys..."
-            docker compose -f docker-compose.prod.yml exec -T backend sh -c 'echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}" >> /app/.env'
-            docker compose -f docker-compose.prod.yml exec -T backend sh -c 'echo "VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" >> /app/.env'
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan config:cache
 
             # Cleanup
             docker image prune -f

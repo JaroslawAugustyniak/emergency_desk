@@ -50,6 +50,8 @@ services:
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME}
       FRONTEND_URL: ${FRONTEND_URL}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
     volumes:
       - ./storage:/app/storage
     depends_on:
@@ -106,6 +108,8 @@ services:
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME}
       FRONTEND_URL: ${FRONTEND_URL}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
     depends_on:
       mysql:
         condition: service_healthy
