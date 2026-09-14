@@ -149,11 +149,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/revenue-summary', [TechnicianRevenueReportController::class, 'revenueSummary']);
         Route::get('/revenue/{technician}', [TechnicianRevenueReportController::class, 'technicianDetail']);
     });
+});
 
-    Route::prefix('push')->group(function () {
-        Route::post('/test', [PushNotificationController::class, 'sendTestNotification']);
-        Route::post('/subscribe', [PushNotificationController::class, 'registerSubscription']);
-    });
+// Push notification routes - auth handled in controller with detailed debugging
+Route::prefix('push')->group(function () {
+    Route::post('/test', [PushNotificationController::class, 'sendTestNotification']);
+    Route::post('/subscribe', [PushNotificationController::class, 'registerSubscription']);
 });
 
 // Admin-only routes
