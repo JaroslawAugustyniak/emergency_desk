@@ -329,8 +329,7 @@ class OrderController extends Controller
 
         $order->status = $status;
         $order->save();
-n        / Emit event to queue push notification
-        TechnicianAssignedToOrder::dispatch($order, $order->technician);
+        
 
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
@@ -702,8 +701,6 @@ n        / Emit event to queue push notification
             $order->prepaused_status = null;
             // Note: stop_reason is intentionally kept
             $order->save();
-n        / Emit event to queue push notification
-        TechnicianAssignedToOrder::dispatch($order, $order->technician);
 
             $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
@@ -736,9 +733,7 @@ n        / Emit event to queue push notification
         $order->status = 'paused';
         $order->stop_reason = $validated['stop_reason'];
         $order->save();
-n        / Emit event to queue push notification
-        TechnicianAssignedToOrder::dispatch($order, $order->technician);
-
+        
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
         return response()->json([
