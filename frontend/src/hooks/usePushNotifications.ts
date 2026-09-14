@@ -88,7 +88,8 @@ export const usePushNotifications = () => {
       );
 
       // Send subscription to backend
-      const response = await fetch('/api/push/subscribe', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/push/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +136,8 @@ export const usePushNotifications = () => {
 
   const sendTestNotification = useCallback(async () => {
     try {
-      const response = await fetch('/api/push/test', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/push/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
