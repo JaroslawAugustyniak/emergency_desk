@@ -250,6 +250,29 @@ jobs:
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan cache:clear
 
+            # Restart all services for clean state
+            echo "Restarting all containers..."
+            docker compose -f docker-compose.prod.yml down
+            sleep 5
+            docker compose -f docker-compose.prod.yml up -d
+
+            # Wait for services to be healthy after restart
+            echo "Waiting for services to be healthy after restart..."
+            for i in {1..30}; do
+              if docker compose -f docker-compose.prod.yml exec -T mysql mysqladmin ping -u root -proot &>/dev/null; then
+                echo "✓ Services are healthy"
+                break
+              fi
+              if [ $i -eq 30 ]; then
+                echo "✗ Services failed to become healthy"
+                exit 1
+              fi
+              echo "Attempt $i/30: Waiting for services..."
+              sleep 2
+            done
+
             # Cleanup
             docker image prune -f
             docker logout ghcr.io
+
+            echo "✓ Deployment completed successfully"
