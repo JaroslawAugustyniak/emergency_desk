@@ -228,12 +228,17 @@ jobs:
 
             # Inject VAPID keys to .env (before migrations and restart)
             echo "Injecting VAPID keys to .env..."
-            if ! grep -q "VAPID_PRIVATE_KEY" .env; then
-              echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}" >> .env
-            fi
-            if ! grep -q "VAPID_PUBLIC_KEY" .env; then
-              echo "VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" >> .env
-            fi
+
+            # Remove old VAPID keys to avoid duplicates
+            sed -i '/^VAPID_PRIVATE_KEY=/d' .env
+            sed -i '/^VAPID_PUBLIC_KEY=/d' .env
+
+            # Ensure .env ends with newline before appending
+            [ -n "$(tail -c 1 .env)" ] && echo >> .env
+
+            # Add VAPID keys
+            echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}" >> .env
+            echo "VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" >> .env
 
             # Run migrations with retry logic
             echo "Running database migrations..."
