@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 import Swal from 'sweetalert2';
 import { Bell, Clock, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
-  const tCommon = useTranslations('common');
   const { user } = useSessionContext();
   const { isSupported, isSubscribed, isMobile, requestPermission, sendTestNotification } = usePushNotifications();
+  const { stats, isLoading: statsLoading, error: statsError } = useDashboardStats();
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePushNotificationDemo = async () => {
@@ -65,6 +66,12 @@ export default function DashboardPage() {
         {t('summary')}
       </p>
 
+      {statsError && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-800">Error loading statistics: {statsError}</p>
+        </div>
+      )}
+
       {/* Summary Stats Boxes */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* Aktywne zlecenia */}
@@ -73,7 +80,9 @@ export default function DashboardPage() {
             <p className="text-slate-600 text-sm">Aktywne zlecenia</p>
             <Clock className="w-12 h-12 text-slate-400 absolute right-3" />
           </div>
-          <div className="text-4xl font-bold text-slate-900 text-center">12</div>
+          <div className="text-4xl font-bold text-slate-900 text-center">
+            {statsLoading ? '-' : stats.active}
+          </div>
         </div>
 
         {/* W trakcie */}
@@ -82,7 +91,9 @@ export default function DashboardPage() {
             <p className="text-slate-600 text-sm">W trakcie</p>
             <Zap className="w-12 h-12 text-slate-400 absolute right-3" />
           </div>
-          <div className="text-4xl font-bold text-slate-900 text-center">8</div>
+          <div className="text-4xl font-bold text-slate-900 text-center">
+            {statsLoading ? '-' : stats.inProgress}
+          </div>
         </div>
 
         {/* Zakończone */}
@@ -91,7 +102,9 @@ export default function DashboardPage() {
             <p className="text-slate-600 text-sm">Zakończone</p>
             <CheckCircle2 className="w-12 h-12 text-slate-400 absolute right-3" />
           </div>
-          <div className="text-4xl font-bold text-slate-900 text-center">156</div>
+          <div className="text-4xl font-bold text-slate-900 text-center">
+            {statsLoading ? '-' : stats.completed}
+          </div>
         </div>
 
         {/* Awaryjne */}
@@ -100,7 +113,9 @@ export default function DashboardPage() {
             <p className="text-slate-600 text-sm">Awaryjne</p>
             <AlertCircle className="w-12 h-12 text-slate-400 absolute right-3" />
           </div>
-          <div className="text-4xl font-bold text-slate-900 text-center">3</div>
+          <div className="text-4xl font-bold text-slate-900 text-center">
+            {statsLoading ? '-' : stats.emergency}
+          </div>
         </div>
       </div>
 

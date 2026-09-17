@@ -1,5 +1,12 @@
 import { Order, CreateOrderData, UpdateOrderData, OrderFilters, OrdersListResponse, ChangeStatusData, AssignTechnicianData } from '@/lib/types/orders';
 
+export interface DashboardStats {
+  active: number;
+  inProgress: number;
+  completed: number;
+  emergency: number;
+}
+
 export async function getOrders(
   filters?: OrderFilters,
   token?: string
@@ -178,4 +185,32 @@ export async function pauseOrder(
 
   const response = await res.json();
   return response.data;
+}
+
+export async function getDashboardStats(
+  token?: string
+): Promise<DashboardStats> {
+  const url = '/api/orders';
+
+  const res = await fetch(url, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch orders: ${res.statusText}`);
+  }
+
+  const response = await res.json();
+  const orders: Order[] = response.data || [];
+
+  return {
+    active: orders.filter(
+      (order) => ['new', 'assigned', 'in_progress'].includes(order.status)
+    ).length,
+    inProgress: orders.filter((order) => order.status === 'in_progress').length,
+    completed: orders.filter((order) =>
+      ['completed', 'invoiced'].includes(order.status)
+    ).length,
+    emergency: orders.filter((order) => order.is_emergency).length,
+  };
 }
