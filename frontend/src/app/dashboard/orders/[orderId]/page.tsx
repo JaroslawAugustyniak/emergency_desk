@@ -65,6 +65,7 @@ export default function OrderDetailPage() {
 
   const isAdmin = (role == 'admin' ? true : false);
   const isClient = (role == 'client' ? true : false);
+  const isManager = (role == 'tech_manager' ? true : false);
   const isTechnician = (role == 'technician' ? true : false);
 
 
@@ -665,15 +666,15 @@ export default function OrderDetailPage() {
         throw new Error('Failed to download protocol');
       }
 
-      const blob = await downloadRes.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = generateData.data.file_name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // const blob = await downloadRes.blob();
+      // const url = window.URL.createObjectURL(blob);
+      // const link = document.createElement('a');
+      // link.href = url;
+      // link.download = generateData.data.file_name;
+      // document.body.appendChild(link);
+      // link.click();
+      // document.body.removeChild(link);
+      // window.URL.revokeObjectURL(url);
 
       await Swal.fire({
         title: t('protocolGenerated'),
@@ -836,7 +837,7 @@ export default function OrderDetailPage() {
       <div className="flex flex-wrap items-center md:justify-end md:mb-6 gap-1">
         {/* Action Buttons */}
 
-            {(order.status === 'new' || order.status === 'assigned') && isAdmin && (
+            {(order.status === 'new' || order.status === 'assigned') && (isAdmin || isManager) && (
               <button
                 onClick={handleAssignTechnician}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
@@ -846,7 +847,7 @@ export default function OrderDetailPage() {
                 {t('assignTechnician')}
               </button>
             )}
-            {order.status === 'new' && (
+            {order.status === 'new' && isClient && (
               <>
             <button
               onClick={handleEdit}
@@ -911,7 +912,7 @@ export default function OrderDetailPage() {
               </button>
             )}
 
-            {isAdmin && (order.status === 'paused' || order.status === 'new' || order.status === 'assigned' || order.status === 'in_progress') && (
+            {(isAdmin || isManager) && (order.status === 'paused' || order.status === 'new' || order.status === 'assigned' || order.status === 'in_progress') && (
               <button
                 onClick={handlePauseOrder}
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded transition-colors ${
@@ -930,6 +931,7 @@ export default function OrderDetailPage() {
               </button>
             )}
 
+            {isAdmin && (order.status === 'completed') && (
             <button
               onClick={handleGenerateAndDownloadProtocol}
               disabled={isGeneratingProtocol}
@@ -943,6 +945,7 @@ export default function OrderDetailPage() {
               <FileText className="w-5 h-5" />
               {isGeneratingProtocol ? 'Generowanie...' : (protocolFileName ? 'Wygeneruj ponownie' : t('generatePDF'))}
             </button>
+            )}
 
             {protocolFileName && (
               <>

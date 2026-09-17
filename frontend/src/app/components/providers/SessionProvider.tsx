@@ -13,7 +13,7 @@ export interface UserData {
 
 interface SessionContextType {
   token: string | null;
-  role: 'admin' | 'client' | 'technician' | null;
+  role: 'admin' | 'client' | 'technician' | 'tech_manager' | null;
   user: UserData | null;
   isLoading: boolean;
   setToken: (token: string | null, rememberMe?: boolean) => void;
@@ -54,7 +54,7 @@ export default function SessionProvider({
   children: ReactNode;
 }) {
   const [token, setTokenState] = useState<string | null>(null);
-  const [role, setRoleState] = useState<'admin' | 'client' | 'technician' | null>(null);
+  const [role, setRoleState] = useState<'admin' | 'client' | 'technician' | 'tech_manager' | null>(null);
   const [user, setUserState] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
