@@ -14,7 +14,7 @@ interface MenuItem {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
   exact?: boolean;
-  roles: ('admin' | 'client' | 'technician')[];
+  roles: ('admin' | 'client' | 'technician' | 'tech_manager')[];
 }
 
 export default function MobileNav() {
