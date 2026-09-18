@@ -64,7 +64,7 @@ class TechnicianRevenueReportController extends Controller
                 'email' => $technician->email,
                 'revenue' => (float) $totalRevenue,
                 'materials_cost' => (float) $totalMaterialsCost,
-                'income' => (float) ($totalRevenue - $totalMaterialsCost),
+                'income' => (float) ($totalRevenue + $totalMaterialsCost),
                 'emergency' => (int) $emergencyCount,
                 'orders_count' => $orders->count(),
             ];
@@ -130,15 +130,20 @@ class TechnicianRevenueReportController extends Controller
             $materialsCost = $order->materials ? $order->materials->sum('price') : 0;
             $totalMaterialsCost += $materialsCost;
 
+            $orderId = str_pad($order->id, 4, '0', STR_PAD_LEFT);
+            $clientId = str_pad($order->client_id ?? 0, 3, '0', STR_PAD_LEFT);
+            $locationId = str_pad($order->location_id ?? 0, 3, '0', STR_PAD_LEFT);
+            $formattedOrderNumber = "C{$clientId}/P{$locationId}/O{$orderId}";
+
             return [
                 'id' => $order->id,
-                'order_number' => $order->order_number,
+                'order_number' => $formattedOrderNumber,
                 'client' => $order->client->name ?? 'N/A',
                 'service_category' => $order->serviceCategory->name ?? 'N/A',
                 'location' => $order->location->city . ', ' . $order->location->street ?? 'N/A',
                 'revenue' => (float) $order->price_total,
                 'materials_cost' => (float) $materialsCost,
-                'income' => (float) ($order->price_total - $materialsCost),
+                'income' => (float) ($order->price_total + $materialsCost),
                 'end_at' => $order->end_at?->toDateString(),
                 'status' => $order->status,
             ];
@@ -154,7 +159,7 @@ class TechnicianRevenueReportController extends Controller
             'summary' => [
                 'total_revenue' => (float) $totalRevenue,
                 'total_materials_cost' => (float) $totalMaterialsCost,
-                'total_income' => (float) ($totalRevenue - $totalMaterialsCost),
+                'total_income' => (float) ($totalRevenue + $totalMaterialsCost),
                 'orders_count' => $orders->count(),
                 'emergency' => (int) $emergencyCount,
             ],

@@ -947,7 +947,7 @@ export default function OrderDetailPage() {
             </button>
             )}
 
-            {protocolFileName && (
+            {protocolFileName && (isAdmin || isManager) && (
               <>
                 <button
                   onClick={handleDownloadProtocol}
@@ -1048,14 +1048,25 @@ export default function OrderDetailPage() {
 
           {/* Description */}
           {order.description && (
-            <div>
+            <div className=' pt-6'>
               <h3 className="text-sm text-gray-500 mb-1">{t('description')}</h3>
               <p className="text-gray-900 whitespace-pre-wrap">{order.description}</p>
             </div>
           )}
 
+          { !isTechnician && (
+          <div className=' pt-6'>
+            <h3 className="text-sm text-gray-500 mb-1">{t('assignedTechnician')}</h3>
+            <p className="text-gray-900">
+              {order.technician
+                ? `${order.technician.first_name} ${order.technician.last_name}`
+                : '-'}
+            </p>            
+          </div>
+          )}
+
           {/* Order Dates */}
-          <div className="grid grid-cols-2 gap-4 pt-6">
+          <div className="grid lg:grid-cols-3 gap-4 pt-6">
             <div>
               <p className="text-sm text-gray-500 mb-1">{t('orderDate')}</p>
               <p className="text-sm font-medium text-gray-900">
@@ -1081,11 +1092,8 @@ export default function OrderDetailPage() {
           </div>
 
           {/* Financial Info */}
-          <div className="grid grid-cols-2 gap-4 pt-6 border-t border-gray-200">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">{t('vatRate')}</p>
-              <p className="text-sm font-medium text-gray-900">{order.vat_rate}%</p>
-            </div>
+          <div className="grid grid-cols-2 gap-4 pt-6">
+
             {order.price_total && (
               <div>
                 <p className="text-sm text-gray-500 mb-1">{t('priceTotal')}</p>
@@ -1133,31 +1141,24 @@ export default function OrderDetailPage() {
       </div>
       )}
 
-      { !isTechnician && (
+
+      { !isTechnician && technicianSignature && (
       <div className="bg-white rounded-lg grid gap-1.5 shadow-md p-6">
           {/* Technician */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-500 mb-1 flex gap-2"><UserRound />{t('technician')}</h3>
-            <p className="text-gray-900 pl-8">
-              {order.technician
-                ? `${order.technician.first_name} ${order.technician.last_name}`
-                : '-'}
-            </p>
-            {technicianSignature && (
-            <>
-             <h3 className="text-sm font-semibold text-gray-500 mt-3 mb-1 flex gap-2"><Signature />Podpis technika</h3>
+            
+             <h3 className="text-sm font-semibold text-gray-500 mb-1 flex gap-2"><Signature />Podpis / potwierdzenie wykonania pracy</h3>
               <div className="space-y-3 pl-8">
                 <img src={technicianSignature} alt="Podpis" className="border border-gray-300 rounded max-h-48" />
               </div>
-              </>
-            )}
+              
           </div>
       </div>
       )}
 
       {isTechnician && order.status === 'completed' && (
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">Podpis technika</h3>
+        <h3 className="text-sm font-semibold text-gray-500 mb-1 flex gap-2"><Signature />Podpis / potwierdzenie wykonania pracy</h3>
         {technicianSignature ? (
           <div className="space-y-3">
             <img src={technicianSignature} alt="Podpis" className="border border-gray-300 rounded max-h-48" />

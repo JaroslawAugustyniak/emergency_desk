@@ -51,13 +51,13 @@ export default function TechnicianRevenueList({
                 {t('technician')}
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('revenue')}
+                {t('repairCost')}
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {t('materialsCost')}
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('income')}
+                {t('repairSum')}
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {t('emergency')}
@@ -122,7 +122,7 @@ export default function TechnicianRevenueList({
               </div>
 
               <div className="mb-3 pb-3 border-b border-gray-200">
-                <p className="text-xs text-gray-500 mb-1">{t('revenue')}</p>
+                <p className="text-xs text-gray-500 mb-1">{t('repairCost')}</p>
                 <p className="text-sm font-semibold text-gray-900">
                   {formatCurrency(technician.revenue)}
                 </p>
@@ -136,7 +136,7 @@ export default function TechnicianRevenueList({
               </div>
 
               <div className="mb-3 pb-3 border-b border-gray-200">
-                <p className="text-xs text-gray-500 mb-1">{t('income')}</p>
+                <p className="text-xs text-gray-500 mb-1">{t('repairSum')}</p>
                 <p className="text-sm font-bold text-green-600">
                   {formatCurrency(technician.income)}
                 </p>

@@ -100,13 +100,10 @@ class OrderPdfService
         $materialsHtml = $this->buildMaterialsTable($order);
         $totalMaterials = $order->materials->sum('price') ?? 0;
         $priceTotal = $order->price_total ?? 0;
-        $vatRate = $order->vat_rate ?? 0;
-        $netPrice = $priceTotal > 0 ? $priceTotal / (1 + ($vatRate / 100)) : 0;
-        $vatAmount = $priceTotal - $netPrice;
-        $totalPrice = $priceTotal > 0 ? $priceTotal : $totalMaterials;
+        $priceTotalFormatted = $this->formatPrice($priceTotal);
+        
+        $totalPrice = $priceTotal > 0 ? $priceTotal + $totalMaterials : $totalMaterials;
         $totalPriceFormatted = $this->formatPrice($totalPrice);
-        $netPriceFormatted = $this->formatPrice($netPrice);
-        $vatAmountFormatted = $this->formatPrice($vatAmount);
         $materialsPriceFormatted = $this->formatPrice($totalMaterials);
 
         $locationNipHtml = $locationNip ? '<div class="row"><div class="col col-label">NIP:</div><div class="col col-value">' . htmlspecialchars($locationNip, ENT_QUOTES, 'UTF-8') . '</div></div>' : '';
@@ -116,7 +113,6 @@ class OrderPdfService
         $techPhoneHtml = ($technicianData && $techPhone !== '—') ? '<div class="row"><div class="col col-label">Telefon:</div><div class="col col-value">' . $techPhone . '</div></div>' : '';
         $durationHtml = ($order->start_at && $order->end_at) ? '<div class="row"><div class="col col-label">Czas trwania:</div><div class="col col-value">' . $this->formatDuration($order->start_at, $order->end_at) . '</div></div>' : '';
         $workReportHtml = $order->work_report ? '<div class="section"><div class="section-title">Raport z pracy</div><div class="section-content"><div class="description-box">' . nl2br(htmlspecialchars($order->work_report, ENT_QUOTES, 'UTF-8')) . '</div></div></div>' : '';
-        $vatHtml = $priceTotal > 0 ? '<div class="summary-row"><div class="summary-label">Stawka VAT:</div><div class="summary-value">' . number_format($vatRate, 2, ',', ' ') . '%</div></div><div class="summary-row"><div class="summary-label">VAT:</div><div class="summary-value">' . $vatAmountFormatted . '</div></div><div class="summary-row"><div class="summary-label">Cena netto:</div><div class="summary-value">' . $netPriceFormatted . '</div></div>' : '';
         $invoiceInfo = $order->invoice_no ? 'Faktura: ' . htmlspecialchars($order->invoice_no, ENT_QUOTES, 'UTF-8') : '';
         $generatedDate = date('d.m.Y H:i');
 
@@ -277,7 +273,11 @@ class OrderPdfService
                     <div class="summary-label">Materiały:</div>
                     <div class="summary-value">$materialsPriceFormatted</div>
                 </div>
-                $vatHtml
+                <div class="summary-row">
+                    <div class="summary-label">Koszt naprawy:</div>
+                    <div class="summary-value">$priceTotalFormatted</div>
+                </div>
+                
                 <div class="summary-row summary-total">
                     <div class="summary-label">RAZEM DO ZAPŁATY:</div>
                     <div class="summary-value">$totalPriceFormatted</div>

@@ -35,11 +35,11 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
   const chartData = useMemo(() => {
     return [
       {
-        name: 'Przychód',
+        name: t('repairCost'),
         value: Math.round(data.summary.total_revenue * 100) / 100,
       },
       {
-        name: 'Koszty materiałów',
+        name: t('materialsCost'),
         value: Math.round(data.summary.total_materials_cost * 100) / 100,
       },
     ];
@@ -68,7 +68,7 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
 
         <div className="bg-slate-50 rounded-lg shadow-sm p-6 relative">
           <div className="flex justify-between items-start mb-6">
-            <p className="text-slate-600 text-sm">Przychód</p>
+            <p className="text-slate-600 text-sm">{t('repairCost')}</p>
             <TrendingUp className="w-12 h-12 text-green-500 absolute right-3" />
           </div>
           <div className="text-4xl font-bold text-slate-900 text-center">{formatCurrency(data.summary.total_revenue)}</div>
@@ -76,7 +76,7 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
 
         <div className="bg-slate-50 rounded-lg shadow-sm p-6 relative">
           <div className="flex justify-between items-start mb-6">
-            <p className="text-slate-600 text-sm">Koszty materiałów</p>
+            <p className="text-slate-600 text-sm">{t('materialsCost')}</p>
             <TrendingDown className="w-12 h-12 text-red-500 absolute right-3" />
           </div>
           <div className="text-4xl font-bold text-slate-900 text-center">{formatCurrency(data.summary.total_materials_cost)}</div>
@@ -84,7 +84,7 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
 
         <div className="bg-slate-50 rounded-lg shadow-sm p-6 relative">
           <div className="flex justify-between items-start mb-6">
-            <p className="text-slate-600 text-sm">Dochód netto</p>
+            <p className="text-slate-600 text-sm">{t('repairSum')}</p>
             <BarChart3 className="w-12 h-12 text-blue-500 absolute right-3" />
           </div>
           <div className="text-4xl font-bold text-slate-900 text-center">{formatCurrency(data.summary.total_income)}</div>
@@ -151,7 +151,7 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
             </div>
 
             <div className="flex justify-between items-center py-3 border-b border-slate-200 ">
-              <span className="text-slate-600 ">Średni przychód na zlecenie</span>
+              <span className="text-slate-600 ">Średni koszt zlecenia</span>
               <span className="font-bold text-slate-900 ">
                 {formatCurrency(
                   data.summary.orders_count > 0
@@ -173,7 +173,7 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
             </div>
 
             <div className="flex justify-between items-center py-3">
-              <span className="text-slate-600 ">Średni dochód na zlecenie</span>
+              <span className="text-slate-600 ">Średni koszt całkowity</span>
               <span className="font-bold text-green-600 ">
                 {formatCurrency(
                   data.summary.orders_count > 0
@@ -208,13 +208,13 @@ export default function TechnicianRevenueDetail({ data }: TechnicianRevenueDetai
                   Kategoria
                 </th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900 ">
-                  Przychód
+                  {t('repairCost')}
                 </th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900 ">
-                  Koszty
+                  {t('materialsCost')}
                 </th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900 ">
-                  Dochód
+                  {t('repairSum')}
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 ">
                   Data
