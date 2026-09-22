@@ -465,6 +465,9 @@ export default function OrderDetailPage() {
         formData.append('photos[]', compressedFile);
       }
 
+      // Add photo type for work_completed photos
+      formData.append('type', 'work_completed');
+
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
@@ -479,8 +482,22 @@ export default function OrderDetailPage() {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const data = JSON.parse(xhr.responseText);
-              setPhotos(data.data || []);
-              resolve();
+              // Fetch all photos for this order to ensure we have both issue and work_completed
+              fetch(`/api/orders/${order.id}/photos`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              })
+                .then(res => res.json())
+                .then(allPhotosData => {
+                  setPhotos(allPhotosData.data || []);
+                  resolve();
+                })
+                .catch(() => {
+                  // Fallback: use returned data if fetch fails
+                  setPhotos(data.data || []);
+                  resolve();
+                });
             } catch (error) {
               reject(new Error('Failed to parse response'));
             }
@@ -1054,6 +1071,28 @@ export default function OrderDetailPage() {
             </div>
           )}
 
+          {/* Issue Photos */}
+          {photos.filter(p => p.type === 'issue').length > 0 && (
+            <div className="pt-6">
+              <h3 className="text-sm text-gray-500 mb-3">{t('issuePhotos') || 'Zdjęcia usterki'}</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {photos.filter(p => p.type === 'issue').map((photo, index) => (
+                  <div key={photo.id} className="relative group">
+                    <img
+                      src={photo.url}
+                      alt="Issue photo"
+                      className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => {
+                        setLightboxIndex(photos.findIndex(p => p.id === photo.id));
+                        setLightboxOpen(true);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           { !isTechnician && (
           <div className=' pt-6'>
             <h3 className="text-sm text-gray-500 mb-1">{t('assignedTechnician')}</h3>
@@ -1322,16 +1361,16 @@ export default function OrderDetailPage() {
           </div>
         )}
 
-        {photos.length > 0 ? (
+        {photos.filter(p => p.type !== 'issue').length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {photos.map((photo, index) => (
+            {photos.filter(p => p.type !== 'issue').map((photo, index) => (
               <div key={photo.id} className="relative group">
                 <img
                   src={photo.url}
                   alt="Repair photo"
                   className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => {
-                    setLightboxIndex(index);
+                    setLightboxIndex(photos.findIndex(p => p.id === photo.id));
                     setLightboxOpen(true);
                   }}
                 />

@@ -1,6 +1,7 @@
 export type Photo = {
   id: number;
   url: string;
+  type?: 'issue' | 'work_completed' | 'temporary';
   created_at: string;
 };
 
@@ -36,7 +37,7 @@ export type Order = {
       email: string;
     } | null;
   } | null;
-  service_category_id: number;
+  service_category_id: number | null;
   service_category: {
     id: number;
     name: string;
@@ -63,7 +64,7 @@ export type Order = {
 export type CreateOrderData = {
   client_id: number;
   location_id: number;
-  service_category_id: number;
+  service_category_id: number | null;
   description?: string | null;
   is_emergency?: boolean;
   client_ref_no?: string | null;

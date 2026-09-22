@@ -4,19 +4,16 @@ import { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import imageCompression from 'browser-image-compression';
 import Swal from 'sweetalert2';
-
-interface Photo {
-  id: number;
-  url: string;
-  created_at: string;
-}
+import type { Photo } from '@/lib/types/orders';
 
 interface PhotoUploadSectionProps {
   orderId: number;
   photos: Photo[];
   token: string;
   onPhotosUpdated: (photos: Photo[]) => void;
-  isTechnician: boolean;
+  displayPhotoAdding: boolean;
+  photoType?: 'issue' | 'work_completed' | 'temporary';
+  title?: string;
 }
 
 export default function PhotoUploadSection({
@@ -24,7 +21,9 @@ export default function PhotoUploadSection({
   photos,
   token,
   onPhotosUpdated,
-  isTechnician,
+  displayPhotoAdding,
+  photoType = 'work_completed',
+  title,
 }: PhotoUploadSectionProps) {
   const t = useTranslations('orders');
   const tCommon = useTranslations('common');
@@ -73,7 +72,13 @@ export default function PhotoUploadSection({
         formData.append('photos[]', compressedFile);
       }
 
-      const response = await fetch(`/api/orders/${orderId}/photos`, {
+      formData.append('type', photoType);
+
+      const url = orderId === 0
+        ? '/api/photos/temporary'
+        : `/api/orders/${orderId}/photos`;
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -190,10 +195,10 @@ export default function PhotoUploadSection({
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h3 className="text-sm font-semibold text-gray-900 mb-4">
-        {t('repairPhotos')}
+        {title || t('repairPhotos')}
       </h3>
 
-      {isTechnician && (
+      {displayPhotoAdding && (
         <div
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -215,6 +220,7 @@ export default function PhotoUploadSection({
             disabled={isUploading}
           />
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
             className="text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
@@ -236,8 +242,9 @@ export default function PhotoUploadSection({
                   // Lightbox will be handled by parent component
                 }}
               />
-              {isTechnician && (
+              {displayPhotoAdding && (
                 <button
+                  type="button"
                   onClick={() => handleDelete(photo.id)}
                   className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold"
                   title={t('deletePhoto')}

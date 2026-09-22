@@ -38,16 +38,17 @@ class LocationController extends Controller
 
         $query = Location::query();
 
-        // Filter by client for non-admin users
-        if ($user->role === 'client') {
+        // Filter by client_id if provided, otherwise use user's role rules
+        if ($clientId !== null) {
+            $query->where('client_id', $clientId);
+        } elseif ($user->role === 'client') {
             $client = $user->client;
             if (!$client) {
                 return response()->json(['message' => 'Client profile not found'], 404);
             }
             $query->where('client_id', $client->id);
-        } elseif ($clientId && $user->role === 'admin') {
-            $query->where('client_id', $clientId);
         }
+        // Admin without explicit client_id filter - return all
 
         if ($search) {
             $query->where(function ($q) use ($search) {

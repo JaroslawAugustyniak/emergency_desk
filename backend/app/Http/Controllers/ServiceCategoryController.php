@@ -32,18 +32,17 @@ class ServiceCategoryController extends Controller
 
         $query = ServiceCategory::query();
 
-        // Filter by client for non-admin users
-        if ($user->role === 'client') {
+        // Filter by client_id if provided, otherwise use user's role rules
+        if ($clientId !== null) {
+            $query->where('client_id', $clientId);
+        } elseif ($user->role === 'client') {
             if (!$user->client_id) {
                 \Log::warning('Client user has no client_id', ['user_id' => $user->id, 'user_email' => $user->email]);
                 return response()->json(['message' => 'Your account is not associated with a client'], 403);
             }
             $query->where('client_id', $user->client_id);
-        } elseif ($clientId && $user->role === 'admin') {
-            $query->where('client_id', $clientId);
-        } elseif (!$clientId && $user->role === 'admin') {
-            // Admin without client_id filter - return all
         }
+        // Admin without explicit client_id filter - return all
 
         $paginated = $query->orderBy('name', 'asc')
             ->paginate($perPage, ['*'], 'page', $page);

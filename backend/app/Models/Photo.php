@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Photo extends Model
 {
-    protected $fillable = ['order_id', 'url'];
+    protected $fillable = ['order_id', 'url', 'type', 'user_id'];
 
     public function order(): BelongsTo
     {

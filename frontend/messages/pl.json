@@ -408,6 +408,7 @@
     "photoDeletedSuccess": "Zdjęcie usunięte!",
     "photoDeleteError": "Błąd podczas usuwania zdjęcia",
     "noPhotos": "Brak zdjęć z naprawy",
+    "issuePhotos": "Zdjęcia usterki",
     "materials": "Materiały użyte w naprawie",
     "addMaterial": "Dodaj materiał",
     "materialName": "Nazwa materiału",

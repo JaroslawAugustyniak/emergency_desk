@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Modal from '@/app/components/ui/Modal';
+import PhotoUploadSection from '@/app/components/orders/PhotoUploadSection';
 import { createOrder, updateOrder } from '@/lib/actions/orders';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -9,7 +10,7 @@ import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { getClients } from '@/lib/actions/clients';
 import { getLocationsByClient, type Location } from '@/lib/actions/locations';
 import { getServiceCategories } from '@/lib/actions/serviceCategories';
-import type { Order } from '@/lib/types/orders';
+import type { Order, Photo } from '@/lib/types/orders';
 
 type Client = {
   id: number;
@@ -54,6 +55,7 @@ export default function OrderFormModal({
   const [clients, setClients] = useState<Client[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
+  const [issuePhotos, setIssuePhotos] = useState<Photo[]>([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,9 +84,9 @@ export default function OrderFormModal({
     fetchClients();
   }, [token, isEditMode, isClientUser]);
 
-  // Fetch locations when client is selected
+  // Fetch locations when client is selected or modal opens
   useEffect(() => {
-    if (!token || isEditMode || !formData.client_id || locationId) return;
+    if (!token || isEditMode || !formData.client_id || locationId || !isOpen) return;
 
     const fetchLocations = async () => {
       try {
@@ -99,11 +101,11 @@ export default function OrderFormModal({
     };
 
     fetchLocations();
-  }, [formData.client_id, token, isEditMode, locationId]);
+  }, [formData.client_id, token, isEditMode, locationId, isOpen]);
 
-  // Fetch service categories when client is selected
+  // Fetch service categories when client is selected or modal opens
   useEffect(() => {
-    if (!token || isEditMode || !formData.client_id) return;
+    if (!token || isEditMode || !formData.client_id || !isOpen) return;
 
     const fetchServiceCategories = async () => {
       try {
@@ -118,7 +120,7 @@ export default function OrderFormModal({
     };
 
     fetchServiceCategories();
-  }, [formData.client_id, token, isEditMode]);
+  }, [formData.client_id, token, isEditMode, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -130,6 +132,8 @@ export default function OrderFormModal({
           service_category_id: String(order.service_category_id),
           description: order.description || '',
         });
+        // Load issue photos for edit mode
+        setIssuePhotos(order.photos.filter(p => p.type === 'issue') || []);
         // Fetch locations and categories for edit mode
         if (order.client_id && token) {
           const fetchLocations = async () => {
@@ -165,6 +169,7 @@ export default function OrderFormModal({
           service_category_id: '',
           description: '',
         });
+        setIssuePhotos([]);
       }
     }
     setError(null);
@@ -214,7 +219,13 @@ export default function OrderFormModal({
     }
 
     // Validate required fields
-    if (!formData.client_id || !formData.location_id || !formData.service_category_id) {
+    if (!formData.client_id || !formData.location_id) {
+      setError(t('validateError') || 'Please fill all required fields');
+      setIsSubmitting(false);
+      return;
+    }
+    // Require service_category_id only if categories exist
+    if (serviceCategories.length > 0 && !formData.service_category_id) {
       setError(t('validateError') || 'Please fill all required fields');
       setIsSubmitting(false);
       return;
@@ -234,7 +245,7 @@ export default function OrderFormModal({
           {
             client_id: Number(formData.client_id),
             location_id: Number(formData.location_id),
-            service_category_id: Number(formData.service_category_id),
+            service_category_id: Number(formData.service_category_id) || null,
             description: formData.description || null,
             order_date: new Date().toISOString(),
           },
@@ -319,7 +330,7 @@ export default function OrderFormModal({
         )}
 
         {/* Service Category Select */}
-        {(formData.client_id || clientId) && !isEditMode && (
+        {(formData.client_id || clientId) && !isEditMode && serviceCategories.length > 0 && (
           <div>
             <label
               htmlFor="service_category_id"
@@ -332,7 +343,7 @@ export default function OrderFormModal({
               value={formData.service_category_id}
               onChange={handleCategoryChange}
               required
-              disabled={isLoadingCategories || serviceCategories.length === 0}
+              disabled={isLoadingCategories}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               <option value="">{tCommon('selectOption')}</option>
@@ -349,6 +360,29 @@ export default function OrderFormModal({
               )}
             </select>
           </div>
+        )}
+
+        {/* Issue Photos Upload */}
+        {order?.id ? (
+          <PhotoUploadSection
+            orderId={order.id}
+            photos={issuePhotos.filter(p => p.type === 'issue')}
+            token={token || ''}
+            onPhotosUpdated={(photos) => setIssuePhotos(photos.map(p => ({ ...p, type: 'issue' })))}
+            displayPhotoAdding={true}
+            photoType="issue"
+            title={t('issuePhotos') || 'Zdjęcia usterki'}
+          />
+        ) : (
+          <PhotoUploadSection
+            orderId={0}
+            photos={issuePhotos.filter(p => p.type === 'temporary')}
+            token={token || ''}
+            onPhotosUpdated={(photos) => setIssuePhotos(photos.map(p => ({ ...p, type: 'temporary' })))}
+            displayPhotoAdding={true}
+            photoType="temporary"
+            title={t('issuePhotos') || 'Zdjęcia usterki'}
+          />
         )}
 
         {/* Description */}

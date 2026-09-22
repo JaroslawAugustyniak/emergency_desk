@@ -355,7 +355,7 @@ export default function OrdersTable({
         
 
         <div className="flex flex-wrap items-center justify-end gap-3 float-end w-full ">
-          {isClient && (
+          {(isClient || isAdmin || isManager) && (
           
           <button
             onClick={handleAddNew}
@@ -498,7 +498,7 @@ export default function OrdersTable({
                           </span>
                         </div>
                       )}
-                      {order.status === 'new' && isClient && (
+                      {order.status === 'new' && (isClient || isAdmin || isManager) && (
                       <div className="relative group">
                         <button
                           onClick={() => handleEdit(order)}
@@ -512,7 +512,7 @@ export default function OrdersTable({
                         </span>
                       </div>
                       )}
-                      {order.status === 'new' && isClient && (
+                      {order.status === 'new' && (isClient || isAdmin || isManager) && (
                       <div className="relative group">
                         <button
                           onClick={() => handleDelete(order.id)}
@@ -587,7 +587,7 @@ export default function OrdersTable({
 
                 <div className="space-y-2">
                   <div className="flex gap-2">
-                    {(order.status === 'new' || order.status === 'assigned') && isAdmin && (
+                    {(order.status === 'new' || order.status === 'assigned') && (isAdmin || isManager) && (
                       <button
                         onClick={() => handleAssignTechnician(order)}
                         className="flex-1 p-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors flex items-center justify-center"
@@ -596,7 +596,7 @@ export default function OrdersTable({
                         <UserPlus className="w-4 h-4" />
                       </button>
                     )}
-                    {(order.status === 'paused' || order.status === 'assigned' || order.status === 'in_progress') && isAdmin && (
+                    {(order.status === 'paused' || order.status === 'new' || order.status === 'assigned' || order.status === 'in_progress') && (isAdmin || isManager) && (
                       <button
                         onClick={() => handlePauseOrder(order)}
                         className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
@@ -613,7 +613,7 @@ export default function OrdersTable({
                         )}
                       </button>
                     )}
-                    {order.status === 'new' && isClient && (
+                    {order.status === 'new' && (isClient || isAdmin || isManager) && (
                     <button
                       onClick={() => handleEdit(order)}
                       className="flex-1 p-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center justify-center"
@@ -622,7 +622,7 @@ export default function OrdersTable({
                       <Edit className="w-4 h-4" />
                     </button>
                     )}
-                    {order.status === 'new' && isClient && (
+                    {order.status === 'new' && (isClient || isAdmin || isManager) && (
                     <button
                       onClick={() => handleDelete(order.id)}
                       className="flex-1 p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex items-center justify-center"

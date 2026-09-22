@@ -37,6 +37,9 @@ class OrderController extends Controller
         }
 
         $user = $request->user();
+
+        // Clean up abandoned temporary photos from previous sessions
+        $this->cleanupAbandonedTemporaryPhotos($user);
         $page = $validated['page'] ?? 1;
         $perPage = $validated['per_page'] ?? 15;
         $search = $validated['search'] ?? null;
@@ -135,7 +138,16 @@ class OrderController extends Controller
             $validated = $request->validate([
                 'client_id' => 'required|integer|exists:clients,id',
                 'location_id' => 'required|integer|exists:locations,id',
-                'service_category_id' => 'required|integer|exists:service_categories,id',
+                'service_category_id' => [
+                    'nullable',
+                    'integer',
+                    'min:0',
+                    function ($attribute, $value, $fail) {
+                        if ($value > 0 && !\App\Models\ServiceCategory::where('id', $value)->exists()) {
+                            $fail('The service category does not exist.');
+                        }
+                    },
+                ],
                 'description' => 'nullable|string',
                 'is_emergency' => 'nullable|boolean',
                 'client_ref_no' => 'nullable|string|max:100',
@@ -158,13 +170,22 @@ class OrderController extends Controller
         $order = Order::create([
             'client_id' => $validated['client_id'],
             'location_id' => $validated['location_id'],
-            'service_category_id' => $validated['service_category_id'],
+            'service_category_id' => $validated['service_category_id'] ?? null,
             'description' => $validated['description'] ?? null,
             'is_emergency' => $validated['is_emergency'] ?? false,
             'client_ref_no' => $validated['client_ref_no'] ?? null,
             'status' => 'new',
             'order_date' => now(),
         ]);
+
+        // Assign temporary photos uploaded by the user to this order
+        \App\Models\Photo::where('user_id', $user->id)
+            ->whereNull('order_id')
+            ->where('type', 'temporary')
+            ->update([
+                'order_id' => $order->id,
+                'type' => 'issue',
+            ]);
 
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
@@ -438,6 +459,7 @@ class OrderController extends Controller
             'photos' => $order->photos->map(fn($photo) => [
                 'id' => $photo->id,
                 'url' => $baseUrl . $photo->url,
+                'type' => $photo->type,
                 'created_at' => $photo->created_at,
             ]) ?? [],
             'order_date' => $order->order_date,
@@ -450,27 +472,48 @@ class OrderController extends Controller
 
 
     /**
-     * Upload photos for an order
+     * Upload photos for an order or temporarily for the current user
      */
-    public function uploadPhotos(Request $request, Order $order): JsonResponse
+    public function uploadPhotos(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        // Check access
-        if ($user->role === 'client') {
-            $client = $user->client;
-            if (!$client || $order->client_id !== $client->id) {
-                return response()->json(['message' => 'Unauthorized'], 403);
-            }
-        } elseif ($user->role === 'technician') {
-            if ($order->technician_id !== $user->id) {
-                return response()->json(['message' => 'Unauthorized'], 403);
+        $routeOrder = $request->route('order');
+
+        \Log::info('uploadPhotos called', [
+            'path' => $request->path(),
+            'route_order_raw' => $routeOrder,
+            'route_order_type' => gettype($routeOrder),
+            'user_id' => $user?->id,
+        ]);
+
+        // Get order from route parameter if exists
+        // Route binding already converts {order} to Order instance
+        $order = null;
+        if ($routeOrder instanceof Order) {
+            $order = $routeOrder;
+        } elseif ($routeOrder) {
+            $order = Order::findOrFail($routeOrder);
+        }
+
+        // Check access if order exists
+        if ($order) {
+            if ($user->role === 'client') {
+                $client = $user->client;
+                if (!$client || $order->client_id !== $client->id) {
+                    return response()->json(['message' => 'Unauthorized'], 403);
+                }
+            } elseif ($user->role === 'technician') {
+                if ($order->technician_id !== $user->id) {
+                    return response()->json(['message' => 'Unauthorized'], 403);
+                }
             }
         }
 
         try {
             $validated = $request->validate([
                 'photos.*' => 'required|image|max:2048',
+                'type' => 'required|in:issue,work_completed,temporary',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -479,30 +522,62 @@ class OrderController extends Controller
             ], 422);
         }
 
+        $photoType = $validated['type'];
         $uploadedPhotos = [];
+        $uploadDir = $order ? 'orders/' . $order->id : 'temporary/' . $user->id;
 
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $file) {
-                $path = $file->store('orders/' . $order->id, 'public');
+                $path = $file->store($uploadDir, 'public');
 
-                $photo = $order->photos()->create([
+                $photoData = [
                     'url' => '/storage/' . $path,
-                ]);
+                ];
+
+                // If order exists, attach to order; otherwise attach to user as temporary
+                if ($order) {
+                    // When adding to existing order, always use the requested type (issue or work_completed)
+                    $photoData['type'] = $photoType === 'temporary' ? 'issue' : $photoType;
+                    $photoData['order_id'] = $order->id;
+                    $photo = $order->photos()->create($photoData);
+                } else {
+                    // For temporary uploads, create with user_id and type='temporary'
+                    $photoData['type'] = 'temporary';
+                    $photoData['user_id'] = $user->id;
+                    $photo = \App\Models\Photo::create($photoData);
+                }
 
                 $uploadedPhotos[] = [
                     'id' => $photo->id,
                     'url' => config('app.url') . $photo->url,
+                    'type' => $photo->type,
                     'created_at' => $photo->created_at,
                 ];
             }
         }
 
         $baseUrl = $request->getSchemeAndHttpHost();
-        $allPhotos = $order->photos->map(fn($p) => [
-            'id' => $p->id,
-            'url' => $baseUrl . $p->url,
-            'created_at' => $p->created_at,
-        ]);
+
+        // Return photos of the appropriate type
+        if ($order) {
+            $allPhotos = $order->photos->where('type', $photoType)->map(fn($p) => [
+                'id' => $p->id,
+                'url' => $baseUrl . $p->url,
+                'type' => $p->type,
+                'created_at' => $p->created_at,
+            ])->values();
+        } else {
+            // Return user's temporary photos (not yet assigned to any order)
+            $allPhotos = \App\Models\Photo::where('user_id', $user->id)
+                ->whereNull('order_id')
+                ->get()
+                ->map(fn($p) => [
+                    'id' => $p->id,
+                    'url' => $baseUrl . $p->url,
+                    'type' => $p->type,
+                    'created_at' => $p->created_at,
+                ])->values();
+        }
 
         return response()->json([
             'message' => 'Photos uploaded successfully',
@@ -541,11 +616,19 @@ class OrderController extends Controller
     }
 
     /**
-     * Get photos for an order
+     * Get photos for an order, optionally filtered by type
      */
-    public function getPhotos(Request $request, Order $order): JsonResponse
+    public function getPhotos(Request $request): JsonResponse
     {
         $user = $request->user();
+
+        // Get order from route parameter
+        $orderParam = $request->route('order');
+        if (!$orderParam) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        $order = $orderParam instanceof Order ? $orderParam : Order::findOrFail($orderParam);
 
         // Check access
         if ($user->role === 'client') {
@@ -559,10 +642,18 @@ class OrderController extends Controller
             }
         }
 
+        $type = $request->query('type'); // Optional filter: 'issue' or 'work_completed'
+        $query = $order->photos();
+
+        if ($type && in_array($type, ['issue', 'work_completed'])) {
+            $query = $query->where('type', $type);
+        }
+
         $baseUrl = $request->getSchemeAndHttpHost();
-        $photos = $order->photos->map(fn($p) => [
+        $photos = $query->get()->map(fn($p) => [
             'id' => $p->id,
             'url' => $baseUrl . $p->url,
+            'type' => $p->type,
             'created_at' => $p->created_at,
         ]);
 
@@ -862,6 +953,28 @@ class OrderController extends Controller
                 'message' => 'Failed to send protocol',
                 'error' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Clean up abandoned temporary photos
+     */
+    private function cleanupAbandonedTemporaryPhotos($user): void
+    {
+        // Delete temporary photos older than 24 hours that weren't assigned to an order
+        $abandonedPhotos = \App\Models\Photo::where('user_id', $user->id)
+            ->whereNull('order_id')
+            ->where('type', 'temporary')
+            ->where('created_at', '<', now()->subHours(24))
+            ->get();
+
+        foreach ($abandonedPhotos as $photo) {
+            // Delete file from storage
+            $filePath = str_replace('/storage/', '', $photo->url);
+            if (\Storage::disk('public')->exists($filePath)) {
+                \Storage::disk('public')->delete($filePath);
+            }
+            $photo->delete();
         }
     }
 

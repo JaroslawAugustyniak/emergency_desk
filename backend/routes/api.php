@@ -83,6 +83,9 @@ Route::prefix('auth')->group(function () {
 
 // Authenticated routes - role-based access controlled in controllers
 Route::middleware('auth:sanctum')->group(function () {
+    // Temporary photo upload (no order_id yet) - outside orders prefix
+    Route::post('/photos/temporary', [OrderController::class, 'uploadPhotos']);
+
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'index']);
         Route::post('/', [OrderController::class, 'store']);
