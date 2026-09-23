@@ -21,6 +21,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
+# Copy PHP configuration
+# Zwiększa limity na upload plików (post_max_size, upload_max_filesize)
+COPY php.ini /usr/local/etc/php/conf.d/app.ini
+
 # Copy entrypoint
 COPY entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh

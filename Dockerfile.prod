@@ -69,6 +69,10 @@ COPY backend/ .
 COPY docker/nginx.conf /etc/nginx/sites-available/default
 RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
+# Copy PHP configuration
+# Zwiększa limity na upload plików (post_max_size, upload_max_filesize)
+COPY php.ini /usr/local/etc/php/conf.d/app.ini
+
 # Copy supervisor configs
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/supervisord-worker.conf /etc/supervisor/conf.d/supervisord-worker.conf
