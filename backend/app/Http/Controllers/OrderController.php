@@ -535,14 +535,26 @@ class OrderController extends Controller
         }
 
         try {
-            $validated = $request->validate([
-                'photos.*' => 'required|image|max:2048',
-                'type' => 'required|in:issue,work_completed,temporary',
-            ]);
+            // Walidacja: max 10MB (10240 KB)
+            // Po optymalizacji pliki będą znacznie mniejsze (80-90% redukcji)
+            $validated = $request->validate(
+                [
+                    'photos.*' => 'required|image|max:10240',
+                    'type' => 'required|in:issue,work_completed,temporary',
+                ],
+                [
+                    'photos.*.required' => 'Zdjęcie jest wymagane.',
+                    'photos.*.image' => 'Wybrany plik nie jest zdjęciem. Obsługiwane formaty: JPEG, PNG, GIF, WebP.',
+                    'photos.*.max' => 'Zdjęcie jest zbyt duże. Maksymalny rozmiar to 10 MB. Wybrany plik ma :size kB. Spróbuj wybrać zdjęcie o mniejszej rozdzielczości lub mniejszym rozmiarze. Uwaga: Zdjęcia z aparatów profesjonalnych mogą być większe - spróbuj je najpierw skompresować na komputerze.',
+                    'type.required' => 'Typ zdjęcia jest wymagany.',
+                    'type.in' => 'Typ zdjęcia musi być jednym z: issue, work_completed, temporary.',
+                ]
+            );
         } catch (\Illuminate\Validation\ValidationException $e) {
+            // Zwróć przystępne komunikaty dla użytkownika
             return response()->json([
-                'message' => 'Validation failed',
-                'details' => $e->errors(),
+                'message' => 'Wgrywanie zdjęć nie powiodło się',
+                'errors' => $this->formatValidationErrors($e->errors()),
             ], 422);
         }
 
@@ -1008,6 +1020,57 @@ class OrderController extends Controller
             }
             $photo->delete();
         }
+    }
+
+    /**
+     * Format validation errors into user-friendly messages
+     * Konwertuje techniczne błędy walidacji na zrozumiałe komunikaty
+     */
+    private function formatValidationErrors(array $errors): array
+    {
+        $formatted = [];
+
+        foreach ($errors as $field => $messages) {
+            // Parsuj pole aby wyciągnąć indeks (photos.0.image → photos 0)
+            preg_match('/(\w+)\.(\d+)\.(\w+)/', $field, $matches);
+
+            if (count($matches) > 0) {
+                $fieldName = $matches[1];      // photos
+                $fileIndex = $matches[2];       // 0, 1, 2, ...
+                $subField = $matches[3];        // image, max, itp
+
+                // Numeruj pliki od 1 dla użytkownika (zamiast od 0)
+                $displayIndex = (int)$fileIndex + 1;
+
+                $formatted[] = [
+                    'file_number' => $displayIndex,
+                    'field' => $fieldName,
+                    'error' => $messages[0],
+                    'suggestion' => $this->getErrorSuggestion($subField, $messages[0]),
+                ];
+            } else {
+                // Błędy nie związane z plikami (np. type)
+                $formatted[] = [
+                    'field' => $field,
+                    'error' => $messages[0],
+                ];
+            }
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Pokaż użytkownikowi co powinien zrobić aby rozwiązać błąd
+     */
+    private function getErrorSuggestion(string $subField, string $message): ?string
+    {
+        return match ($subField) {
+            'image' => '💡 Wskazówka: Upewnij się, że wybrałeś rzeczywiste zdjęcie (JPEG, PNG, GIF lub WebP), a nie inny typ pliku.',
+            'max' => '💡 Wskazówka: Spróbuj otworzyć zdjęcie na komputerze i zmniejsz jego rozmiar lub rozdzielczość przed wysłaniem.',
+            'required' => '💡 Wskazówka: Zaznacz co najmniej jedno zdjęcie do wysłania.',
+            default => null,
+        };
     }
 
 }
