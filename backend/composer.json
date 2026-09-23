@@ -10,7 +10,8 @@
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
         "minishlink/web-push": "^10.0",
-        "mpdf/mpdf": "^8.3"
+        "mpdf/mpdf": "^8.3",
+        "spatie/image-optimizer": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

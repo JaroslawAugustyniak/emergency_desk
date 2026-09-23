@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Services\OrderPdfService;
 use App\Services\PhotoService;
+use App\Services\ImageOptimizationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -549,9 +550,17 @@ class OrderController extends Controller
         $uploadedPhotos = [];
         $uploadDir = $order ? 'orders/' . $order->id : 'temporary/' . $user->id;
 
+        // Zainicjuj serwis do optymalizacji zdjęć
+        $imageOptimizer = new ImageOptimizationService();
+
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $file) {
-                $path = $file->store($uploadDir, 'public');
+                // Zoptymalizuj obraz przed zapisaniem
+                // - Zmniejszy rozmiar jeśli potrzeba
+                // - Skomprymuje obraz
+                // - Konwertuje format na JPEG (dla lepszej kompresji)
+                // - Usuwa metadata EXIF (bezpieczeństwo)
+                $path = $imageOptimizer->optimizeAndStore($file, $uploadDir);
 
                 $photoData = [
                     'url' => '/storage/' . $path,
