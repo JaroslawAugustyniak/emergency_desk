@@ -1,6 +1,7 @@
 FROM php:8.2-cli
 
 # Install system dependencies
+# libjpeg-turbo-progs dla JPEG support w GD library
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -11,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     libpng-dev \
     libjpeg-dev \
+    libjpeg-turbo-progs \
+    && docker-php-ext-configure gd --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql zip gd ftp
 
 # Install Composer

@@ -20,7 +20,9 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     libpng-dev \
     libjpeg-dev \
+    libjpeg-turbo-progs \
     libgmp-dev \
+    && docker-php-ext-configure gd --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql zip gd gmp ftp
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -40,10 +42,12 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     libpng-dev \
     libjpeg-dev \
+    libjpeg-turbo-progs \
     libgmp-dev \
     default-mysql-client \
     nginx \
     supervisor \
+    && docker-php-ext-configure gd --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql zip gd gmp ftp \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
