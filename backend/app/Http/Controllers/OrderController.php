@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\OrderPdfService;
+use App\Services\PhotoService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -194,6 +195,10 @@ class OrderController extends Controller
                 'order_id' => $order->id,
                 'type' => 'issue',
             ]);
+
+        // Move photo files from temporary folder to order-specific folder
+        $photoService = new PhotoService();
+        $photoService->moveTemporaryPhotosToOrder($order);
 
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
