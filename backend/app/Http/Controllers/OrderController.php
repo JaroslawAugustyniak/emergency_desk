@@ -284,11 +284,18 @@ class OrderController extends Controller
         }
 
         try {
-            $validated = $request->validate([
+            $rules = [
                 'status' => 'required|string|in:' . implode(',', $allowedStatuses),
                 'stop_reason' => 'nullable|string',
                 'price_total' => 'nullable|numeric|min:0',
-            ]);
+            ];
+
+            // Invoice number required when changing to invoiced status
+            if ($request->get('status') === 'invoiced') {
+                $rules['invoice_no'] = 'required|string|min:1';
+            }
+
+            $validated = $request->validate($rules);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
@@ -339,6 +346,9 @@ class OrderController extends Controller
             if ($status === 'paused') {
                 $order->stop_reason = $validated['stop_reason'] ?? null;
                 $order->prepaused_status = $order->status;
+            }
+            if ($status === 'invoiced') {
+                $order->invoice_no = $validated['invoice_no'] ?? null;
             }
         }
 
@@ -774,7 +784,7 @@ class OrderController extends Controller
         $user = $request->user();
 
         // Only admin and tech_manager can pause/resume orders
-        if (!in_array($user->role, ['admin', 'tech_manager'])) {
+        if (!in_array($user->role, ['admin', 'tech_manager', 'technician'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

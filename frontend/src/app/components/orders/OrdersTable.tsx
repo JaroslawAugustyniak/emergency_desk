@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, ArrowUpDown, Plus, Loader, UserPlus, SquareArrowRight, Pause, Play } from 'lucide-react';
+import { Edit, Trash2, ArrowUpDown, Plus, Loader, UserPlus, SquareArrowRight, Pause, Play, FileText } from 'lucide-react';
 import Swal from 'sweetalert2';
 import OrderFormModal from '@/app/components/orders/OrderFormModal';
 import AssignTechnicianModal from '@/app/components/orders/AssignTechnicianModal';
 import PauseOrderModal from '@/app/components/orders/PauseOrderModal';
 import FormattedOrderNumber from '@/app/components/orders/FormattedOrderNumber';
 import Pagination from '@/app/components/ui/Pagination';
-import { deleteOrder, pauseOrder } from '@/lib/actions/orders';
+import { deleteOrder, pauseOrder, changeOrderStatus } from '@/lib/actions/orders';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useTableSearch } from '@/hooks/useTableSearch';
@@ -17,6 +17,7 @@ import { getLocationsByClient } from '@/lib/actions/locations';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import type { Order } from '@/lib/types/orders';
 import Link from 'next/link';
+import { is_technician } from '@/lib/auth';
 
 
 type Pagination = {
@@ -168,6 +169,7 @@ export default function OrdersTable({
   const isAdmin = (role == 'admin' ? true : false);
   const isClient = (role == 'client' ? true : false);
   const isManager = (role == 'tech_manager' ? true : false);
+  const isTechnician = (role == 'technician' ? true : false);
 
   const showClientFilter = (role == 'admin' ? true : false); //!searchParams.get('client_id') && !searchParams.get('location_id');
   const showLocationFilter = (role == 'admin' || role == 'client' ? true : false); //searchParams.get('client_id') || selectedClient;
@@ -244,6 +246,58 @@ export default function OrdersTable({
   const handleClosePauseModal = () => {
     setIsPauseModalOpen(false);
     setOrderToPause(null);
+  };
+
+  const handleInvoice = async (order: Order) => {
+    if (!token) return;
+
+    const { value: invoiceNo } = await Swal.fire({
+      title: t('invoiceOrder') || 'Zafakturuj zlecenie',
+      input: 'text',
+      inputLabel: 'Nr faktury',
+      inputValue: order.invoice_no,
+      inputPlaceholder: 'np. INV-2026-001',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: tCommon('confirm'),
+      cancelButtonText: tCommon('cancel'),
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Nr faktury jest wymagany';
+        }
+      },
+    });
+
+    if (!invoiceNo) return;
+
+    try {
+      await changeOrderStatus(
+        order.id,
+        { status: 'invoiced' as const, invoice_no: invoiceNo },
+        token
+      );
+
+      await Swal.fire({
+        title: 'Sukces',
+        text: 'Zlecenie zostało zafakturowane',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+
+      router.refresh();
+    } catch (error) {
+      console.error('Error invoicing order:', error);
+      await Swal.fire({
+        title: 'Błąd',
+        text: error instanceof Error ? error.message : 'Nie udało się zafakturować zlecenia',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -442,6 +496,7 @@ export default function OrdersTable({
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
                       {getStatusLabel(order.status)}
                       {order.status == 'paused' && <span className="ml-1">: {order.stop_reason} </span>}
+                      {order.status == 'invoiced' && <span className="ml-1">: {order.invoice_no} </span>}
                       {(order.status == 'assigned' || order.status === 'in_progress') && (<>: {order.technician?.first_name} {order.technician?.last_name}</>)}
                     </span>
                   </td>
@@ -476,6 +531,7 @@ export default function OrdersTable({
                           </span>
                         </div>
                       )}
+                      
                       {(order.status === 'paused' || order.status === 'new' || order.status === 'assigned' || order.status === 'in_progress') && (isAdmin || isManager) && (
                         <div className="relative group">
                           <button
@@ -495,6 +551,20 @@ export default function OrdersTable({
                           </button>
                           <span className="tooltip tooltip-top-right">
                             {order.status === 'paused' ? t('resumeOrder') : t('pauseOrder')}
+                          </span>
+                        </div>
+                      )}
+                      {isAdmin && (order.status === 'completed' || order.status == 'invoiced') && (
+                        <div className="relative group">
+                          <button
+                            onClick={() => handleInvoice(order)}
+                            className="p-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                            title={order.invoice_no ? 'Zmień dane faktury' : 'Zafakturuj'}   
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
+                          <span className="tooltip tooltip-top-right">
+                            {order.invoice_no ? 'Zmień dane faktury' : 'Zafakturuj'}   
                           </span>
                         </div>
                       )}
@@ -611,6 +681,15 @@ export default function OrdersTable({
                         ) : (
                           <Pause className="w-4 h-4" />
                         )}
+                      </button>
+                    )}
+                    {isAdmin && (order.status === 'completed' || order.status == 'invoiced') && (
+                      <button
+                        onClick={() => handleInvoice(order)}
+                        className="flex-1 p-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors flex items-center justify-center"
+                        title={order.invoice_no ? 'Zmień dane faktury' : 'Zafakturuj'} 
+                      >
+                        <FileText className="w-4 h-4" />
                       </button>
                     )}
                     {order.status === 'new' && (isClient || isAdmin || isManager) && (

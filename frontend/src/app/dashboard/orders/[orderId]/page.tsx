@@ -213,6 +213,57 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handleInvoice = async () => {
+    if (!token || !order) return;
+
+    const { value: invoiceNo } = await Swal.fire({
+      title: t('invoiceOrder') || 'Zafakturuj zlecenie',
+      input: 'text',
+      inputLabel: 'Nr faktury',
+      inputValue: order.invoice_no,
+      inputPlaceholder: 'np. INV-2026-001',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: tCommon('confirm'),
+      cancelButtonText: tCommon('cancel'),
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Nr faktury jest wymagany';
+        }
+      },
+    });
+
+    if (!invoiceNo) return;
+
+    try {
+      const updatedOrder = await changeOrderStatus(
+        order.id,
+        { status: 'invoiced' as const, invoice_no: invoiceNo },
+        token
+      );
+      setOrder(updatedOrder);
+
+      await Swal.fire({
+        title: 'Sukces',
+        text: 'Zlecenie zostało zafakturowane',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Error invoicing order:', error);
+      await Swal.fire({
+        title: 'Błąd',
+        text: error instanceof Error ? error.message : 'Nie udało się zafakturować zlecenia',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    }
+  };
+
   const handleStartRepair = async () => {
     if (!token || !order) return;
 
@@ -933,7 +984,7 @@ export default function OrderDetailPage() {
               </button>
             )}
 
-            {(isAdmin || isManager) && (order.status === 'paused' || order.status === 'new' || order.status === 'assigned' || order.status === 'in_progress') && (
+            {(isAdmin || isManager || isTechnician) && (order.status === 'paused' || order.status === 'new' || order.status === 'assigned' || order.status === 'in_progress') && (
               <button
                 onClick={handlePauseOrder}
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded transition-colors ${
@@ -990,6 +1041,17 @@ export default function OrderDetailPage() {
                   </button>
                 )}
               </>
+            )}
+
+            {isAdmin && (order.status === 'completed' || order.status === 'invoiced') && (
+              <button
+                onClick={handleInvoice}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                title="Zafakturuj zlecenie"
+              >
+                <FileText className="w-5 h-5" />
+                {order.invoice_no ? 'Zmień dane faktury' : 'Zafakturuj'}                
+              </button>
             )}
 
       </div>
@@ -1141,6 +1203,13 @@ export default function OrderDetailPage() {
               <div>
                 <p className="text-sm text-gray-500 mb-1">{t('priceTotal')}</p>
                 <p className="text-sm font-medium text-gray-900">{order.price_total.toFixed(2)} PLN</p>
+              </div>
+            )}
+
+            {order.invoice_no && (
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Nr faktury</p>
+                <p className="text-sm font-medium text-gray-900">{order.invoice_no}</p>
               </div>
             )}
           </div>

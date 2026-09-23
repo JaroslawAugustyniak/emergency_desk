@@ -107,6 +107,7 @@ export type ChangeStatusData = {
   status: 'new' | 'assigned' | 'in_progress' | 'paused' | 'finished' | 'completed' | 'invoiced';
   stop_reason?: string | null;
   price_total?: number | null;
+  invoice_no?: string;
 };
 
 export type AssignTechnicianData = {
