@@ -310,7 +310,155 @@ jobs:
 
 ---
 
-## 8. Pierwsze uruchomienie projektu na serwerze
+## 8. Konfiguracja backupu bazy danych i plików
+
+Projekt zawiera zautomatyzowany system tworzenia kopii bezpieczeństwa (backupy) bazy danych i plików.
+
+### Architektura backupu
+
+Backup obejmuje:
+- **Dump bazy danych MySQL** (`database.sql`)
+- **Pliki aplikacji** z katalogu `backend/storage/app/public` (obrazki, protokoły, itp.)
+- **Archiwum** w formacie `tar.gz` z kompresją
+- **Automatyczne czyszczenie** starych backupów (domyślnie starsze niż 30 dni)
+- **Upload na serwer FTP** (opcjonalnie)
+
+### Komponenty backupu
+
+```
+Kernel.php                          → Scheduler (uruchamia się co minutę)
+  ↓
+backup:create (Laravel Command)     → Koordynuje proces backupu
+  ↓
+BackupService (app/Services/)       → Obsługuje:
+  ├─ mysqldump (export bazy)
+  ├─ tar.gz (kompresja plików)
+  ├─ FTP upload (jeśli skonfigurowany)
+  └─ cleanup (usunięcie starych backupów)
+```
+
+### Serwis Docker — `schedule-worker`
+
+W `docker-compose.prod.yml` znajduje się dedykowany kontener do schedulingu:
+
+```yaml
+schedule-worker:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  container_name: ed_schedule_worker
+  command: php artisan schedule:work
+  # ... pozostała konfiguracja
+```
+
+**Zadania:**
+- Uruchamia `php artisan schedule:work` (wewnątrz kontenera na nieskończoność)
+- Monitoruje plan harmonogramu
+- Wykonuje `backup:create` każdego dnia o ustalonej porze
+
+### Konfiguracja zmiennych środowiskowych
+
+Dodaj do pliku `.env` na serwerze:
+
+```env
+# =========================
+# BACKUP Configuration
+# =========================
+
+# Pora wykonania backupu (format HH:mm, domyślnie 02:00)
+BACKUP_SCHEDULE_TIME=02:00
+
+# FTP — jeśli chcesz wysyłać backupy na zewnętrzny serwer
+BACKUP_FTP_HOST=ftp.example.com
+BACKUP_FTP_USERNAME=username
+BACKUP_FTP_PASSWORD=password
+BACKUP_FTP_DIRECTORY=/backups/
+
+# Ile dni przechowywać stare backupy na dysku (domyślnie 30)
+BACKUP_RETENTION_DAYS=30
+```
+
+### Ścieżka przechowywania backupów
+
+Backupy znajdują się w:
+```
+./storage/backups/backup_YYYY-MM-DD_HH-mm-ss.tar.gz
+```
+
+Na serwerze, jeśli montowany jest volume:
+```
+~/docker/nazwa_projektu/storage/backups/
+```
+
+### Testowanie backupu
+
+#### Ręcznie:
+```bash
+# Wejdź do katalogu projektu
+cd ~/docker/nazwa_projektu
+
+# Uruchom backup ręcznie
+docker exec ed_backend php artisan backup:create
+```
+
+#### Sprawdzenie logów:
+```bash
+# Logi schedule-worker (scheduler)
+docker logs ed_schedule_worker -f
+
+# Logi backend (gdzie wykonuje się backup)
+docker logs ed_backend -f | grep -i backup
+
+# Logi Laravel
+tail -f ./storage/logs/laravel.log | grep -i backup
+```
+
+#### Lista backupów:
+```bash
+ls -lh ./storage/backups/
+```
+
+### Upload na serwer FTP
+
+Jeśli skonfigurowany jest FTP, backupy będą automatycznie wgrywane na zewnętrzny serwer po utworzeniu.
+
+**Wymagane pola w `.env`:**
+- `BACKUP_FTP_HOST` — adres serwera FTP
+- `BACKUP_FTP_USERNAME` — login FTP
+- `BACKUP_FTP_PASSWORD` — hasło FTP
+- `BACKUP_FTP_DIRECTORY` — katalog docelowy (domyślnie `/backups/`)
+
+Jeśli którekolwiek z pól brakuje, upload na FTP będzie pominięty, a backup zostanie stworzony lokalnie.
+
+### Monitoring backupu
+
+Backupy logują się do:
+- `storage/logs/laravel.log` — event logów aplikacji
+- `docker logs ed_schedule_worker` — uruchomienie schedulera
+- `docker logs ed_backend` — wykonanie backupu
+
+**Przykładowe logi:**
+```
+[2026-09-23 02:00:00] local.INFO: Starting backup process...
+[2026-09-23 02:00:15] local.INFO: Database dumped to /app/storage/backups/backup_2026-09-23_02-00-00_database.sql
+[2026-09-23 02:00:45] local.INFO: Archive created at /app/storage/backups/backup_2026-09-23_02-00-00.tar.gz
+[2026-09-23 02:01:00] local.INFO: Backup uploaded to FTP server
+[2026-09-23 02:01:05] local.INFO: Backup process completed successfully
+```
+
+### Troubleshooting backupu
+
+| Problem | Przyczyna | Rozwiązanie |
+|---|---|---|
+| Backup się nie uruchamia | `schedule-worker` nie działa | `docker ps \| grep schedule-worker` i `docker logs ed_schedule_worker` |
+| "mysqldump: command not found" | Brak narzędzia w kontenerze | Sprawdź Dockerfile czy zawiera `mysql-client` |
+| Błąd permisji na pliki | Pliki należą do innego użytkownika | `docker exec ed_backend chown -R www-data:www-data /app/storage` |
+| FTP upload fails | Złe dane FTP lub firewall | Sprawdź konfigurację w `.env` i dostęp do serwera FTP |
+| Brak backupów w katalogu | Katalog backupów nie istnieje | `docker exec ed_backend mkdir -p /app/storage/backups` |
+
+---
+
+## 9. Pierwsze uruchomienie projektu na serwerze
 
 ```bash
 # 1. Sklonuj repo
@@ -340,7 +488,7 @@ docker compose -f docker-compose.frontend.yml up -d
 
 ---
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
 | Problem | Przyczyna | Rozwiązanie |
 |---|---|---|

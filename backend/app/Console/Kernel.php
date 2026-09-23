@@ -12,7 +12,15 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // Define scheduled tasks here
+        $schedule->command('backup:create')
+            ->dailyAt(config('backup.schedule.time', '02:00'))
+            ->withoutOverlapping()
+            ->onFailure(function () {
+                \Illuminate\Support\Facades\Log::error('Backup command failed');
+            })
+            ->onSuccess(function () {
+                \Illuminate\Support\Facades\Log::info('Backup command succeeded');
+            });
     }
 
     /**

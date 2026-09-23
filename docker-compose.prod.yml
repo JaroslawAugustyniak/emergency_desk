@@ -119,6 +119,52 @@ services:
       - ed_network
     restart: unless-stopped
 
+  schedule-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ed_schedule_worker
+    working_dir: /app
+    command: php artisan schedule:work
+    volumes:
+      - ./backend:/app
+      - ./storage:/app/storage
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      APP_KEY: ${APP_KEY}
+      QUEUE_CONNECTION: database
+      CONTAINER_TYPE: schedule-worker
+      MAIL_MAILER: ${MAIL_MAILER}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+      FRONTEND_URL: ${FRONTEND_URL}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      BACKUP_FTP_HOST: ${BACKUP_FTP_HOST}
+      BACKUP_FTP_USERNAME: ${BACKUP_FTP_USERNAME}
+      BACKUP_FTP_PASSWORD: ${BACKUP_FTP_PASSWORD}
+      BACKUP_FTP_DIRECTORY: ${BACKUP_FTP_DIRECTORY:-/backups/}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BACKUP_SCHEDULE_TIME: ${BACKUP_SCHEDULE_TIME:-02:00}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - ed_network
+    restart: unless-stopped
+
 volumes:
   mysql_data:
     driver: local
