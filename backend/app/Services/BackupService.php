@@ -53,6 +53,12 @@ class BackupService
             if ($this->isFtpConfigured()) {
                 $this->uploadToFtp($archivePath, basename($archivePath));
                 Log::info("Backup uploaded to FTP server");
+
+                // Krok 3a: Usuń backup lokalnie po wysłaniu (jeśli skonfigurowane)
+                if (config('backup.ftp.delete_after_upload', true)) {
+                    unlink($archivePath);
+                    Log::info("Local backup deleted after FTP upload");
+                }
             }
 
             // Krok 4: Sprzątanie - usuń tymczasowy plik SQL
@@ -60,8 +66,8 @@ class BackupService
                 unlink($dbFile);
             }
 
-            // Krok 5: Usuń stare backupy (starsze niż 30 dni)
-            $this->cleanOldBackups(30);
+            // Krok 5: Usuń stare backupy (trzymaj max N backupów)
+            $this->cleanOldBackups();
 
             Log::info("Backup process completed successfully");
 
@@ -181,7 +187,53 @@ class BackupService
             throw new Exception("Failed to upload file to FTP: {$remoteFile}");
         }
 
+        // Czyszczenie starych backupów na FTP
+        $this->cleanOldFtpBackups($connection, $ftpDir);
+
         ftp_close($connection);
+    }
+
+    /**
+     * Usuwa stare backupy z FTP - trzyma max N kopii
+     */
+    private function cleanOldFtpBackups($connection, string $ftpDir): void
+    {
+        $keepCount = config('backup.retention.keep_count', 3);
+
+        if (!@ftp_chdir($connection, $ftpDir)) {
+            return;
+        }
+
+        $files = ftp_rawlist($connection, '.');
+        if (!$files) {
+            return;
+        }
+
+        // Parsuj listę FTP - wyciągnij nazwy plików
+        $backupFiles = [];
+        foreach ($files as $line) {
+            if (strpos($line, 'backup_') !== false && strpos($line, '.tar.gz') !== false) {
+                $parts = preg_split('/\s+/', $line);
+                $filename = $parts[count($parts) - 1];
+                $backupFiles[] = $filename;
+            }
+        }
+
+        // Jeśli mamy więcej niż keepCount, usuń najstarsze
+        if (count($backupFiles) > $keepCount) {
+            // Sortuj alfabetycznie (chronologicznie) - najstarsze na początku
+            sort($backupFiles);
+
+            // Ile trzeba usunąć
+            $toDelete = count($backupFiles) - $keepCount;
+
+            for ($i = 0; $i < $toDelete; $i++) {
+                $file = $backupFiles[$i];
+                if (@ftp_delete($connection, $file)) {
+                    Log::info("Deleted old FTP backup: {$file}");
+                }
+            }
+        }
     }
 
     /**
@@ -193,19 +245,56 @@ class BackupService
     }
 
     /**
-     * Usuwa stare backupy starsze niż określona liczba dni
+     * Usuwa stare backupy - trzyma max N backupów lub backupy starsze niż X dni
      */
-    private function cleanOldBackups(int $days): void
+    private function cleanOldBackups(): void
     {
-        $cutoffTime = now()->subDays($days)->getTimestamp();
+        $keepCount = config('backup.retention.keep_count', 3);
+        $retentionDays = config('backup.retention.retention_days', 3);
 
         $files = glob($this->backupDir . '/backup_*.tar.gz');
-        if (!$files) {
+        if (!$files || count($files) <= $keepCount) {
             return;
         }
 
+        // Sortuj pliki po dacie modyfikacji (najnowsze na końcu)
+        usort($files, function ($a, $b) {
+            return filemtime($a) - filemtime($b);
+        });
+
+        // Usuń pliki: najpierw stare powyżej limitu dnia, potem poza liczbą
+        $cutoffTime = now()->subDays($retentionDays)->getTimestamp();
+        $filesToDelete = [];
+
         foreach ($files as $file) {
-            if (is_file($file) && filemtime($file) < $cutoffTime) {
+            if (!is_file($file)) {
+                continue;
+            }
+
+            $fileTime = filemtime($file);
+
+            // Usuń jeśli starszy niż retention_days
+            if ($fileTime < $cutoffTime) {
+                $filesToDelete[] = $file;
+            }
+        }
+
+        // Jeśli wciąż mamy więcej niż keep_count, usuń najstarsze
+        if (count($files) - count($filesToDelete) > $keepCount) {
+            $remaining = count($files) - count($filesToDelete);
+            $toRemove = $remaining - $keepCount;
+
+            for ($i = 0; $i < count($files) && $toRemove > 0; $i++) {
+                if (!in_array($files[$i], $filesToDelete)) {
+                    $filesToDelete[] = $files[$i];
+                    $toRemove--;
+                }
+            }
+        }
+
+        // Usuń zaznaczone pliki
+        foreach ($filesToDelete as $file) {
+            if (file_exists($file)) {
                 unlink($file);
                 Log::info("Deleted old backup: {$file}");
             }

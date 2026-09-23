@@ -19,12 +19,17 @@ class CreateBackupCommand extends Command
 
             $backupPath = $backupService->createFullBackup();
 
-            $size = filesize($backupPath);
-            $sizeInMb = round($size / 1024 / 1024, 2);
-
             $this->info("Backup created successfully!");
-            $this->info("Location: {$backupPath}");
-            $this->info("Size: {$sizeInMb} MB");
+
+            if (file_exists($backupPath)) {
+                $size = filesize($backupPath);
+                $sizeInMb = round($size / 1024 / 1024, 2);
+                $this->info("Location: {$backupPath}");
+                $this->info("Size: {$sizeInMb} MB");
+            } else {
+                $this->info("Location: {$backupPath}");
+                $this->info("Note: Backup was uploaded to FTP and deleted locally");
+            }
 
             return self::SUCCESS;
         } catch (Exception $e) {
