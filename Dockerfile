@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     libpng-dev \
     libjpeg-dev \
-    && docker-php-ext-install pdo pdo_mysql zip gd
+    && docker-php-ext-install pdo pdo_mysql zip gd ftp
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer

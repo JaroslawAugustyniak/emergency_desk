@@ -41,3 +41,5 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+backend/storage/backups/*.sql
+backend/storage/backups/*.tar.gz

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  ftp:
+    image: stilliard/pure-ftpd:latest
+    container_name: test-ftp-server
+    environment:
+      PUBLICHOST: localhost
+      FTP_USER_NAME: testuser
+      FTP_USER_PASS: testpass123
+      FTP_USER_HOME: /home/testuser
+    ports:
+      - "21:21"
+      - "30000-30009:30000-30009"
+    volumes:
+      - ftp_data:/home/testuser
+    networks:
+      - emergency_desk_default
+
+volumes:
+  ftp_data:
+    driver: local
+
+networks:
+  emergency_desk_default:
+    external: true
+    name: emergency_desk_default
