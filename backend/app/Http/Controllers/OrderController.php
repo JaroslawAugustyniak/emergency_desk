@@ -65,10 +65,18 @@ class OrderController extends Controller
         // Admin and tech_manager see all orders
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                    ->orWhere('client_ref_no', 'like', "%{$search}%");
-            });
+            $query->leftJoin('clients', 'orders.client_id', '=', 'clients.id')
+                  ->leftJoin('locations', 'orders.location_id', '=', 'locations.id')
+                  ->where(function ($q) use ($search) {
+                      $q->where('orders.description', 'like', "%{$search}%")
+                        ->orWhere('orders.invoice_no', 'like', "%{$search}%")
+                        ->orWhere('orders.id', 'like', "%{$search}%")
+                        ->orWhere('clients.name', 'like', "%{$search}%")
+                        ->orWhere('locations.address', 'like', "%{$search}%")
+                        ->orWhere('locations.city', 'like', "%{$search}%");
+                  })
+                  ->distinct()
+                  ->select('orders.*');
         }
 
         if ($clientId && $user->role === 'admin') {
