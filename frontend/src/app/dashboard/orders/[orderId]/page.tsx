@@ -164,6 +164,10 @@ export default function OrderDetailPage() {
 
   const handleCloseAssignModal = () => {
     setIsAssignModalOpen(false);
+    // Reload order after modal closes
+    if (token) {
+      getOrder(Number(orderId), token).then((data) => setOrder(data.data));
+    }
   };
 
   const handleStatusChange = async (newStatus: string) => {
