@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     netcat-openbsd \
-    mysql-client \
+    default-mysql-client \
     libzip-dev \
     zlib1g-dev \
     libpng-dev \

@@ -78,7 +78,7 @@ class BackupService
     private function dumpDatabase(string $filePath): void
     {
         $command = sprintf(
-            'mysqldump -h %s -u %s -p%s %s > %s',
+            'mysqldump -h %s -u %s -p%s --ssl=0 --no-tablespaces %s > %s',
             escapeshellarg($this->dbHost),
             escapeshellarg($this->dbUser),
             escapeshellarg($this->dbPassword),
