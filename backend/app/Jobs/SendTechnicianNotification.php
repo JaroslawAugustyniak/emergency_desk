@@ -4,14 +4,12 @@ namespace App\Jobs;
 
 use App\Models\Order;
 use App\Models\User;
-use App\Models\PushSubscription;
+use App\Services\PushNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Minishlink\WebPush\WebPush;
-use Minishlink\WebPush\Subscription;
 
 class SendTechnicianNotification implements ShouldQueue
 {
@@ -26,14 +24,8 @@ class SendTechnicianNotification implements ShouldQueue
         $this->technician = $technician;
     }
 
-    public function handle(): void
+    public function handle(PushNotificationService $pushService): void
     {
-        $subscriptions = PushSubscription::where('user_id', $this->technician->id)->get();
-
-        if ($subscriptions->isEmpty()) {
-            return;
-        }
-
         $message = [
             'title' => 'Nowe zlecenie przypisane',
             'body' => 'Zostałeś przypisany do zlecenia: ' . $this->order->id,
@@ -47,47 +39,22 @@ class SendTechnicianNotification implements ShouldQueue
             ],
         ];
 
-        $vapidPublicKey = env('VAPID_PUBLIC_KEY');
-        $vapidPrivateKey = env('VAPID_PRIVATE_KEY');
+        try {
+            $result = $pushService->dispatchToUser($this->technician, $message);
 
-        if (!$vapidPublicKey || !$vapidPrivateKey) {
-            \Log::error('VAPID keys not configured');
-            return;
+            \Log::info('Push notification dispatch result for technician', [
+                'technician_id' => $this->technician->id,
+                'order_id' => $this->order->id,
+                'sent' => $result['sent'],
+                'failed' => $result['failed'],
+                'errors' => $result['errors'],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send push notification to technician', [
+                'technician_id' => $this->technician->id,
+                'order_id' => $this->order->id,
+                'error' => $e->getMessage(),
+            ]);
         }
-
-        $webPush = new WebPush([
-            'VAPID' => [
-                'subject' => 'mailto:' . env('MAIL_FROM_ADDRESS', 'no-reply@emergencydesk.com'),
-                'publicKey' => $vapidPublicKey,
-                'privateKey' => $vapidPrivateKey,
-            ],
-        ]);
-
-        foreach ($subscriptions as $subscription) {
-            try {
-                $pushSubscription = Subscription::create([
-                    'endpoint' => $subscription->endpoint,
-                    'publicKey' => $subscription->p256dh,
-                    'authToken' => $subscription->auth,
-                ]);
-
-                $webPush->queueNotification(
-                    $pushSubscription,
-                    json_encode($message)
-                );
-            } catch (\Exception $e) {
-                \Log::error('Failed to queue notification', [
-                    'subscription_id' => $subscription->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        $webPush->flush();
-
-        \Log::info('Push notification sent to technician', [
-            'technician_id' => $this->technician->id,
-            'order_id' => $this->order->id,
-        ]);
     }
 }
