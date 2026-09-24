@@ -39,7 +39,7 @@ export default function OrderDetailPage() {
   const t = useTranslations('orders');
   const tL = useTranslations('locations');
   const tCommon = useTranslations('common');
-  const { token, isLoading, role } = useSessionContext();
+  const { token, isLoading, role, user } = useSessionContext();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -919,7 +919,7 @@ export default function OrderDetailPage() {
                 {t('assignTechnician')}
               </button>
             )}
-            {order.status === 'new' && isClient && (
+            {order.status === 'new' && (isClient || isAdmin || isManager) && (order.user_id == user?.id) && (
               <>
             <button
               onClick={handleEdit}

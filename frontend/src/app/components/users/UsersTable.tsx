@@ -34,7 +34,7 @@ type Pagination = {
   limit: number;
 };
 
-type SortField = 'first_name' | 'email';
+type SortField = 'first_name' | 'email' | 'phone';
 
 export default function UsersTable({
   users,
@@ -238,6 +238,15 @@ export default function UsersTable({
                   <ArrowUpDown className="w-4 h-4" />
                 </div>
               </th>
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('phone')}
+              >
+                <div className="flex items-center gap-2">
+                  {t('phoneColumn')}
+                  <ArrowUpDown className="w-4 h-4" />
+                </div>
+              </th>
               {!clientId && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('roleColumn')}
@@ -271,6 +280,9 @@ export default function UsersTable({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {user.email}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {user.phone}
                   </td>
                   {!clientId && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -357,6 +369,13 @@ export default function UsersTable({
                   <p className="text-xs text-gray-500 mb-1">{t('emailColumn')}</p>
                   <p className="text-sm text-gray-600">{user.email}</p>
                 </div>
+
+                {user.phone && (
+                <div className="mb-3 pb-3 border-b border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">{t('phoneColumn')}</p>
+                  <p className="text-sm text-gray-600">{user.phone}</p>
+                </div>
+                )}
 
                 <div className="mb-3 pb-3 border-b border-gray-200">
                   <p className="text-xs text-gray-500 mb-1">{t('roleColumn')}</p>

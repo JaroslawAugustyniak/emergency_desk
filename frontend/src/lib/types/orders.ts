@@ -9,6 +9,7 @@ export type Order = {
   id: number;
   order_number: string;
   client_id: number;
+  user_id: number;
   client: {
     id: number;
     name: string;

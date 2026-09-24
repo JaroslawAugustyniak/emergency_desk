@@ -162,7 +162,7 @@ export default function OrdersTable({
     router.push(`?${params.toString()}`);
   };
 
-  const { role }  = useSessionContext();
+  const { user, role }  = useSessionContext();
 
   const showFilters = true; //!searchParams.get('location_id');
 
@@ -170,6 +170,8 @@ export default function OrdersTable({
   const isClient = (role == 'client' ? true : false);
   const isManager = (role == 'tech_manager' ? true : false);
   const isTechnician = (role == 'technician' ? true : false);
+
+  const currentUserId = user?.id;
 
   const showClientFilter = (role == 'admin' ? true : false); //!searchParams.get('client_id') && !searchParams.get('location_id');
   const showLocationFilter = (role == 'admin' || role == 'client' ? true : false); //searchParams.get('client_id') || selectedClient;
@@ -438,9 +440,7 @@ export default function OrdersTable({
                   <ArrowUpDown className="w-4 h-4" />
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('client')}
-              </th>
+              
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {t('location')}
               </th>
@@ -453,6 +453,8 @@ export default function OrdersTable({
                   <ArrowUpDown className="w-4 h-4" />
                 </div>
               </th>
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('description')}</th>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('order_date')}
@@ -493,9 +495,8 @@ export default function OrdersTable({
                   </td>
  
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {order.client?.name || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <span className={`py-1 text-xs font-medium `}>{order.client?.name || '-'}</span>
+                    <br />
                     {order.location?.address || '-'} {order.location?.number || '-'} - {order.location?.city ? order.location?.city : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -505,6 +506,9 @@ export default function OrdersTable({
                       {order.status == 'invoiced' && <span className="ml-1">: {order.invoice_no} </span>}
                       {(order.status == 'assigned' || order.status === 'in_progress') && (<>: {order.technician?.first_name} {order.technician?.last_name}</>)}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {order.description}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {formatDate(order.created_at)}
@@ -574,7 +578,7 @@ export default function OrdersTable({
                           </span>
                         </div>
                       )}
-                      {order.status === 'new' && (isClient || isAdmin || isManager) && (
+                      {order.status === 'new' && (isClient || isAdmin || isManager) && (order.user_id == user?.id) && (
                       <div className="relative group">
                         <button
                           onClick={() => handleEdit(order)}
@@ -588,7 +592,7 @@ export default function OrdersTable({
                         </span>
                       </div>
                       )}
-                      {order.status === 'new' && (isClient || isAdmin || isManager) && (
+                      {order.status === 'new' && (isClient || isAdmin || isManager) && (order.user_id == user?.id) && (
                       <div className="relative group">
                         <button
                           onClick={() => handleDelete(order.id)}
@@ -646,6 +650,11 @@ export default function OrdersTable({
                   <p className="text-sm text-gray-600">{order.client?.name || '-'}</p>
                 </div>
 
+                <div className="mb-3 pb-3 border-b border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">{t('location')}</p>
+                  <p className="text-sm text-gray-600">{order.location?.address || '-'} {order.location?.number || '-'} - {order.location?.city ? order.location?.city : '-'}</p>
+                </div>
+
                 <div className="mb-4 pb-4 border-b border-gray-200">
                   <p className="text-xs text-gray-500 mb-1">{t('status')}</p>
                   <div className="flex items-center gap-2">
@@ -656,6 +665,10 @@ export default function OrdersTable({
                   </div>
                 </div>
 
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">{t('description')}</p>
+                  <p className="text-sm text-gray-600">{order.description}</p>
+                </div>
                 <div className="mb-4 pb-4 border-b border-gray-200">
                   <p className="text-xs text-gray-500 mb-1">{t('orderDate')}</p>
                   <p className="text-sm text-gray-600">{formatDate(order.order_date)}</p>
@@ -698,7 +711,7 @@ export default function OrdersTable({
                         <FileText className="w-4 h-4" />
                       </button>
                     )}
-                    {order.status === 'new' && (isClient || isAdmin || isManager) && (
+                    {order.status === 'new' && (isClient || isAdmin || isManager) && (order.user_id == user?.id) && (
                     <button
                       onClick={() => handleEdit(order)}
                       className="flex-1 p-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center justify-center"
@@ -707,7 +720,7 @@ export default function OrdersTable({
                       <Edit className="w-4 h-4" />
                     </button>
                     )}
-                    {order.status === 'new' && (isClient || isAdmin || isManager) && (
+                    {order.status === 'new' && (isClient || isAdmin || isManager) && (order.user_id == user?.id) && (
                     <button
                       onClick={() => handleDelete(order.id)}
                       className="flex-1 p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex items-center justify-center"

@@ -301,6 +301,7 @@
     "search": "Szukaj użytkownika...",
     "nameColumn": "Nazwa",
     "emailColumn": "Email",
+    "phoneColumn": "Telefon",
     "roleColumn": "Rola",
     "noClients": "Brak klientów do wyświetlenia",
     "noUsers": "Brak użytkowników do wyświetlenia",

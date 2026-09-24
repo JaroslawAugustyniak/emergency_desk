@@ -453,6 +453,7 @@ class OrderController extends Controller
         return [
             'id' => $order->id,
             'client_id' => $order->client_id,
+            'user_id' => $order->user_id,
             'client' => $order->client ? [
                 'id' => $order->client->id,
                 'name' => $order->client->name,

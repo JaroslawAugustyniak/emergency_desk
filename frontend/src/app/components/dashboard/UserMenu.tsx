@@ -169,7 +169,7 @@ export default function UserMenu({ isPortalUser }: { isPortalUser: boolean }) {
             <>
               <button
                 onClick={handleTogglePushNotifications}
-                className="dropdown-item"
+                className="dropdown-item text-left"
               >
                 {isSubscribed ? <BellOff size={16} /> : <Bell size={16} />}
                 {isSubscribed ? tPush('disableMenuItem') : tPush('enableMenuItem')}
