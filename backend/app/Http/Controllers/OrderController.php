@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ProtocolMail;
 use App\Events\TechnicianAssignedToOrder;
+use App\Listeners\SendTechnicianNotificationListener;
+use App\Services\PushNotificationQueueService;
 
 class OrderController extends Controller
 {
@@ -387,7 +389,7 @@ class OrderController extends Controller
     /**
      * Assign technician to order
      */
-    public function assignTechnician(Request $request, Order $order): JsonResponse
+    public function assignTechnician(Request $request, Order $order, PushNotificationQueueService $queueService): JsonResponse
     {
         $user = $request->user();
 
@@ -408,12 +410,20 @@ class OrderController extends Controller
             ], 422);
         }
 
+        $previousTechnicianId = $order->technician_id;
+
         $order->technician_id = $validated['technician_id'];
         $order->status = 'assigned';
         if (isset($validated['is_emergency'])) {
             $order->is_emergency = $validated['is_emergency'];
         }
         $order->save();
+
+        // The technician changed - cancel the outgoing technician's pending push
+        // notification so they don't get notified about an order they're no longer on.
+        if ($previousTechnicianId && $previousTechnicianId !== $order->technician_id) {
+            $queueService->cancelPending($previousTechnicianId, SendTechnicianNotificationListener::NOTIFICATION_TYPE);
+        }
 
         // Emit event to queue push notification
         TechnicianAssignedToOrder::dispatch($order, $order->technician);
