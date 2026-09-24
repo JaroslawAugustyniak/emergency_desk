@@ -6,12 +6,15 @@ use App\Models\Order;
 use App\Services\OrderPdfService;
 use App\Services\PhotoService;
 use App\Services\ImageOptimizationService;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ProtocolMail;
 use App\Events\TechnicianAssignedToOrder;
+use App\Events\NewOrderInEmergency;
+use App\Events\OrderFinished;
 
 class OrderController extends Controller
 {
@@ -177,9 +180,12 @@ class OrderController extends Controller
             }
         }
 
+        $user = $request->user();
+
         $order = Order::create([
             'client_id' => $validated['client_id'],
             'location_id' => $validated['location_id'],
+            'user_id' => $user->id,
             'service_category_id' => $validated['service_category_id'] ?? null,
             'description' => $validated['description'] ?? null,
             'is_emergency' => $validated['is_emergency'] ?? false,
@@ -200,6 +206,8 @@ class OrderController extends Controller
         // Move photo files from temporary folder to order-specific folder
         $photoService = new PhotoService();
         $photoService->moveTemporaryPhotosToOrder($order);
+
+        NewOrderInEmergency::dispatch($order);
 
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
@@ -269,6 +277,9 @@ class OrderController extends Controller
      */
     public function destroy(Order $order): JsonResponse
     {
+        $notificationService = new PushNotificationService();
+        $notificationService->deleteNotificationsForOrder($order->id);
+
         $order->delete();
 
         return response()->json([
@@ -374,6 +385,10 @@ class OrderController extends Controller
 
         $order->status = $status;
         $order->save();
+
+        if($order->status === 'invoiced'){
+            OrderFinished::dispatch($order);
+        }
         
 
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);

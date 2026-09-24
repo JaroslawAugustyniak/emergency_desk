@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\PushSubscription;
+use App\Models\PushNotification;
 use App\Models\User;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\WebPush;
@@ -137,5 +138,19 @@ class PushNotificationService
             'failed' => $failureCount,
             'errors' => $errors,
         ];
+    }
+
+
+    
+
+    public function deleteNotificationsForOrder(int $orderId, ?string $type = null): void
+    {
+        $query = PushNotification::where('order_id', $orderId);
+    
+        if ($type) {
+            $query->where('type', $type);
+        }
+    
+        $query->delete();
     }
 }

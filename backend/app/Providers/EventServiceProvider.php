@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use App\Events\TechnicianAssignedToOrder;
+use App\Events\NewOrderInEmergency;
+use App\Events\OrderFinished;
 use App\Listeners\SendTechnicianNotificationListener;
+use App\Listeners\SendManagerNotificationListener;
+use App\Listeners\SendClientNotificationListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -22,6 +26,12 @@ class EventServiceProvider extends ServiceProvider
         ],
         TechnicianAssignedToOrder::class => [
             SendTechnicianNotificationListener::class,
+        ],
+        NewOrderInEmergency::class => [
+            SendManagerNotificationListener::class,
+        ],
+        OrderFinished::class => [
+            SendClientNotificationListener::class,
         ],
     ];
 

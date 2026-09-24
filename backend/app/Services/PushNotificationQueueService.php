@@ -114,4 +114,5 @@ class PushNotificationQueueService
 
         return $stats;
     }
+
 }

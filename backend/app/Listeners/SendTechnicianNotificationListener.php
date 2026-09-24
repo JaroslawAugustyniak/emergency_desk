@@ -28,12 +28,17 @@ class SendTechnicianNotificationListener
             );
         }
 
+        $orderId = str_pad($event->order->id, 4, '0', STR_PAD_LEFT);
+        $clientId = str_pad($event->order->client_id ?? 0, 3, '0', STR_PAD_LEFT);
+        $locationId = str_pad($event->order->location_id ?? 0, 3, '0', STR_PAD_LEFT);
+        $formattedOrderNumber = "C{$clientId}/P{$locationId}/O{$orderId}";
+
         $notification = $this->queueService->queue(
             userId: $event->technician->id,
             type: self::NOTIFICATION_TYPE,
             title: 'Nowe zlecenie przypisane',
-            body: 'Zostałeś przypisany do zlecenia: ' . $event->order->id,
-            url: '/orders/' . $event->order->id,
+            body: 'Zostałeś przypisany do zlecenia: ' . $formattedOrderNumber,
+            url: '/dashboard/orders/' . $event->order->id,
             orderId: $event->order->id,
             delayMinutes: config('push.assign_technician_delay_minutes'),
         );
