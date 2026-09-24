@@ -72,6 +72,31 @@ services:
       - default
     restart: unless-stopped
 
+  push-notification-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ed_push_notification_worker
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      APP_KEY: ${APP_KEY}
+      QUEUE_CONNECTION: database
+    command: php artisan push:work-queue
+    depends_on:
+      - mysql
+      - backend
+    networks:
+      - default
+    restart: unless-stopped
+
   frontend:
     image: node:20-bullseye
     container_name: ed_frontend

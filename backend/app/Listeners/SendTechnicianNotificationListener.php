@@ -15,6 +15,19 @@ class SendTechnicianNotificationListener
 
     public function handle(TechnicianAssignedToOrder $event): void
     {
+        // Assignment changed - cancel the outgoing technician's pending notification
+        // for this order so they don't get notified about a job they're no longer on.
+        // getOriginal() still holds the pre-change value because the event is dispatched
+        // before $order->save() (which would reset it via syncOriginal()).
+        $previousTechnicianId = $event->order->getOriginal('technician_id');
+        if ($previousTechnicianId && $previousTechnicianId !== $event->technician->id) {
+            $this->queueService->cancelPending(
+                $previousTechnicianId,
+                self::NOTIFICATION_TYPE,
+                $event->order->id,
+            );
+        }
+
         $notification = $this->queueService->queue(
             userId: $event->technician->id,
             type: self::NOTIFICATION_TYPE,
@@ -22,7 +35,7 @@ class SendTechnicianNotificationListener
             body: 'Zostałeś przypisany do zlecenia: ' . $event->order->id,
             url: '/orders/' . $event->order->id,
             orderId: $event->order->id,
-            delayMinutes: 30,
+            delayMinutes: config('push.assign_technician_delay_minutes'),
         );
 
         \Log::info('Push notification queued for technician', [

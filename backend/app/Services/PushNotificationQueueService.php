@@ -26,7 +26,7 @@ class PushNotificationQueueService
         ?int $orderId = null,
         int $delayMinutes = 30
     ): PushNotification {
-        $this->cancelPending($userId, $type);
+        $this->cancelPending($userId, $type, $orderId);
 
         return PushNotification::create([
             'user_id' => $userId,
@@ -45,11 +45,12 @@ class PushNotificationQueueService
      * Delete any not-yet-sent notification of the given type for the given user,
      * e.g. because the technician assignment it was about has since changed.
      */
-    public function cancelPending(int $userId, string $type): int
+    public function cancelPending(int $userId, string $type, ?int $orderId = null): int
     {
         return PushNotification::pending()
             ->where('user_id', $userId)
             ->where('type', $type)
+            ->where('order_id', $orderId)
             ->delete();
     }
 
