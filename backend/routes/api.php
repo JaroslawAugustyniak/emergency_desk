@@ -158,6 +158,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::prefix('push')->group(function () {
     Route::post('/test', [PushNotificationController::class, 'sendTestNotification']);
     Route::post('/subscribe', [PushNotificationController::class, 'registerSubscription']);
+    Route::post('/unsubscribe', [PushNotificationController::class, 'unsubscribe']);
 });
 
 // Admin-only routes

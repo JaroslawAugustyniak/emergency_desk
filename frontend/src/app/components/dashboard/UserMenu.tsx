@@ -3,16 +3,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Menu, LogOut, User } from 'lucide-react';
+import { Menu, LogOut, User, Bell, BellOff } from 'lucide-react';
 import Swal from 'sweetalert2';
 import ProfileEditModal from '@/app/components/profile/ProfileEditModal';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 export default function UserMenu({ isPortalUser }: { isPortalUser: boolean }) {
   const router = useRouter();
   const t = useTranslations('profile');
   const tAuth = useTranslations('auth');
+  const tPush = useTranslations('pushNotifications');
   const { setToken } = useSessionContext();
+  const { isSupported, isSubscribed, permission, requestPermission, unsubscribe } = usePushNotifications();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -95,6 +98,44 @@ export default function UserMenu({ isPortalUser }: { isPortalUser: boolean }) {
     setIsProfileModalOpen(true);
   };
 
+  const handleTogglePushNotifications = async () => {
+    setIsOpen(false);
+
+    if (isSubscribed) {
+      try {
+        await unsubscribe();
+        Swal.fire({
+          icon: 'success',
+          title: tPush('disableSuccess'),
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } catch (error) {
+        console.error('Failed to disable push notifications:', error);
+        Swal.fire({ icon: 'error', title: tPush('error') });
+      }
+      return;
+    }
+
+    if (permission === 'denied') {
+      Swal.fire({ icon: 'info', title: tPush('permissionDenied') });
+      return;
+    }
+
+    try {
+      await requestPermission();
+      Swal.fire({
+        icon: 'success',
+        title: tPush('enableSuccess'),
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error('Failed to enable push notifications:', error);
+      Swal.fire({ icon: 'error', title: tPush('error') });
+    }
+  };
+
   return (
     <div className="relative" ref={menuRef}>
       {/* Trigger Button */}
@@ -123,6 +164,19 @@ export default function UserMenu({ isPortalUser }: { isPortalUser: boolean }) {
 
           <div className="dropdown-divider"></div>
           </>
+          )}
+          {isSupported && (
+            <>
+              <button
+                onClick={handleTogglePushNotifications}
+                className="dropdown-item"
+              >
+                {isSubscribed ? <BellOff size={16} /> : <Bell size={16} />}
+                {isSubscribed ? tPush('disableMenuItem') : tPush('enableMenuItem')}
+              </button>
+
+              <div className="dropdown-divider"></div>
+            </>
           )}
           <button
             onClick={handleLogout}

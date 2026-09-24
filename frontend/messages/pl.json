@@ -1,4 +1,16 @@
 {
+  "pushNotifications": {
+    "promptTitle": "Włączyć powiadomienia push?",
+    "promptMessage": "Otrzymuj powiadomienia o nowych zleceniach nawet gdy aplikacja jest zamknięta.",
+    "enableButton": "Włącz powiadomienia",
+    "dismissButton": "Nie teraz",
+    "enableMenuItem": "Włącz powiadomienia",
+    "disableMenuItem": "Wyłącz powiadomienia",
+    "enableSuccess": "Powiadomienia zostały włączone",
+    "disableSuccess": "Powiadomienia zostały wyłączone",
+    "error": "Nie udało się zmienić ustawień powiadomień",
+    "permissionDenied": "Powiadomienia są zablokowane w ustawieniach przeglądarki"
+  },
   "common": {
     "appName": "WorkLogger",
     "save": "Zapisz",

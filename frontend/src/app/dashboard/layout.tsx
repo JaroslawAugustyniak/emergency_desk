@@ -8,6 +8,7 @@ import MobileNav from "@/app/components/dashboard/MobileNav";
 import { SidebarProvider } from "@/app/components/context/SidebarContext";
 import { PageTitleProvider } from "@/app/components/context/PageTitleContext";
 import NavigationTracker from "@/app/components/ui/NavigationTracker";
+import PushNotificationPrompt from "@/app/components/dashboard/PushNotificationPrompt";
 import { useSessionContext } from "@/app/components/providers/SessionProvider";
 
 export default function DashboardLayout({
@@ -40,6 +41,7 @@ export default function DashboardLayout({
     <SidebarProvider>
       <PageTitleProvider>
         <NavigationTracker />
+        <PushNotificationPrompt />
         <div className="dashboard-container">
             {/* Desktop Sidebar - hidden on mobile */}
             <div className="hidden md:flex md:flex-col">

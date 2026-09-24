@@ -4,6 +4,7 @@ export const usePushNotifications = () => {
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
 
   // Check if device is mobile
   useEffect(() => {
@@ -29,6 +30,7 @@ export const usePushNotifications = () => {
       isMobile;
 
     setIsSupported(supported);
+    setPermission(supported ? Notification.permission : 'unsupported');
 
     if (supported && Notification.permission === 'granted') {
       checkSubscription();
@@ -53,9 +55,10 @@ export const usePushNotifications = () => {
     }
 
     try {
-      const permission = await Notification.requestPermission();
+      const result = await Notification.requestPermission();
+      setPermission(result);
 
-      if (permission !== 'granted') {
+      if (result !== 'granted') {
         throw new Error('Notification permission denied');
       }
 
@@ -134,6 +137,44 @@ export const usePushNotifications = () => {
     }
   }, [isSupported]);
 
+  const unsubscribe = useCallback(async () => {
+    if (!isSupported) {
+      throw new Error('Push notifications not supported on this device');
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        setIsSubscribed(false);
+        return { success: true, message: 'Push notifications already disabled' };
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/push/unsubscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({ endpoint: subscription.endpoint }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to remove subscription: ${errorData?.message || response.statusText}`);
+      }
+
+      await subscription.unsubscribe();
+      setIsSubscribed(false);
+      return { success: true, message: 'Push notifications disabled' };
+    } catch (error) {
+      console.error('Error unsubscribing:', error);
+      throw error;
+    }
+  }, [isSupported]);
+
   const sendTestNotification = useCallback(async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -166,7 +207,9 @@ export const usePushNotifications = () => {
     isSupported,
     isSubscribed,
     isMobile,
+    permission,
     requestPermission,
+    unsubscribe,
     sendTestNotification,
     checkSubscription,
   };

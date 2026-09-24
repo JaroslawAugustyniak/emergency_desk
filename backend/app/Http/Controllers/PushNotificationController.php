@@ -192,4 +192,44 @@ class PushNotificationController extends Controller
             ], 422);
         }
     }
+
+    /**
+     * Remove a push subscription (user disabled notifications)
+     */
+    public function unsubscribe(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'endpoint' => 'required|string',
+            ]);
+
+            $user = $this->getAuthenticatedUser($request);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated',
+                ], 401);
+            }
+
+            PushSubscription::where('user_id', $user->id)
+                ->where('endpoint', $validated['endpoint'])
+                ->delete();
+
+            \Log::info('Push subscription removed', [
+                'endpoint' => substr($validated['endpoint'], 0, 50) . '...',
+                'user_id' => $user->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Subscription removed successfully',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to remove subscription', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove subscription: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
 }
