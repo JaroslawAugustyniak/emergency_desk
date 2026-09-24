@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: data.message || 'Failed to create client',
-          details: data.errors || data.detail || null,
+          details: data.details || data.errors || data.detail || null,
           message: data.message || 'Failed to create client',
         },
         { status: res.status }

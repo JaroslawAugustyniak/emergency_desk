@@ -65,7 +65,7 @@ export async function PATCH(
       return NextResponse.json(
         {
           error: data.message || 'Failed to change user status',
-          details: data.errors || data.detail || null,
+          details: data.details || data.errors || data.detail || null,
           message: data.message || 'Failed to change user status',
         },
         { status: res.status }

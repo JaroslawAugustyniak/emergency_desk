@@ -16,22 +16,24 @@ class UserController extends Controller
     {
         $user = $request->user();
 
-        try {
-            $validated = $request->validate([
-                'page' => 'integer|min:1',
-                'per_page' => 'integer|min:1|max:100',
-                'client_id' => 'integer',
-                'role' => 'string|in:admin,client,technician,tech_manager',
-                'search' => 'string|max:255',
-                'sort_by' => 'string|in:id,email,first_name,last_name,role,created_at',
-                'sort_order' => 'string|in:asc,desc',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'page' => 'integer|min:1',
+            'per_page' => 'integer|min:1|max:100',
+            'client_id' => 'integer',
+            'role' => 'string|in:admin,client,technician,tech_manager',
+            'search' => 'string|max:255',
+            'sort_by' => 'string|in:id,email,first_name,last_name,role,created_at',
+            'sort_order' => 'string|in:asc,desc',
+        ]);
+
+        if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
-                'details' => $e->errors(),
+                'details' => $validator->errors()->toArray(),
             ], 422);
         }
+
+        $validated = $validator->validated();
 
         $page = $validated['page'] ?? 1;
         $perPage = $validated['per_page'] ?? 15;
@@ -97,22 +99,24 @@ class UserController extends Controller
     {
         $authUser = $request->user();
 
-        try {
-            $validated = $request->validate([
-                'email' => 'required|email|unique:users,email',
-                'password' => 'required|min:8',
-                'role' => 'required|in:admin,client,technician,tech_manager',
-                'first_name' => 'required|string|max:100',
-                'last_name' => 'required|string|max:100',
-                'phone' => 'nullable|string|max:20',
-                'client_id' => 'nullable|exists:clients,id',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:8',
+            'role' => 'required|in:admin,client,technician,tech_manager',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'phone' => 'nullable|string|max:20',
+            'client_id' => 'nullable|exists:clients,id',
+        ]);
+
+        if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
-                'details' => $e->errors(),
+                'details' => $validator->errors()->toArray(),
             ], 422);
         }
+
+        $validated = $validator->validated();
 
         // Tech manager can only create technicians
         if ($authUser->role === 'tech_manager' && $validated['role'] !== 'technician') {
@@ -148,22 +152,24 @@ class UserController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        try {
-            $validated = $request->validate([
-                'email' => ['email', Rule::unique('users')->ignore($user->id)],
-                'role' => 'in:admin,client,technician',
-                'first_name' => 'string|max:100',
-                'last_name' => 'string|max:100',
-                'phone' => 'nullable|string|max:20',
-                'password' => 'nullable|min:8',
-                'client_id' => 'nullable|exists:clients,id',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'email' => ['email', Rule::unique('users')->ignore($user->id)],
+            'role' => 'in:admin,client,technician',
+            'first_name' => 'string|max:100',
+            'last_name' => 'string|max:100',
+            'phone' => 'nullable|string|max:20',
+            'password' => 'nullable|min:8',
+            'client_id' => 'nullable|exists:clients,id',
+        ]);
+
+        if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
-                'details' => $e->errors(),
+                'details' => $validator->errors()->toArray(),
             ], 422);
         }
+
+        $validated = $validator->validated();
 
         $updateData = array_filter($validated, fn($value) => $value !== null);
 
@@ -274,16 +280,18 @@ class UserController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        try {
-            $validated = $request->validate([
-                'status' => 'required|in:active,blocked',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'status' => 'required|in:active,blocked',
+        ]);
+
+        if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
-                'details' => $e->errors(),
+                'details' => $validator->errors()->toArray(),
             ], 422);
         }
+
+        $validated = $validator->validated();
 
         $user->update(['status' => $validated['status']]);
 

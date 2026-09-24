@@ -133,7 +133,7 @@ export async function PUT(
       return NextResponse.json(
         {
           error: data.message || 'Failed to update order',
-          details: data.errors || data.detail || null,
+          details: data.details || data.errors || data.detail || null,
           message: data.message || 'Failed to update order',
         },
         { status: res.status }
@@ -269,7 +269,7 @@ export async function PATCH(
       return NextResponse.json(
         {
           error: data.message || 'Failed to update order',
-          details: data.errors || data.detail || null,
+          details: data.details || data.errors || data.detail || null,
           message: data.message || 'Failed to update order',
         },
         { status: res.status }

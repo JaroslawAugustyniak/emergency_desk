@@ -133,7 +133,7 @@ export async function PUT(
       return NextResponse.json(
         {
           error: data.message || 'Failed to update client',
-          details: data.errors || data.detail || null,
+          details: data.details || data.errors || data.detail || null,
           message: data.message || 'Failed to update client',
         },
         { status: res.status }

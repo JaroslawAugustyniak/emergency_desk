@@ -63,7 +63,7 @@ export async function POST(
       return NextResponse.json(
         {
           error: data.message || 'Failed to regenerate hash',
-          details: data.errors || data.detail || null,
+          details: data.details || data.errors || data.detail || null,
           message: data.message || 'Failed to regenerate hash',
         },
         { status: res.status }
