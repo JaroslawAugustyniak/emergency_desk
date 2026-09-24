@@ -31,6 +31,12 @@ class ProcessPushNotificationQueue extends Command
                         $stats['no_subscription'],
                         $stats['failed']
                     ));
+
+                    if (!empty($stats['errors'])) {
+                        foreach ($stats['errors'] as $error) {
+                            $this->error('  → ' . $error);
+                        }
+                    }
                 }
             } catch (\Exception $e) {
                 \Log::error('Push notification queue worker error', ['error' => $e->getMessage()]);

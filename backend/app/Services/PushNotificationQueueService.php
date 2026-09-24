@@ -61,7 +61,7 @@ class PushNotificationQueueService
      */
     public function processDue(): array
     {
-        $stats = ['processed' => 0, 'sent' => 0, 'no_subscription' => 0, 'failed' => 0];
+        $stats = ['processed' => 0, 'sent' => 0, 'no_subscription' => 0, 'failed' => 0, 'errors' => []];
 
         foreach (PushNotification::due()->with('user')->get() as $notification) {
             $stats['processed']++;
@@ -84,6 +84,13 @@ class PushNotificationQueueService
             try {
                 $result = $this->pushService->dispatchToUser($notification->user, $payload);
                 $stats['sent'] += $result['sent'];
+                if ($result['failed'] > 0) {
+                    $stats['failed'] += $result['failed'];
+                    $stats['errors'] = array_merge($stats['errors'], array_map(
+                        fn($err) => "Notification #{$notification->id} delivery: $err",
+                        $result['errors']
+                    ));
+                }
             } catch (\Exception $e) {
                 // "No push subscriptions found" is the expected case when the user
                 // never enabled push notifications - not a delivery failure to retry.
@@ -92,6 +99,7 @@ class PushNotificationQueueService
                     $stats['no_subscription']++;
                 } else {
                     $stats['failed']++;
+                    $stats['errors'][] = "Notification #{$notification->id} (user {$notification->user_id}): " . $e->getMessage();
                     \Log::error('Failed to process queued push notification', [
                         'notification_id' => $notification->id,
                         'user_id' => $notification->user_id,
