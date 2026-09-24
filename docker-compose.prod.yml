@@ -60,6 +60,7 @@ services:
       BACKUP_KEEP_COUNT: ${BACKUP_KEEP_COUNT:-3}
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-3}
       BACKUP_SCHEDULE_TIME: ${BACKUP_SCHEDULE_TIME:-02:00}
+      PUSH_ASSIGN_TECHNICIAN_DELAY_MINUTES: ${PUSH_ASSIGN_TECHNICIAN_DELAY_MINUTES:-30}
     volumes:
       - ./storage:/app/storage
     depends_on:
@@ -118,6 +119,37 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - ed_network
+    restart: unless-stopped
+
+  push-notification-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ed_push_notification_worker
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - ./storage:/app/storage
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      APP_KEY: ${APP_KEY}
+      QUEUE_CONNECTION: database
+      FRONTEND_URL: ${FRONTEND_URL}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+    command: php artisan push:work-queue
     depends_on:
       mysql:
         condition: service_healthy
