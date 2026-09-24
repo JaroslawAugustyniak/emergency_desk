@@ -92,7 +92,7 @@ services:
   queue-worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: ed_queue_worker
     working_dir: /app
     volumes:
@@ -131,7 +131,7 @@ services:
   push-notification-worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: ed_push_notification_worker
     working_dir: /app
     volumes:
@@ -162,7 +162,7 @@ services:
   schedule-worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: ed_schedule_worker
     working_dir: /app
     command: php artisan schedule:work
