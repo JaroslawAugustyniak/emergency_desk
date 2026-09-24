@@ -21,6 +21,21 @@ export const usePushNotifications = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Reads the subscription directly from the browser API rather than the
+  // isSupported state, so it works right after setIsSupported() runs in the
+  // effect below - React state updates aren't visible yet in that same tick.
+  const checkSubscription = useCallback(async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      setIsSubscribed(!!subscription);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
+  }, []);
+
   // Check if push notifications are supported
   useEffect(() => {
     const supported =
@@ -35,19 +50,7 @@ export const usePushNotifications = () => {
     if (supported && Notification.permission === 'granted') {
       checkSubscription();
     }
-  }, [isMobile]);
-
-  const checkSubscription = useCallback(async () => {
-    if (!isSupported) return;
-
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
-      setIsSubscribed(!!subscription);
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-    }
-  }, [isSupported]);
+  }, [isMobile, checkSubscription]);
 
   const requestPermission = useCallback(async () => {
     if (!isSupported) {
