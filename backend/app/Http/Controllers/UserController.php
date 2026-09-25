@@ -43,7 +43,7 @@ class UserController extends Controller
         $sortBy = $validated['sort_by'] ?? 'created_at';
         $sortOrder = $validated['sort_order'] ?? 'desc';
 
-        $query = User::query();
+        $query = User::query()->with('client');
 
         // Tech manager can only view technicians
         if ($user->role === 'tech_manager') {
@@ -315,6 +315,10 @@ class UserController extends Controller
             'last_name' => $user->last_name,
             'phone' => $user->phone,
             'client_id' => $user->client_id,
+            'client' => $user->client ? [
+                'id' => $user->client->id,
+                'name' => $user->client->name,
+            ] : null,
             'email_verified_at' => $user->email_verified_at,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,

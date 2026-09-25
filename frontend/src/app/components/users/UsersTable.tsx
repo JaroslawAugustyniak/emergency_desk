@@ -25,6 +25,10 @@ type User = {
   status: 'active' | 'blocked';
   phone?: string;
   client_id?: number | null;
+  client?: {
+    id: number,
+    name: string
+  }
 };
 
 type Pagination = {
@@ -287,7 +291,10 @@ export default function UsersTable({
                   {!clientId && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium">
-                        {getRoleLabel(user.role)}                        
+                        {getRoleLabel(user.role)}  
+                        {user.role == 'client' && (
+                          <span className=' font-bold'> {user?.client ? user?.client.name : ''}</span>
+                        )}                      
                       </span>
                     </td>
                   )}
@@ -379,7 +386,11 @@ export default function UsersTable({
 
                 <div className="mb-3 pb-3 border-b border-gray-200">
                   <p className="text-xs text-gray-500 mb-1">{t('roleColumn')}</p>
-                  <p className="text-sm text-gray-600 font-medium">{user.role}</p>
+                  <p className="text-sm text-gray-600 font-medium">{user.role} 
+                    {user.role == 'client' && (
+                      <span>{user?.client ? user?.client.name : ''}</span>
+                    )}
+                  </p>
                 </div>
 
                 <div className="space-y-2">

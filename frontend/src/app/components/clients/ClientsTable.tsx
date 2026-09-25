@@ -186,7 +186,7 @@ export default function ClientsTable({
                       className="hover:text-blue-600 flex items-center gap-2"
                     >
                       {client.name}
-                      {client.has_internal_no && client.internal_no && (
+                      {client.internal_no && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {client.internal_no}
                         </span>

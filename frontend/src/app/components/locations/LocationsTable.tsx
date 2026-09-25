@@ -25,6 +25,11 @@ type Location = {
   client_id: number;
   created_at: string;
   updated_at: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  }
 };
 
 type Pagination = {
@@ -177,6 +182,11 @@ export default function LocationsTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {t('zipColumn')}
               </th>
+
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {t('userColumn')}
+              </th>
+
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {tCommon('actions')}
               </th>
@@ -214,6 +224,16 @@ export default function LocationsTable({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {location.zip}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {location?.user && (
+                      <Link
+                        href={`/dashboard/users/${location.user.id}`}
+                      className="hover:text-blue-600"
+                    >
+                      {location.user.name} 
+                    </Link>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-2">
@@ -282,6 +302,20 @@ export default function LocationsTable({
                   <p className="text-sm text-gray-600">{location.city}, {location.zip}</p>
                 </div>
 
+                {location?.user && (
+                <div className="mb-3 pb-3 border-b border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">{t('userColumn')}</p>
+                  <p className="text-sm text-gray-600">
+                    
+                      <Link
+                        href={`/dashboard/users/${location.user.id}`}
+                      className="hover:text-blue-600"
+                    >
+                      {location.user.name} 
+                    </Link>
+                    </p>
+                </div>
+                )}
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <button

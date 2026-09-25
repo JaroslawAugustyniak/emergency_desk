@@ -61,19 +61,48 @@ class LocationController extends Controller
             });
         }
 
-        $query->orderBy($sortBy, $sortOrder);
+        // $query->orderBy($sortBy, $sortOrder);
+        $total = $query->count();
+        $locations = $query
+            ->orderBy($sortBy, $sortOrder)
+            ->forPage($page, $perPage)
+            ->get()
+            ->map(fn($location) => $this->formatLocation($location, $request));
 
-        $paginated = $query->with('user')->paginate($perPage, ['*'], 'page', $page);
+        // $paginated = $query->with('user')->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
-            'data' => $paginated->items(),
+            'data' => $locations,
             'pagination' => [
-                'page' => $paginated->currentPage(),
-                'per_page' => $paginated->perPage(),
-                'total' => $paginated->total(),
-                'last_page' => $paginated->lastPage(),
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'last_page' => ceil($total / $perPage),
             ],
         ]);
+    }
+
+    /**
+     * Format order data for response
+     */
+    private function formatLocation(Location $location, $request = null): array
+    {
+        $baseUrl = $request ? $request->getSchemeAndHttpHost() : config('app.url');
+
+        return [
+            'id' => $location->id,
+            'name' => $location->name,
+            'address' => $location->address,
+            'zip' => $location->zip,
+            'city' => $location->city,
+            'number' => $location->number,
+            'user' => $location->user ? [
+                'id' => $location->user->id,
+                'name' => $location->user->first_name.' '.$location->user->last_name,
+                'email' => $location->user->email
+            ] : null,
+            
+        ];
     }
 
     public function store(Request $request): JsonResponse
