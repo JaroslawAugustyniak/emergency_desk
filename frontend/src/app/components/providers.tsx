@@ -3,6 +3,7 @@
 import { ThemeProvider } from 'next-themes';
 import { NextIntlClientProvider } from 'next-intl';
 import SessionProvider from '@/app/components/providers/SessionProvider';
+import { PushNotificationListener } from '@/components/PushNotificationListener';
 
 export function Providers({
   children,
@@ -17,6 +18,7 @@ export function Providers({
     <SessionProvider>
       <NextIntlClientProvider messages={messages} locale={locale} timeZone="Europe/Warsaw">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <PushNotificationListener />
           {children}
         </ThemeProvider>
       </NextIntlClientProvider>

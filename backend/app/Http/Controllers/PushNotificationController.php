@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\PushSubscription;
+use App\Models\PushNotification;
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -230,6 +231,79 @@ class PushNotificationController extends Controller
                 'success' => false,
                 'message' => 'Failed to remove subscription: ' . $e->getMessage(),
             ], 422);
+        }
+    }
+
+    /**
+     * Get unread push notifications for the current user
+     */
+    public function getUnreadNotifications(Request $request): JsonResponse
+    {
+        try {
+            $user = $this->getAuthenticatedUser($request);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated',
+                ], 401);
+            }
+
+            $notifications = PushNotification::where('user_id', $user->id)
+                ->where('is_read', false)
+                ->orderBy('created_at', 'asc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $notifications,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to get unread notifications', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get notifications: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark a notification as read
+     */
+    public function markAsRead(Request $request, $notificationId): JsonResponse
+    {
+        try {
+            $user = $this->getAuthenticatedUser($request);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated',
+                ], 401);
+            }
+
+            $notification = PushNotification::where('id', $notificationId)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$notification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Notification not found',
+                ], 404);
+            }
+
+            $notification->update(['is_read' => true]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification marked as read',
+                'data' => $notification,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to mark notification as read', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark notification as read: ' . $e->getMessage(),
+            ], 500);
         }
     }
 }

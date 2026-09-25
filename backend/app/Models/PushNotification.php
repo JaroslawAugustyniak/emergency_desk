@@ -17,6 +17,7 @@ class PushNotification extends Model
         'url',
         'data',
         'is_sent',
+        'is_read',
         'no_subscription',
         'sent_at',
         'send_after',
@@ -25,6 +26,7 @@ class PushNotification extends Model
     protected $casts = [
         'data' => 'array',
         'is_sent' => 'boolean',
+        'is_read' => 'boolean',
         'no_subscription' => 'boolean',
         'sent_at' => 'datetime',
         'send_after' => 'datetime',

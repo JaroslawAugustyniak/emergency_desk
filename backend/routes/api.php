@@ -159,6 +159,8 @@ Route::prefix('push')->group(function () {
     Route::post('/test', [PushNotificationController::class, 'sendTestNotification']);
     Route::post('/subscribe', [PushNotificationController::class, 'registerSubscription']);
     Route::post('/unsubscribe', [PushNotificationController::class, 'unsubscribe']);
+    Route::get('/unread', [PushNotificationController::class, 'getUnreadNotifications']);
+    Route::put('/{notificationId}/read', [PushNotificationController::class, 'markAsRead']);
 });
 
 // Admin-only routes
