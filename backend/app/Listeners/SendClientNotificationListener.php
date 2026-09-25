@@ -47,7 +47,7 @@ class SendClientNotificationListener
                 userId: $manager->id,
                 type: self::NOTIFICATION_TYPE,
                 title: 'Zlecenie zakończone',
-                body: 'Twoje zlecenie nr: ' . $event->order->id .', zostało zakończone.',
+                body: 'Twoje zlecenie nr: ' . $formattedOrderNumber .', zostało zakończone.',
                 url: '/dashboard/orders/' . $event->order->id,
                 orderId: $event->order->id,
                 delayMinutes: config('push.assign_technician_delay_minutes'),
