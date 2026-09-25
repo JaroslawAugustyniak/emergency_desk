@@ -46,7 +46,7 @@ class SendManagerNotificationListener
                 userId: $manager->id,
                 type: self::NOTIFICATION_TYPE,
                 title: 'Nowe zlecenie',
-                body: 'Pojawiło się nowe zlecenie nr: ' . $formattedOrderNumber .', utworzone przez '. $event->order->client->name.' dla '.$event->order->location->name,
+                body: 'Pojawiło się nowe zlecenie nr: ' . $formattedOrderNumber .', utworzone przez '. $author->first_name.' '.$author->last_name.' dla '.$event->order->location->name,
                 url: '/dashboard/orders/' . $event->order->id,
                 orderId: $event->order->id,
                 delayMinutes: config('push.assign_technician_delay_minutes'),
