@@ -1,17 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSessionContext } from '@/app/components/providers/SessionProvider';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+
 
 import { Clock, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
+  
   const { user } = useSessionContext();
   const { stats, isLoading: statsLoading, error: statsError } = useDashboardStats();
-  const [isLoading, setIsLoading] = useState(false);
+  
+
+  // Auto-refresh orders every 30 seconds (only if no modal is open)
+
+  
 
 
   return (

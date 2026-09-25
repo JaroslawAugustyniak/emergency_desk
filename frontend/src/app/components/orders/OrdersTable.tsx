@@ -129,6 +129,17 @@ export default function OrdersTable({
     fetchLocations();
   }, [selectedClient, token]);
 
+  // Auto-refresh orders every 30 seconds (only if no modal is open)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!isModalOpen && !isAssignModalOpen && !isPauseModalOpen) {
+        router.refresh();
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [router, isModalOpen, isAssignModalOpen, isPauseModalOpen]);
+
   const handleClientChange = (clientId: string) => {
     const id = clientId ? Number(clientId) : null;
     setSelectedClient(id);

@@ -46,5 +46,13 @@ export function useDashboardStats() {
     }
   }, [token, fetchStats]);
 
+    useEffect(() => {
+    const interval = setInterval(() => {
+      fetchStats();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [fetchStats]);
+
   return { stats, isLoading, error, refetch: fetchStats };
 }
