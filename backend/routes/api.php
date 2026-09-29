@@ -85,6 +85,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     // Temporary photo upload (no order_id yet) - outside orders prefix
     Route::post('/photos/temporary', [OrderController::class, 'uploadPhotos']);
+    Route::delete('/photos/temporary/{photoId}', [OrderController::class, 'deleteTemporaryPhoto']);
 
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'index']);

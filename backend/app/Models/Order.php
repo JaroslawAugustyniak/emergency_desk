@@ -27,6 +27,7 @@ class Order extends Model
         'price_total',
         'work_report',
         'technician_signature',
+        'technician_signature_path',
         'order_date',
         'start_at',
         'end_at',
@@ -69,5 +70,29 @@ class Order extends Model
     public function materials()
     {
         return $this->hasMany(Material::class);
+    }
+
+    public function getSignatureUrl(): ?string
+    {
+        if (!$this->technician_signature_path) {
+            return null;
+        }
+        return url('storage/' . $this->technician_signature_path);
+    }
+
+    public function getSignatureBase64(): ?string
+    {
+        if (!$this->technician_signature_path) {
+            // Fallback to old base64 for backward compatibility
+            return $this->technician_signature;
+        }
+
+        try {
+            $content = \Illuminate\Support\Facades\Storage::disk('public')->get($this->technician_signature_path);
+            return 'data:image/png;base64,' . base64_encode($content);
+        } catch (\Exception $e) {
+            \Log::error("Failed to get signature for order {$this->id}: {$e->getMessage()}");
+            return null;
+        }
     }
 }

@@ -263,6 +263,32 @@ class OrderController extends Controller
         }
         // Admin can update all fields
 
+        // Handle signature migration: convert base64 to file in storage
+        if (isset($updateData['technician_signature']) && $updateData['technician_signature']) {
+            try {
+                $signature = $updateData['technician_signature'];
+
+                // Check if it's a data URL (base64)
+                if (str_starts_with($signature, 'data:image/png;base64,')) {
+                    $base64Data = str_replace('data:image/png;base64,', '', $signature);
+                    $png = base64_decode($base64Data, true);
+
+                    if ($png !== false) {
+                        $path = "signatures/{$order->id}/signature.png";
+                        \Illuminate\Support\Facades\Storage::disk('public')->put($path, $png);
+                        $updateData['technician_signature_path'] = $path;
+                        unset($updateData['technician_signature']);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error("Failed to save signature for order {$order->id}: {$e->getMessage()}");
+                return response()->json([
+                    'message' => 'Failed to save signature',
+                    'details' => $e->getMessage(),
+                ], 500);
+            }
+        }
+
         $order->update($updateData);
         $order->load(['client', 'technician', 'location', 'serviceCategory', 'photos']);
 
@@ -491,6 +517,8 @@ class OrderController extends Controller
             'status' => $order->status,
             'description' => $order->description,
             'technician_signature' => $order->technician_signature,
+            'technician_signature_path' => $order->technician_signature_path,
+            'technician_signature_url' => $order->getSignatureUrl(),
             'stop_reason' => $order->stop_reason,
             'vat_rate' => $order->vat_rate,
             'is_emergency' => $order->is_emergency,
@@ -671,6 +699,20 @@ class OrderController extends Controller
         if (!$photo) {
             return response()->json(['message' => 'Photo not found'], 404);
         }
+
+        $photo->delete();
+
+        return response()->json(['message' => 'Photo deleted successfully']);
+    }
+
+    public function deleteTemporaryPhoto(Request $request, $photoId): JsonResponse
+    {
+        $user = $request->user();
+
+        $photo = \App\Models\Photo::where('id', $photoId)
+            ->where('user_id', $user->id)
+            ->where('type', 'temporary')
+            ->firstOrFail();
 
         $photo->delete();
 

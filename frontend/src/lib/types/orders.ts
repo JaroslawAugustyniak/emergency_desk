@@ -54,6 +54,8 @@ export type Order = {
   price_total: number | null;
   work_report: string | null;
   technician_signature: string | null;
+  technician_signature_path: string | null;
+  technician_signature_url: string | null;
   photos: Photo[];
   order_date: string;
   start_at: string | null;

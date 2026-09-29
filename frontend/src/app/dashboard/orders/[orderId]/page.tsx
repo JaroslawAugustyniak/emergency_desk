@@ -1268,7 +1268,7 @@ export default function OrderDetailPage() {
       </div>
       )}
 
-      {isTechnician && order.status === 'completed' && (
+      {isTechnician && (order.status === 'completed' || order.status === 'invoiced') && (
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-sm font-semibold text-gray-500 mb-1 flex gap-2"><Signature />Podpis / potwierdzenie wykonania pracy</h3>
         {technicianSignature ? (
