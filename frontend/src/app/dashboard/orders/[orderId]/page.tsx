@@ -96,11 +96,11 @@ export default function OrderDetailPage() {
         setIsLoadingData(true);
         const data = await getOrder(Number(orderId), token);
 
-        // console.log(data.data);
+        console.log(data.data);
 
         setOrder(data.data);
         setWorkReport(data.data.work_report || '');
-        setTechnicianSignature(data.data.technician_signature || null);
+        setTechnicianSignature(data.data.technician_signature_url || null);
         setPhotos(data.data.photos || []);
 
         // Check if protocol exists
@@ -1003,7 +1003,7 @@ export default function OrderDetailPage() {
               </button>
             )}
 
-            {isAdmin && (order.status === 'completed') && (
+            {isAdmin && (order.status === 'completed' || order.status === 'invoiced') && (
             <button
               onClick={handleGenerateAndDownloadProtocol}
               disabled={isGeneratingProtocol}
@@ -1252,7 +1252,6 @@ export default function OrderDetailPage() {
         )}
       </div>
       )}
-
 
       { !isTechnician && technicianSignature && (
       <div className="bg-white rounded-lg grid gap-1.5 shadow-md p-6">

@@ -106,17 +106,66 @@ class OrderPdfService
         $totalPriceFormatted = $this->formatPrice($totalPrice);
         $materialsPriceFormatted = $this->formatPrice($totalMaterials);
 
-        $locationNipHtml = $locationNip ? '<div class="row"><div class="col col-label">NIP:</div><div class="col col-value">' . htmlspecialchars($locationNip, ENT_QUOTES, 'UTF-8') . '</div></div>' : '';
-        $locationDescriptionHtml = $locationDescription ? '<div class="row"><div class="col col-label">Uwagi:</div><div class="col col-value"><div class="description-box">' . nl2br(htmlspecialchars($locationDescription, ENT_QUOTES, 'UTF-8')) . '</div></div></div>' : '';
-        $clientContactHtml = $clientData ? '<div class="row"><div class="col col-label">Kontakt:</div><div class="col col-value">' . $clientEmail . ($clientPhone ? ' / ' . $clientPhone : '') . '</div></div>' : '';
-        $techEmailHtml = $technicianData ? '<div class="row"><div class="col col-label">Email:</div><div class="col col-value">' . $techEmail . '</div></div>' : '';
-        $techPhoneHtml = ($technicianData && $techPhone !== '—') ? '<div class="row"><div class="col col-label">Telefon:</div><div class="col col-value">' . $techPhone . '</div></div>' : '';
-        $durationHtml = ($order->start_at && $order->end_at) ? '<div class="row"><div class="col col-label">Czas trwania:</div><div class="col col-value">' . $this->formatDuration($order->start_at, $order->end_at) . '</div></div>' : '';
-        $workReportHtml = $order->work_report ? '<div class="section"><div class="section-title">Raport z pracy</div><div class="section-content"><div class="description-box">' . nl2br(htmlspecialchars($order->work_report, ENT_QUOTES, 'UTF-8')) . '</div></div></div>' : '';
+        $sections = [];
+
+        $sections[] = $this->halfSection('Informacje podstawowe', [
+            ['Numer zlecenia:', "#$formattedOrderNumber"],
+            ['Numer ref. klienta:', $clientRefNo],
+            ['Status:', '<span class="status-badge status-' . $statusClass . '">' . $statusLabel . '</span>'],
+            ['Typ zlecenia:', trim($emergencyIcon . ' ' . $emergencyBadge)],
+            ['Data złożenia:', $orderDate],
+            ['Kategoria usługi:', $categoryName],
+        ]);
+
+        $locationRows = [
+            ['Nazwa lokacji:', $locationName],
+            ['Adres:', $locationAddress],
+        ];
+        if ($locationNip) {
+            $locationRows[] = ['NIP:', htmlspecialchars($locationNip, ENT_QUOTES, 'UTF-8')];
+        }
+        if ($locationDescription) {
+            $locationRows[] = ['Uwagi:', '<div style="background-color: #fafbfc; border-left: 3px solid #3b82f6; padding: 10px; line-height: 1.6;">' . nl2br(htmlspecialchars($locationDescription, ENT_QUOTES, 'UTF-8')) . '</div>'];
+        }
+        $sections[] = $this->halfSection('Lokalizacja naprawy', $locationRows);
+
+        $clientRows = [['Klient:', $clientName]];
+        if ($clientData) {
+            $clientRows[] = ['Kontakt:', $clientEmail . ($clientPhone ? ' / ' . $clientPhone : '')];
+        }
+        $sections[] = $this->halfSection('Dane klienta', $clientRows);
+
+        $techRows = [['Technik:', $technicianName]];
+        if ($technicianData) {
+            $techRows[] = ['Email:', $techEmail];
+            if ($techPhone !== '—') {
+                $techRows[] = ['Telefon:', $techPhone];
+            }
+        }
+        $sections[] = $this->halfSection('Dane technika', $techRows);
+
+        $periodRows = [
+            ['Rozpoczęcie:', $startDate],
+            ['Zakończenie:', $endDate],
+        ];
+        if ($order->start_at && $order->end_at) {
+            $periodRows[] = ['Czas trwania:', $this->formatDuration($order->start_at, $order->end_at)];
+        }
+        $sections[] = $this->halfSection('Okresy pracy', $periodRows);
+
+        $sections[] = $this->halfSection('Opis zlecenia', null, '<div style="background-color: #fafbfc; border-left: 3px solid #3b82f6; padding: 10px; line-height: 1.6;">' . ($order->description ? nl2br(htmlspecialchars($order->description, ENT_QUOTES, 'UTF-8')) : 'Brak opisu') . '</div>');
+
+        if ($order->work_report) {
+            $sections[] = $this->halfSection('Raport z pracy', null, '<div style="background-color: #fafbfc; border-left: 3px solid #3b82f6; padding: 10px; line-height: 1.6;">' . nl2br(htmlspecialchars($order->work_report, ENT_QUOTES, 'UTF-8')) . '</div>');
+        }
+
+        $halfSectionsHtml = $this->pairSections($sections);
+        $signature = $order->getSignatureBase64();
+        $receiptSignatureHtml = $signature
+            ? '<img src="' . $signature . '" alt="Potwierdzenie odbioru" style="max-width: 150px; max-height: 60px;" />'
+            : '<div class="signature-line"></div>';
         $invoiceInfo = $order->invoice_no ? 'Faktura: ' . htmlspecialchars($order->invoice_no, ENT_QUOTES, 'UTF-8') : '';
         $generatedDate = date('d.m.Y H:i');
-
-        $descriptionContent = $order->description ? nl2br(htmlspecialchars($order->description, ENT_QUOTES, 'UTF-8')) : 'Brak opisu';
 
         return <<<HTML
 <!DOCTYPE html>
@@ -162,101 +211,20 @@ class OrderPdfService
     </style>
 </head>
 <body>
-    <div class="header">
-        <div>$logoPath</div>
-        <div class="company-info">
-            <div class="company-name">Emergency Desk</div>
-            <div style="font-size: 10px; color: #6b7280;">System zarządzania zleceniami napraw</div>
-        </div>
-    </div>
+    <table style="width: 100%; margin: 0 0 30px 0; border-collapse: collapse; border-bottom: 2px solid #1f2937;">
+        <tr>
+            <td style="width: 50%; border: none; padding: 0 0 20px 0; vertical-align: middle; text-align: left;">$logoPath</td>
+            <td style="width: 50%; border: none; padding: 0 0 20px 0; vertical-align: middle; text-align: right;">
+                <div class="company-name">Emergency Desk</div>
+                <div style="font-size: 10px; color: #6b7280;">System zarządzania zleceniami napraw</div>
+            </td>
+        </tr>
+    </table>
 
     <div class="order-id">Zlecenie #$formattedOrderNumber</div>
     <div class="title">PROTOKÓŁ ZLECENIA</div>
 
-    <div class="section">
-        <div class="section-title">Informacje podstawowe</div>
-        <div class="section-content">
-            <div class="row">
-                <div class="col col-label">Numer zlecenia:</div>
-                <div class="col col-value">#$formattedOrderNumber</div>
-                <div class="col col-label">Numer ref. klienta:</div>
-                <div class="col col-value">$clientRefNo</div>
-            </div>
-            <div class="row">
-                <div class="col col-label">Status:</div>
-                <div class="col col-value"><span class="status-badge status-$statusClass">$statusLabel</span></div>
-                <div class="col col-label">Typ zlecenia:</div>
-                <div class="col col-value">$emergencyIcon $emergencyBadge</div>
-            </div>
-            <div class="row">
-                <div class="col col-label">Data złożenia:</div>
-                <div class="col col-value">$orderDate</div>
-                <div class="col col-label">Kategoria usługi:</div>
-                <div class="col col-value">$categoryName</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Lokalizacja naprawy</div>
-        <div class="section-content">
-            <div class="row">
-                <div class="col col-label">Nazwa lokacji:</div>
-                <div class="col col-value">$locationName</div>
-            </div>
-            <div class="row">
-                <div class="col col-label">Adres:</div>
-                <div class="col col-value">$locationAddress</div>
-            </div>
-            $locationNipHtml
-            $locationDescriptionHtml
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Dane klienta</div>
-        <div class="section-content">
-            <div class="row">
-                <div class="col col-label">Klient:</div>
-                <div class="col col-value">$clientName</div>
-            </div>
-            $clientContactHtml
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Dane technika</div>
-        <div class="section-content">
-            <div class="row">
-                <div class="col col-label">Technik:</div>
-                <div class="col col-value">$technicianName</div>
-            </div>
-            $techEmailHtml
-            $techPhoneHtml
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Okresy pracy</div>
-        <div class="section-content">
-            <div class="row">
-                <div class="col col-label">Rozpoczęcie:</div>
-                <div class="col col-value">$startDate</div>
-                <div class="col col-label">Zakończenie:</div>
-                <div class="col col-value">$endDate</div>
-            </div>
-            $durationHtml
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Opis zlecenia</div>
-        <div class="section-content">
-            <div class="description-box">$descriptionContent</div>
-        </div>
-    </div>
-
-    $workReportHtml
+    $halfSectionsHtml
 
     <div class="section">
         <div class="section-title">Materiały i części</div>
@@ -292,8 +260,8 @@ class OrderPdfService
             <div class="signature-line"></div>
         </div>
         <div class="footer-section text-right">
-            <div style="margin-bottom: 20px;">Podpis klienta:</div>
-            <div class="signature-line"></div>
+            <div style="margin-bottom: 20px;">Potwierdzenie odbioru:</div>
+            $receiptSignatureHtml
         </div>
         <div class="footer-section text-right">
             <div style="color: #9ca3af; font-size: 9px;">
@@ -306,6 +274,42 @@ class OrderPdfService
 </body>
 </html>
 HTML;
+    }
+
+    /**
+     * @param array<int, array{0: string, 1: string}>|null $rows label/value pairs
+     */
+    private function halfSection(string $title, ?array $rows, string $rawContent = ''): string
+    {
+        // Inline styles: mPDF does not reliably apply class rules inside table cells.
+        $content = $rawContent;
+        foreach ($rows ?? [] as [$label, $value]) {
+            $content .= '<table style="width: 100%; margin: 0 0 6px 0;"><tr>'
+                . '<td style="width: 38%; padding: 0 8px 4px 0; border: none; font-size: 11px; font-weight: bold; color: #4b5563; vertical-align: top;">' . $label . '</td>'
+                . '<td style="padding: 0 0 4px 0; border: none; font-size: 11px; color: #1f2937; vertical-align: top;">' . $value . '</td>'
+                . '</tr></table>';
+        }
+
+        // Padding on table cells is applied reliably by mPDF (unlike on divs nested in cells).
+        return '<table style="width: 100%; margin: 0 0 12px 0; border-collapse: collapse;">'
+            . '<tr><td style="background-color: #e5e7eb; border: none; border-left: 4px solid #1f2937; padding: 8px 10px; font-size: 12px; font-weight: bold;">' . $title . '</td></tr>'
+            . '<tr><td style="border: none; padding: 10px 10px 4px 10px;">' . $content . '</td></tr>'
+            . '</table>';
+    }
+
+    /**
+     * Lay out sections two per row, each taking half of the page width.
+     *
+     * @param string[] $sections
+     */
+    private function pairSections(array $sections): string
+    {
+        $html = '';
+        foreach (array_chunk($sections, 2) as $pair) {
+            $html .= '<table style="width: 100%; margin: 0;"><tr><td style="width: 50%; padding: 0 6px 0 0; border: none; vertical-align: top;">' . $pair[0] . '</td><td style="width: 50%; padding: 0 0 0 6px; border: none; vertical-align: top;">' . ($pair[1] ?? '') . '</td></tr></table>';
+        }
+
+        return $html;
     }
 
     private function buildMaterialsTable(Order $order): string

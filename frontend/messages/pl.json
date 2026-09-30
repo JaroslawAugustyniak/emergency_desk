@@ -396,7 +396,7 @@
     "deletedMessage": "Zamówienie zostało usunięte.",
     "deletedError": "Błąd podczas usuwania zamówienia",
     "savingError": "Błąd podczas zapisywania",
-    "generatePDF": "Generuj PDF",
+    "generatePDF": "Generuj protokuł",
     "startRepair": "Rozpocznij naprawę",
     "finishRepair": "Zakończ naprawę",
     "resumeRepair": "Wznów naprawę",
