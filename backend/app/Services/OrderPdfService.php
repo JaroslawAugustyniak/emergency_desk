@@ -153,17 +153,17 @@ class OrderPdfService
         }
         $sections[] = $this->halfSection('Okresy pracy', $periodRows);
 
-        $sections[] = $this->halfSection('Opis zlecenia', null, '<div style="background-color: #fafbfc; border-left: 3px solid #3b82f6; padding: 10px; line-height: 1.6;">' . ($order->description ? nl2br(htmlspecialchars($order->description, ENT_QUOTES, 'UTF-8')) : 'Brak opisu') . '</div>');
+        $sections[] = $this->halfSection('Opis zlecenia', null, '<div style="background-color: #fafbfc; padding: 10px; line-height: 1.6;">' . ($order->description ? nl2br(htmlspecialchars($order->description, ENT_QUOTES, 'UTF-8')) : 'Brak opisu') . '</div>');
 
         if ($order->work_report) {
-            $sections[] = $this->halfSection('Raport z pracy', null, '<div style="background-color: #fafbfc; border-left: 3px solid #3b82f6; padding: 10px; line-height: 1.6;">' . nl2br(htmlspecialchars($order->work_report, ENT_QUOTES, 'UTF-8')) . '</div>');
+            $sections[] = $this->halfSection('Raport z pracy', null, '<div style="background-color: #fafbfc; padding: 10px; line-height: 1.6;">' . nl2br(htmlspecialchars($order->work_report, ENT_QUOTES, 'UTF-8')) . '</div>');
         }
 
         $halfSectionsHtml = $this->pairSections($sections);
         $signature = $order->getSignatureBase64();
         $receiptSignatureHtml = $signature
             ? '<img src="' . $signature . '" alt="Potwierdzenie odbioru" style="max-width: 150px; max-height: 60px;" />'
-            : '<div class="signature-line"></div>';
+            : '<table align="right" style="width: 150px; margin: 30px 0 0 0; border-collapse: collapse;"><tr><td style="border: none; border-top: 1px solid #1f2937; padding: 0; height: 1px; font-size: 1px;"></td></tr></table>';
         $invoiceInfo = $order->invoice_no ? 'Faktura: ' . htmlspecialchars($order->invoice_no, ENT_QUOTES, 'UTF-8') : '';
         $generatedDate = date('d.m.Y H:i');
 
@@ -254,23 +254,24 @@ class OrderPdfService
         </div>
     </div>
 
-    <div class="footer">
-        <div class="footer-section">
-            <div style="margin-bottom: 20px;">Podpis technika:</div>
-            <div class="signature-line"></div>
-        </div>
-        <div class="footer-section text-right">
-            <div style="margin-bottom: 20px;">Potwierdzenie odbioru:</div>
-            $receiptSignatureHtml
-        </div>
-        <div class="footer-section text-right">
-            <div style="color: #9ca3af; font-size: 9px;">
-                Wygenerowano: $generatedDate
-                <br>
-                $invoiceInfo
-            </div>
-        </div>
-    </div>
+    <table style="width: 100%; margin: 40px 0 0 0; border-collapse: collapse; border-top: 1px solid #d1d5db; font-size: 10px; color: #6b7280;">
+        <tr>
+            <td style="width: 34%; border: none; padding: 20px 0 0 0; vertical-align: top; text-align: left;">
+                <div style="margin-bottom: 20px;">Potwierdzenie odbioru:</div>
+                $receiptSignatureHtml
+            </td>
+            <td style="width: 33%; border: none; padding: 20px 0 0 0; vertical-align: top; text-align: right;">
+                
+            </td>
+            <td style="width: 33%; border: none; padding: 20px 0 0 0; vertical-align: top; text-align: right;">
+                <div style="color: #9ca3af; font-size: 9px;">
+                    Wygenerowano: $generatedDate
+                    <br>
+                    $invoiceInfo
+                </div>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
 HTML;

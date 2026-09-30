@@ -299,6 +299,35 @@ class OrderController extends Controller
     }
 
     /**
+     * Delete technician signature (file in storage and database entry)
+     */
+    public function deleteSignature(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->role === 'technician') {
+            if ($order->technician_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        } elseif ($user->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($order->technician_signature_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($order->technician_signature_path);
+        }
+
+        $order->update([
+            'technician_signature' => null,
+            'technician_signature_path' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Signature deleted successfully',
+        ]);
+    }
+
+    /**
      * Delete order (soft delete)
      */
     public function destroy(Order $order): JsonResponse

@@ -96,6 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/{order}/status', [OrderController::class, 'changeStatus']);
         Route::patch('/{order}/assign-technician', [OrderController::class, 'assignTechnician']);
         Route::patch('/{order}/pause', [OrderController::class, 'pause']);
+        Route::delete('/{order}/signature', [OrderController::class, 'deleteSignature']);
 
         // Photo routes
         Route::post('/{order}/photos', [OrderController::class, 'uploadPhotos']);

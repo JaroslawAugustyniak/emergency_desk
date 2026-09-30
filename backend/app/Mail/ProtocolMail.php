@@ -27,7 +27,12 @@ class ProtocolMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Protokół zlecenia #' . str_pad($this->order->id, 8, '0', STR_PAD_LEFT),
+            subject: 'Protokół zlecenia #' . sprintf(
+                    'C%s/P%s/O%s',
+                    str_pad($this->order->client_id ?? 0, 3, '0', STR_PAD_LEFT),
+                    str_pad($this->order->location_id ?? 0, 3, '0', STR_PAD_LEFT),
+                    str_pad($this->order->id, 4, '0', STR_PAD_LEFT)
+                ),
         );
     }
 
@@ -41,7 +46,7 @@ class ProtocolMail extends Mailable implements ShouldQueue
                     'C%s/P%s/O%s',
                     str_pad($this->order->client_id ?? 0, 3, '0', STR_PAD_LEFT),
                     str_pad($this->order->location_id ?? 0, 3, '0', STR_PAD_LEFT),
-                    str_pad($this->order->id, 8, '0', STR_PAD_LEFT)
+                    str_pad($this->order->id, 4, '0', STR_PAD_LEFT)
                 ),
                 'locationName' => $this->order->location?->name ?? '—',
             ],

@@ -487,6 +487,47 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handleDeleteSignature = async () => {
+    if (!token || !order) return;
+
+    const result = await Swal.fire({
+      title: 'Usunąć podpis?',
+      text: tCommon('confirmDelete'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: tCommon('yes'),
+      cancelButtonText: tCommon('no'),
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const response = await fetch(`/api/orders/${order.id}/signature`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete signature');
+      }
+
+      setTechnicianSignature(null);
+      setOrder({ ...order, technician_signature_url: null } as Order);
+    } catch (error) {
+      console.error('Error deleting signature:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : 'Failed to delete signature',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
+    }
+  };
+
   const handlePhotoUpload = async (files: FileList) => {
     if (!token || !order) return;
 
@@ -1274,7 +1315,7 @@ export default function OrderDetailPage() {
           <div className="space-y-3">
             <img src={technicianSignature} alt="Podpis" className="border border-gray-300 rounded max-h-48" />
             <button
-              onClick={() => setTechnicianSignature(null)}
+              onClick={handleDeleteSignature}
               className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
             >
               Usuń podpis
