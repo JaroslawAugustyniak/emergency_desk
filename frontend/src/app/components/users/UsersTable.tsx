@@ -24,6 +24,7 @@ type User = {
   role: string;
   status: 'active' | 'blocked';
   phone?: string;
+  has_push_subscription?: boolean;
   client_id?: number | null;
   client?: {
     id: number,
@@ -251,6 +252,9 @@ export default function UsersTable({
                   <ArrowUpDown className="w-4 h-4" />
                 </div>
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {t('pushColumn')}
+              </th>
               {!clientId && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('roleColumn')}
@@ -264,7 +268,7 @@ export default function UsersTable({
           <tbody className="bg-white divide-y divide-gray-200">
             {users.length === 0 ? (
               <tr>
-                <td colSpan={clientId ? 3 : 4} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={clientId ? 5 : 6} className="px-6 py-8 text-center text-gray-500">
                   {t('noUsers')}
                 </td>
               </tr>
@@ -287,6 +291,11 @@ export default function UsersTable({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {user.phone}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${user.has_push_subscription ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {user.has_push_subscription ? t('pushEnabled') : t('pushDisabled')}
+                    </span>
                   </td>
                   {!clientId && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -383,6 +392,11 @@ export default function UsersTable({
                   <p className="text-sm text-gray-600">{user.phone}</p>
                 </div>
                 )}
+
+                <div className="mb-3 pb-3 border-b border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">{t('pushColumn')}</p>
+                  <p className="text-sm text-gray-600">{user.has_push_subscription ? t('pushEnabled') : t('pushDisabled')}</p>
+                </div>
 
                 <div className="mb-3 pb-3 border-b border-gray-200">
                   <p className="text-xs text-gray-500 mb-1">{t('roleColumn')}</p>

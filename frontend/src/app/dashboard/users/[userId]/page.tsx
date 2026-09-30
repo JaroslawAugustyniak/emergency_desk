@@ -15,6 +15,7 @@ type User = {
   last_name: string;
   role: string;
   phone?: string;
+  has_push_subscription?: boolean;
   created_at?: string;
   updated_at?: string;
 };
@@ -138,6 +139,15 @@ export default function UserDetailPage() {
               <p className="text-base text-gray-900">{user.phone}</p>
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              {t('pushColumn')}
+            </label>
+            <p className="text-base text-gray-900">
+              {user.has_push_subscription ? t('pushEnabled') : t('pushDisabled')}
+            </p>
+          </div>
 
           {user.created_at && (
             <div>

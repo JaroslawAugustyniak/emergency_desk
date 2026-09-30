@@ -7,6 +7,7 @@ export type User = {
   last_name: string;
   phone?: string | null;
   client_id?: number | null;
+  has_push_subscription?: boolean;
   email_verified_at?: string | null;
   created_at: string;
   updated_at: string;

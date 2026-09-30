@@ -43,7 +43,7 @@ class UserController extends Controller
         $sortBy = $validated['sort_by'] ?? 'created_at';
         $sortOrder = $validated['sort_order'] ?? 'desc';
 
-        $query = User::query()->with('client');
+        $query = User::query()->with(['client', 'pushSubscription']);
 
         // Tech manager can only view technicians
         if ($user->role === 'tech_manager') {
@@ -88,7 +88,7 @@ class UserController extends Controller
     public function show(User $user): JsonResponse
     {
         return response()->json([
-            'data' => $this->formatUser($user),
+            'data' => $this->formatUser($user->loadMissing('pushSubscription')),
         ]);
     }
 
@@ -216,7 +216,7 @@ class UserController extends Controller
         $perPage = $validated['per_page'] ?? 50;
 
         $total = User::where('role', 'technician')->count();
-        $technicians = User::where('role', 'technician')
+        $technicians = User::with('pushSubscription')->where('role', 'technician')
             ->orderBy('created_at', 'desc')
             ->forPage($page, $perPage)
             ->get()
@@ -320,6 +320,7 @@ class UserController extends Controller
                 'name' => $user->client->name,
             ] : null,
             'email_verified_at' => $user->email_verified_at,
+            'has_push_subscription' => $user->pushSubscription !== null,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,
         ];

@@ -73,6 +73,11 @@ class User extends Authenticatable
         return $this->email_verified_at !== null;
     }
 
+    public function pushSubscription()
+    {
+        return $this->hasOne(PushSubscription::class);
+    }
+
     public function client()
     {
         return $this->belongsTo(Client::class);
