@@ -291,7 +291,7 @@ class PushNotificationController extends Controller
                 ], 404);
             }
 
-            $notification->update(['is_read' => true]);
+            $notification->update(['is_read' => true, 'is_sent' => true, 'sent_at' => now()]);
 
             return response()->json([
                 'success' => true,
